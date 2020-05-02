@@ -1,0 +1,8 @@
+### Editor ###
+.vscode/
+.ionide/
+.history/
+.idea/
+
+### Build ###
+build/
