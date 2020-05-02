@@ -96,14 +96,8 @@ type Header struct {
 	Name        string
 	Type        string
 	Description string
-	Default     interface{}
 }
 
 func NewHeader(name string, headerType string, description string) *Header {
 	return &Header{Name: name, Description: description, Type: headerType}
-}
-
-func (h *Header) SetDefault(defaultValue string) *Header {
-	h.Default = defaultValue
-	return h
 }

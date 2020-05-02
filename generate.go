@@ -65,7 +65,7 @@ type innerPath struct {
 
 type innerResponse struct {
 	Description string                  `yaml:"description,omitempty"`
-	Headers     map[string]*innerHeader `yaml:"header,omitempty"`
+	Headers     map[string]*innerHeader `yaml:"headers,omitempty"`
 	Examples    map[string]string       `yaml:"examples,omitempty"`
 	Schema      *innerSchema            `yaml:"schema,omitempty"`
 }
@@ -102,8 +102,6 @@ type innerModel struct {
 
 // !!
 type innerSchema struct {
-	Ref string `yaml:"$ref,omitempty"`
-
 	Title       string `yaml:"-"`
 	Type        string `yaml:"type,omitempty"`
 	Required    bool   `yaml:"required,omitempty"`
@@ -113,18 +111,22 @@ type innerSchema struct {
 	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
 	Default         interface{}   `yaml:"default,omitempty"`
 	Enum            []interface{} `yaml:"enum,omitempty"`
-	Items           *innerItems   `yaml:"items,omitempty"`
+
+	OriginRef string      `yaml:"originRef,omitempty"`
+	Ref       string      `yaml:"$ref,omitempty"`
+	Items     *innerItems `yaml:"items,omitempty"`
 }
 
 // !!
 type innerItems struct {
-	Ref string `yaml:"$ref,omitempty"`
-
 	Type    string        `yaml:"type,omitempty"`
 	Format  string        `yaml:"format,omitempty"`
 	Default interface{}   `yaml:"default,omitempty"`
 	Enum    []interface{} `yaml:"enum,omitempty"`
-	Items   *innerItems   `yaml:"items,omitempty"`
+
+	OriginRef string      `yaml:"originRef,omitempty"`
+	Ref       string      `yaml:"$ref,omitempty"`
+	Items     *innerItems `yaml:"items,omitempty"`
 }
 
 func mapSchema(schema *Schema) *innerSchema {
@@ -133,11 +135,12 @@ func mapSchema(schema *Schema) *innerSchema {
 	}
 	if schema.Ref != "" {
 		return &innerSchema{
-			Ref:         "#/definitions/" + schema.Ref,
-			Title:       schema.Title,
-			Type:        schema.Type,
-			Required:    schema.Required,
-			Description: schema.Description,
+			OriginRef: schema.Ref,
+			Ref:       "#/definitions/" + schema.Ref,
+			// Title:       schema.Title,
+			// Type:        schema.Type,
+			// Required:    schema.Required,
+			// Description: schema.Description,
 		}
 	}
 	return &innerSchema{
@@ -159,7 +162,8 @@ func mapItems(items *Items) *innerItems {
 	}
 	if items.Ref != "" {
 		return &innerItems{
-			Ref: "#/definitions/" + items.Ref,
+			OriginRef: items.Ref,
+			Ref:       "#/definitions/" + items.Ref,
 		}
 	}
 	return &innerItems{
@@ -199,7 +203,6 @@ func mapResponse(responses []*Response) map[string]*innerResponse {
 			headers[h.Name] = &innerHeader{
 				Type:        h.Type,
 				Description: h.Description,
-				Default:     h.Default,
 			}
 		}
 

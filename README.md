@@ -6,6 +6,7 @@
 
 ```go
 import . "github.com/Aoi-hosizora/go-yaml-doc"
+
 SetDocument(
     "localhost:10086", "/",
     NewInfo("test-api", "a demo description", "1.0").
@@ -13,76 +14,91 @@ SetDocument(
         SetLicense(NewLicense("MIT", "http://xxx.yyy.zzz")).
         SetContact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
 )
-SetTags(NewTag("ping", "ping-controller"), NewTag("user", "user-controller"))
-SetSecurities(NewSecurity("jwt", "header", "Authorization"))
+SetTags(
+    NewTag("ping", "ping-controller"),
+    NewTag("user", "user-controller"),
+)
+SetSecurities(
+    NewSecurity("jwt", HEADER, "Authorization"),
+)
 
 AddPaths(
-    NewPath("GET", "/api/v1/ping", "ping").
+    NewPath(GET, "/api/v1/ping", "ping").
         SetDescription("ping the server").
         SetTags("ping").
         SetConsumes(JSON).
         SetProduces(JSON).
-        SetResponses(
-            NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: `{"ping": "pong"}`}),
+        SetResponses( // response with example value
+            NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: "{\n\t\"ping\": \"pong\"\n}"}),
         ),
-    NewPath("GET", "/api/v1/user", "get user").
+    NewPath(GET, "/api/v1/user", "get user").
         SetDescription("get user from database").
         SetTags("user").
         SetConsumes(JSON).
         SetProduces(JSON).
-        SetSecurities("jwt").
+        SetSecurities("jwt"). // a security setting
         SetParams(
-            NewParam("page", "query", "integer", false, "current page").SetDefault(1),
-            NewParam("total", "query", "integer", false, "page size").SetDefault(10),
-            NewParam("order", "query", "string", false, "order string").SetDefault(""),
+            NewParam("page", QUERY, INTEGER, false, "current page").SetDefault(1), // parameter with default value
+            NewParam("total", QUERY, INTEGER, false, "page size").SetDefault(10),
+            NewParam("order", QUERY, STRING, false, "order string").SetDefault(""),
         ).
         SetResponses(
-            NewResponse(200).SetSchema("Result<Page<User>>"),
+            NewResponse(200).SetSchema(NewSchemaRef("Result<Page<User>>")), // object type response
         ),
-    NewPath("PUT", "/api/v1/user/{id}", "update user (ugly api)").
+    NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
         SetDescription("update user to database").
         SetTags("user").
         SetConsumes(JSON).
         SetProduces(JSON).
         SetSecurities("jwt").
         SetParams(
-            NewParam("id", "path", "integer", true, "user id"),
-            NewParam("body", "body", "", true, "request body").SetSchema("User"),
+            NewParam("id", PATH, INTEGER, true, "user id"), // normal parameter
+            NewParam("body", BODY, OBJECT, true, "request body").SetSchema(NewSchemaRef("User")), // object type parameter
         ).
         SetResponses(
-            NewResponse(200).SetDescription("success").SetSchema("Result").
-                SetHeaders(NewHeader("Content-Type", "Content-Type", "string").SetDefault(JSON)),
+            NewResponse(200).SetDescription("success").SetSchema(NewSchemaRef("Result")).
+                SetHeaders(NewHeader("Content-Type", STRING, "demo")), // response with header
             NewResponse(404).SetDescription("not found"),
+            NewResponse(400).SetDescription("bad request").SetSchema(NewSchema(STRING, true)).
+                SetExamples(map[string]string{JSON: "bad request"}), // string type response
+        ),
+    NewPath(HEAD, "/api/v1/test", "test path").
+        SetParams(
+            NewParam("arr", QUERY, ARRAY, true, "test").
+                SetItems(NewItems(INTEGER).SetFormat(INT64).SetItems(NewItems(INTEGER))), // array-array type parameter
+            NewParam("ref", QUERY, ARRAY, true, "test").SetItems(NewItemsRef("User")), // array-object type parameter
+            NewParam("enum", QUERY, STRING, true, "test").SetEnum("male", "female"), // enum type parameter
         ),
 )
 
 AddModels(
-    NewModel("Result", "global response").SetProperties(
-        NewProperty("code", "status code", "integer", true),
-        NewProperty("message", "status message", "string", true),
+    NewModel("Result", "global response").SetProperties( // a normal model
+        NewProperty("code", INTEGER, true, "status code"), // a normal property
+        NewProperty("message", STRING, true, "status message"),
     ),
     NewModel("User", "user response").SetProperties(
-        NewProperty("id", "user id", "integer", true),
-        NewProperty("name", "user name", "string", true),
-        NewProperty("profile", "user profile", "string", false).SetAllowEmptyValue(true),
-        NewProperty("gender", "user gender", "string", true).SetEnum("male", "female"),
-        NewProperty("create_at", "user register time", "datetime", true).SetFormat("yyyy-MM-dd HH:mm:ss"),
-        NewProperty("birthday", "user birthday", "date", true).SetFormat("yyyy-MM-dd"),
+        NewProperty("id", INTEGER, true, "user id"),
+        NewProperty("name", STRING, true, "user name"),
+        NewProperty("profile", STRING, false, "user profile").SetAllowEmptyValue(true),
+        NewProperty("gender", STRING, true, "user gender").SetEnum("male", "female"), // enum type property
+        NewProperty("create_at", STRING, true, "user register time").SetFormat(DATETIME), // datetime type property
+        NewProperty("birthday", STRING, true, "user birthday").SetFormat(DATE), // date type property
+        NewProperty("scores", ARRAY, true, "user scores").SetItems(NewItems(NUMBER)), // array property
     ),
     NewModel("Page<User>", "user response").SetProperties(
-        NewProperty("page", "current page", "integer", true),
-        NewProperty("total", "data count", "integer", true),
-        NewProperty("limit", "page size", "integer", true),
-        NewProperty("data", "page data", "array", true).SetItems(NewItems("").SetSchema("User")),
+        NewProperty("page", INTEGER, true, "current page"),
+        NewProperty("total", INTEGER, true, "data count"),
+        NewProperty("limit", INTEGER, true, "page size"),
+        NewPropertyArray("data", NewItemsRef("User"), true, "page data"), // array-object type property
     ),
     NewModel("Result<Page<User>>", "user response").SetProperties(
-        NewProperty("code", "status code", "integer", true),
-        NewProperty("message", "status message", "string", true),
-        NewProperty("data", "result data", "object", true).SetSchema("Page<User>"),
+        NewProperty("code", INTEGER, true, "status code"),
+        NewProperty("message", STRING, true, "status message"),
+        NewPropertyObject("data", "Page<User>", true, "result data"), // object type property
     ),
 )
 
-err := GenerateYaml("api.yaml", map[string]interface{}{"swagger": "2.0"})
+err := GenerateYaml("api.yaml", map[string]interface{}{"swagger": "2.0"}) // add some fields to output
 ```
 
 ### References

@@ -1,21 +1,22 @@
 package yamldoc
 
 type Items struct {
-	Ref  string
 	Type string
 
 	Format  string
 	Default interface{}
 	Enum    []interface{}
-	Items   *Items // `type` == array
-}
 
-func NewRefItems(ref string) *Items {
-	return &Items{Ref: ref}
+	Ref   string
+	Items *Items // `type` == array
 }
 
 func NewItems(itemType string) *Items {
-	return &Items{Type: itemType}
+	return &Items{Type: itemType, Format: defaultFormat(itemType)}
+}
+
+func NewItemsRef(ref string) *Items {
+	return &Items{Ref: ref}
 }
 
 func (i *Items) SetFormat(format string) *Items {

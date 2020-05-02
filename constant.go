@@ -9,7 +9,7 @@ const (
 	BOOLEAN = "boolean" // type: boolean
 	ARRAY   = "array"   // type: array
 	FILE    = "file"    // type: file
-	OBJECT  = "object"  // model type: object
+	OBJECT  = "object"  // x
 
 	// format
 	INT32    = "int32"     // format: signed 32 bits
@@ -39,6 +39,7 @@ const (
 	PATCH   = "patch"   // method
 
 	// mime
+	ALL   = "*/*"                               // mime data
 	JSON  = "application/json"                  // mime data
 	XML   = "text/xml"                          // mime data
 	PLAIN = "text/plain"                        // mime data

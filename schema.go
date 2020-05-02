@@ -1,8 +1,6 @@
 package yamldoc
 
 type Schema struct {
-	Ref string
-
 	Title       string
 	Type        string
 	Required    bool
@@ -12,15 +10,29 @@ type Schema struct {
 	AllowEmptyValue bool
 	Default         interface{}
 	Enum            []interface{}
-	Items           *Items // `type` == array
+
+	Ref   string // `type` == object
+	Items *Items // `type` == array
 }
 
-func NewProperty(name string, schemaType string, required bool, description string) *Schema {
-	return &Schema{Title: name, Type: schemaType, Required: required, Description: description}
+func NewSchema(schemaType string, required bool) *Schema {
+	return &Schema{
+		Required: required, Type: schemaType, Format: defaultFormat(schemaType),
+	}
 }
 
-func NewRefProperty(name string, ref string, required bool, description string) *Schema {
-	return &Schema{Title: name, Type: "object", Ref: ref, Required: required, Description: description}
+func NewSchemaRef(ref string) *Schema {
+	return &Schema{Ref: ref}
+}
+
+func (s *Schema) SetTitle(title string) *Schema {
+	s.Title = title
+	return s
+}
+
+func (s *Schema) SetDescription(description string) *Schema {
+	s.Description = description
+	return s
 }
 
 func (s *Schema) SetFormat(format string) *Schema {

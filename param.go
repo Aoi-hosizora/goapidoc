@@ -18,7 +18,10 @@ type Param struct {
 }
 
 func NewParam(name string, in string, paramType string, required bool, description string) *Param {
-	return &Param{Name: name, In: in, Type: paramType, Required: required, Description: description}
+	return &Param{
+		Name: name, In: in, Required: required, Description: description,
+		Type: paramType, Format: defaultFormat(paramType),
+	}
 }
 
 func (p *Param) SetFormat(format string) *Param {
@@ -41,13 +44,14 @@ func (p *Param) SetEnum(enum ...interface{}) *Param {
 	return p
 }
 
-// !
+// ! only used when body in
 func (p *Param) SetSchema(schema *Schema) *Param {
+	p.Type = ""
 	p.Schema = schema
 	return p
 }
 
-// !
+// ! only used when array type
 func (p *Param) SetItems(items *Items) *Param {
 	p.Items = items
 	return p
