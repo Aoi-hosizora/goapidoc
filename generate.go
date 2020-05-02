@@ -51,8 +51,8 @@ type innerSecurity struct {
 
 type innerPath struct {
 	Summary     string                    `yaml:"summary"`
-	Description string                    `yaml:"description,omitempty"`
 	OperationId string                    `yaml:"operationId"`
+	Description string                    `yaml:"description,omitempty"`
 	Tags        []string                  `yaml:"tags,omitempty"`
 	Consumes    []string                  `yaml:"consumes,omitempty"`
 	Produces    []string                  `yaml:"produces,omitempty"`
@@ -63,9 +63,9 @@ type innerPath struct {
 
 type innerModel struct {
 	Title       string                    `json:"title"`
-	Description string                    `json:"description,omitempty"`
 	Type        string                    `json:"type"`
 	Required    []string                  `json:"required"`
+	Description string                    `json:"description,omitempty"`
 	Properties  map[string]*innerProperty `json:"properties,omitempty"`
 }
 
@@ -88,8 +88,8 @@ type innerResponse struct {
 }
 
 type innerProperty struct {
-	Description string       `yaml:"description,omitempty"`
 	Type        string       `yaml:"type"`
+	Description string       `yaml:"description,omitempty"`
 	Format      string       `yaml:"format,omitempty"`
 	Enum        []string     `yaml:"enum,omitempty"`
 	Ref         string       `yaml:"$ref,omitempty"`
