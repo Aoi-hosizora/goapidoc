@@ -1,18 +1,20 @@
 package yamldoc
 
+// Route path
 type Path struct {
-	Method string
-	Route  string
+	Method  string
+	Route   string
+	Summary string
 
-	Summary     string
 	Description string
 	Tags        []string
 	Consumes    []string
 	Produces    []string
 	Securities  []string
 	Deprecated  bool
-	Params      []*Param
-	Responses   []*Response
+
+	Params    []*Param
+	Responses []*Response
 }
 
 func NewPath(method string, route string, summary string) *Path {
@@ -49,18 +51,22 @@ func (r *Path) SetDeprecated(deprecated bool) *Path {
 	return r
 }
 
+// Set parameters
 func (r *Path) SetParams(params ...*Param) *Path {
 	r.Params = params
 	return r
 }
 
+// Set responses
 func (r *Path) SetResponses(responses ...*Response) *Path {
 	r.Responses = responses
 	return r
 }
 
+// Route response
 type Response struct {
-	Code        int
+	Code int
+
 	Description string
 	Examples    map[string]string
 	Headers     []*Header
@@ -86,12 +92,13 @@ func (r *Response) SetHeaders(headers ...*Header) *Response {
 	return r
 }
 
-// !
+// !! Set schema, support objects, primitives and arrays
 func (r *Response) SetSchema(schema *Schema) *Response {
 	r.Schema = schema
 	return r
 }
 
+// Response header
 type Header struct {
 	Name        string
 	Type        string

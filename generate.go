@@ -8,14 +8,16 @@ import (
 	"strings"
 )
 
+// region inner-type
+
 type innerDocument struct {
-	Host       string                           `yaml:"host"`
-	BasePath   string                           `yaml:"basePath"`
-	Info       *innerInfo                       `yaml:"info"`
-	Tags       []*innerTag                      `yaml:"tags,omitempty"`
-	Securities map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty"`
-	Paths      map[string]map[string]*innerPath `yaml:"paths,omitempty"`
-	Models     map[string]*innerModel           `yaml:"definitions,omitempty"`
+	Host        string                           `yaml:"host"`
+	BasePath    string                           `yaml:"basePath"`
+	Info        *innerInfo                       `yaml:"info"`
+	Tags        []*innerTag                      `yaml:"tags,omitempty"`
+	Securities  map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty"`
+	Paths       map[string]map[string]*innerPath `yaml:"paths,omitempty"`
+	Definitions map[string]*innerDefinition      `yaml:"definitions,omitempty"`
 }
 
 type innerTag struct {
@@ -49,7 +51,7 @@ type innerSecurity struct {
 	In   string `yaml:"in"`
 }
 
-// !
+// !!!
 type innerPath struct {
 	Summary     string                    `yaml:"summary"`
 	OperationId string                    `yaml:"operationId"`
@@ -63,6 +65,7 @@ type innerPath struct {
 	Responses   map[string]*innerResponse `yaml:"responses,omitempty"`
 }
 
+// !!!
 type innerResponse struct {
 	Description string                  `yaml:"description,omitempty"`
 	Headers     map[string]*innerHeader `yaml:"headers,omitempty"`
@@ -77,7 +80,7 @@ type innerHeader struct {
 	Default     interface{} `yaml:"default,omitempty"`
 }
 
-// !
+// !!!
 type innerParam struct {
 	Name            string        `yaml:"name"`
 	In              string        `yaml:"in"`
@@ -92,21 +95,19 @@ type innerParam struct {
 	Items           *innerItems   `yaml:"items,omitempty"`
 }
 
-// !
-type innerModel struct {
+// !!!
+type innerDefinition struct {
 	Type        string                  `json:"type"`
 	Required    []string                `json:"required"`
 	Description string                  `json:"description,omitempty"`
 	Properties  map[string]*innerSchema `json:"properties,omitempty"`
 }
 
-// !!
+// !!! (include Schema and Property)
 type innerSchema struct {
-	Title       string `yaml:"-"`
-	Type        string `yaml:"type,omitempty"`
-	Required    bool   `yaml:"required,omitempty"`
-	Description string `yaml:"description,omitempty"`
-
+	Type            string        `yaml:"type,omitempty"`
+	Required        bool          `yaml:"required,omitempty"`
+	Description     string        `yaml:"description,omitempty"`
 	Format          string        `yaml:"format,omitempty"`
 	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
 	Default         interface{}   `yaml:"default,omitempty"`
@@ -117,7 +118,7 @@ type innerSchema struct {
 	Items     *innerItems `yaml:"items,omitempty"`
 }
 
-// !!
+// !!!
 type innerItems struct {
 	Type    string        `yaml:"type,omitempty"`
 	Format  string        `yaml:"format,omitempty"`
@@ -129,6 +130,10 @@ type innerItems struct {
 	Items     *innerItems `yaml:"items,omitempty"`
 }
 
+// endregion
+
+// region map-func
+
 func mapSchema(schema *Schema) *innerSchema {
 	if schema == nil {
 		return nil
@@ -137,14 +142,9 @@ func mapSchema(schema *Schema) *innerSchema {
 		return &innerSchema{
 			OriginRef: schema.Ref,
 			Ref:       "#/definitions/" + schema.Ref,
-			// Title:       schema.Title,
-			// Type:        schema.Type,
-			// Required:    schema.Required,
-			// Description: schema.Description,
 		}
 	}
 	return &innerSchema{
-		Title:           schema.Title,
 		Type:            schema.Type,
 		Required:        schema.Required,
 		Description:     schema.Description,
@@ -175,7 +175,7 @@ func mapItems(items *Items) *innerItems {
 	}
 }
 
-func mapParam(params []*Param) []*innerParam {
+func mapParams(params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
 		out[i] = &innerParam{
@@ -195,7 +195,7 @@ func mapParam(params []*Param) []*innerParam {
 	return out
 }
 
-func mapResponse(responses []*Response) map[string]*innerResponse {
+func mapResponses(responses []*Response) map[string]*innerResponse {
 	out := make(map[string]*innerResponse)
 	for _, r := range responses {
 		headers := map[string]*innerHeader{}
@@ -216,6 +216,26 @@ func mapResponse(responses []*Response) map[string]*innerResponse {
 	return out
 }
 
+func mapDefinition(definition *Definition) *innerDefinition {
+	required := make([]string, 0)
+	schemas := make(map[string]*innerSchema)
+	for _, p := range definition.Properties {
+		if p.Required {
+			required = append(required, p.Title)
+		}
+		schemas[p.Title] = mapSchema(p.Schema)
+	}
+
+	return &innerDefinition{
+		Type:        "object",
+		Description: definition.Description,
+		Required:    required,
+		Properties:  schemas,
+	}
+}
+
+// endregion
+
 func buildDocument(d *Document) *innerDocument {
 	out := &innerDocument{
 		Host:     d.Host,
@@ -228,10 +248,10 @@ func buildDocument(d *Document) *innerDocument {
 			License:        &innerLicense{Name: d.Info.License.Name, Url: d.Info.License.Url},
 			Contact:        &innerContact{Name: d.Info.Contact.Name, Url: d.Info.Contact.Url, Email: d.Info.Contact.Email},
 		},
-		Tags:       []*innerTag{},
-		Securities: map[string]*innerSecurity{},
-		Paths:      map[string]map[string]*innerPath{},
-		Models:     map[string]*innerModel{},
+		Tags:        []*innerTag{},
+		Securities:  map[string]*innerSecurity{},
+		Paths:       map[string]map[string]*innerPath{},
+		Definitions: map[string]*innerDefinition{},
 	}
 	for _, t := range d.Tags {
 		out.Tags = append(out.Tags, &innerTag{
@@ -267,30 +287,14 @@ func buildDocument(d *Document) *innerDocument {
 			Produces:    p.Produces,
 			Securities:  p.Securities,
 			Deprecated:  p.Deprecated,
-			Parameters:  mapParam(p.Params),
-			Responses:   mapResponse(p.Responses),
+			Parameters:  mapParams(p.Params),
+			Responses:   mapResponses(p.Responses),
 		}
 	}
 
 	// models
-	for _, m := range d.Models {
-		required := make([]string, 0)
-		schemas := make(map[string]*innerSchema)
-		for _, p := range m.Properties {
-			name := p.Title
-			// p.Title = ""
-			if p.Required {
-				required = append(required, name)
-			}
-			schemas[name] = mapSchema(p)
-		}
-
-		out.Models[m.Name] = &innerModel{
-			Type:        "object",
-			Description: m.Description,
-			Required:    required,
-			Properties:  schemas,
-		}
+	for _, d := range d.Definitions {
+		out.Definitions[d.Name] = mapDefinition(d)
 	}
 
 	return out

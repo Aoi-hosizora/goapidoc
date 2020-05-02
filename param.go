@@ -44,14 +44,14 @@ func (p *Param) SetEnum(enum ...interface{}) *Param {
 	return p
 }
 
-// ! only used when body in
+// Set object (when `in` == body)
 func (p *Param) SetSchema(schema *Schema) *Param {
 	p.Type = ""
 	p.Schema = schema
 	return p
 }
 
-// ! only used when array type
+// Set array (when `type` == array)
 func (p *Param) SetItems(items *Items) *Param {
 	p.Items = items
 	return p

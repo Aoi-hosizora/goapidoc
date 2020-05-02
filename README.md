@@ -1,6 +1,7 @@
 # go-yaml-doc
 
 + A tool written in golang for generating yaml-format api document
++ If you want to adapt to swagger 2, you need to add `map[string]interface{}{"swagger": "2.0"}`
 
 ### Usage
 
@@ -29,7 +30,7 @@ AddPaths(
         SetConsumes(JSON).
         SetProduces(JSON).
         SetResponses( // response with example value
-            NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: "{\n\t\"ping\": \"pong\"\n}"}),
+            NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: `{"ping":"pong"}`}),
         ),
     NewPath(GET, "/api/v1/user", "get user").
         SetDescription("get user from database").
@@ -53,7 +54,7 @@ AddPaths(
         SetSecurities("jwt").
         SetParams(
             NewParam("id", PATH, INTEGER, true, "user id"), // normal parameter
-            NewParam("body", BODY, OBJECT, true, "request body").SetSchema(NewSchemaRef("User")), // object type parameter
+            NewParam("body", BODY, OBJECT, true, "body").SetSchema(NewSchemaRef("User")), // object parameter
         ).
         SetResponses(
             NewResponse(200).SetDescription("success").SetSchema(NewSchemaRef("Result")).
@@ -65,18 +66,18 @@ AddPaths(
     NewPath(HEAD, "/api/v1/test", "test path").
         SetParams(
             NewParam("arr", QUERY, ARRAY, true, "test").
-                SetItems(NewItems(INTEGER).SetFormat(INT64).SetItems(NewItems(INTEGER))), // array-array type parameter
-            NewParam("ref", QUERY, ARRAY, true, "test").SetItems(NewItemsRef("User")), // array-object type parameter
+                SetItems(NewItems(INTEGER).SetFormat(INT64).SetItems(NewItems(INTEGER))), // array-array parameter
+            NewParam("ref", QUERY, ARRAY, true, "test").SetItems(NewItemsRef("User")), // array-object parameter
             NewParam("enum", QUERY, STRING, true, "test").SetEnum("male", "female"), // enum type parameter
         ),
 )
 
-AddModels(
-    NewModel("Result", "global response").SetProperties( // a normal model
+AddDefinitions(
+    NewDefinition("Result", "global response").SetProperties( // a normal definition
         NewProperty("code", INTEGER, true, "status code"), // a normal property
         NewProperty("message", STRING, true, "status message"),
     ),
-    NewModel("User", "user response").SetProperties(
+    NewDefinition("User", "user response").SetProperties(
         NewProperty("id", INTEGER, true, "user id"),
         NewProperty("name", STRING, true, "user name"),
         NewProperty("profile", STRING, false, "user profile").SetAllowEmptyValue(true),
@@ -85,16 +86,16 @@ AddModels(
         NewProperty("birthday", STRING, true, "user birthday").SetFormat(DATE), // date type property
         NewProperty("scores", ARRAY, true, "user scores").SetItems(NewItems(NUMBER)), // array property
     ),
-    NewModel("Page<User>", "user response").SetProperties(
+    NewDefinition("Page<User>", "user response").SetProperties(
         NewProperty("page", INTEGER, true, "current page"),
         NewProperty("total", INTEGER, true, "data count"),
         NewProperty("limit", INTEGER, true, "page size"),
-        NewPropertyArray("data", NewItemsRef("User"), true, "page data"), // array-object type property
+        NewArrayProperty("data", NewItemsRef("User"), true, "page data"), // array-object property
     ),
-    NewModel("Result<Page<User>>", "user response").SetProperties(
+    NewDefinition("Result<Page<User>>", "user response").SetProperties(
         NewProperty("code", INTEGER, true, "status code"),
         NewProperty("message", STRING, true, "status message"),
-        NewPropertyObject("data", "Page<User>", true, "result data"), // object type property
+        NewObjectProperty("data", "Page<User>", true, "result data"), // object type property
     ),
 )
 

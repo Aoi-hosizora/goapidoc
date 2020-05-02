@@ -69,12 +69,12 @@ func TestGenerateYaml(t *testing.T) {
 			),
 	)
 
-	AddModels(
-		NewModel("Result", "global response").SetProperties(
+	AddDefinitions(
+		NewDefinition("Result", "global response").SetProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
 		),
-		NewModel("User", "user response").SetProperties(
+		NewDefinition("User", "user response").SetProperties(
 			NewProperty("id", INTEGER, true, "user id"),
 			NewProperty("name", STRING, true, "user name"),
 			NewProperty("profile", STRING, false, "user profile").SetAllowEmptyValue(true),
@@ -83,16 +83,16 @@ func TestGenerateYaml(t *testing.T) {
 			NewProperty("birthday", STRING, true, "user birthday").SetFormat(DATE),
 			NewProperty("scores", ARRAY, true, "user scores").SetItems(NewItems(NUMBER)),
 		),
-		NewModel("Page<User>", "user response").SetProperties(
+		NewDefinition("Page<User>", "user response").SetProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
-			NewPropertyArray("data", NewItemsRef("User"), true, "page data"),
+			NewArrayProperty("data", NewItemsRef("User"), true, "page data"),
 		),
-		NewModel("Result<Page<User>>", "user response").SetProperties(
+		NewDefinition("Result<Page<User>>", "user response").SetProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
-			NewPropertyObject("data", "Page<User>", true, "result data"),
+			NewObjectProperty("data", "Page<User>", true, "result data"),
 		),
 	)
 
