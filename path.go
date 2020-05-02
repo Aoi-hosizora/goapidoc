@@ -10,9 +10,9 @@ type Path struct {
 	Consumes    []string
 	Produces    []string
 	Securities  []string
+	Deprecated  bool
 	Params      []*Param
 	Responses   []*Response
-	Deprecated  bool
 }
 
 func NewPath(method string, route string, summary string) *Path {
@@ -44,6 +44,11 @@ func (r *Path) SetSecurities(securities ...string) *Path {
 	return r
 }
 
+func (r *Path) SetDeprecated(deprecated bool) *Path {
+	r.Deprecated = deprecated
+	return r
+}
+
 func (r *Path) SetParams(params ...*Param) *Path {
 	r.Params = params
 	return r
@@ -54,17 +59,12 @@ func (r *Path) SetResponses(responses ...*Response) *Path {
 	return r
 }
 
-func (r *Path) SetDeprecated(deprecated bool) *Path {
-	r.Deprecated = deprecated
-	return r
-}
-
 type Response struct {
 	Code        int
 	Description string
-	Schema      string
-	Headers     []*Header
 	Examples    map[string]string
+	Headers     []*Header
+	Schema      *Schema
 }
 
 func NewResponse(code int) *Response {
@@ -76,8 +76,8 @@ func (r *Response) SetDescription(description string) *Response {
 	return r
 }
 
-func (r *Response) SetSchema(ref string) *Response {
-	r.Schema = ref
+func (r *Response) SetExamples(examples map[string]string) *Response {
+	r.Examples = examples
 	return r
 }
 
@@ -86,26 +86,21 @@ func (r *Response) SetHeaders(headers ...*Header) *Response {
 	return r
 }
 
-func (r *Response) SetExamples(examples map[string]string) *Response {
-	r.Examples = examples
+// !
+func (r *Response) SetSchema(schema *Schema) *Response {
+	r.Schema = schema
 	return r
 }
 
 type Header struct {
 	Name        string
-	Description string
 	Type        string
-	Format      string
+	Description string
 	Default     interface{}
 }
 
-func NewHeader(name string, description string, headerType string) *Header {
+func NewHeader(name string, headerType string, description string) *Header {
 	return &Header{Name: name, Description: description, Type: headerType}
-}
-
-func (h *Header) SetFormat(format string) *Header {
-	h.Format = format
-	return h
 }
 
 func (h *Header) SetDefault(defaultValue string) *Header {

@@ -49,93 +49,25 @@ type innerSecurity struct {
 	In   string `yaml:"in"`
 }
 
+// !
 type innerPath struct {
 	Summary     string                    `yaml:"summary"`
 	OperationId string                    `yaml:"operationId"`
-	Deprecated  bool                      `yaml:"deprecated"`
 	Description string                    `yaml:"description,omitempty"`
 	Tags        []string                  `yaml:"tags,omitempty"`
 	Consumes    []string                  `yaml:"consumes,omitempty"`
 	Produces    []string                  `yaml:"produces,omitempty"`
 	Securities  []string                  `yaml:"security,omitempty"`
+	Deprecated  bool                      `yaml:"deprecated,omitempty"`
 	Parameters  []*innerParam             `yaml:"parameters,omitempty"`
 	Responses   map[string]*innerResponse `yaml:"responses,omitempty"`
 }
 
-type innerModel struct {
-	Title       string                    `json:"title"`
-	Type        string                    `json:"type"`
-	Required    []string                  `json:"required"`
-	Description string                    `json:"description,omitempty"`
-	Properties  map[string]*innerProperty `json:"properties,omitempty"`
-}
-
-type innerParam struct {
-	Name            string        `yaml:"name"`
-	In              string        `yaml:"in"`
-	Required        bool          `yaml:"required"`
-	Description     string        `yaml:"description,omitempty"`
-	Type            string        `yaml:"type,omitempty"`
-	Format          string        `yaml:"format,omitempty"`
-	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
-	Default         interface{}   `yaml:"default,omitempty"`
-	Enum            []interface{} `yaml:"enum,omitempty"`
-	Schema          *innerSchema  `yaml:"schema,omitempty"`
-	Items           *innerItems   `yaml:"items,omitempty"`
-}
-
 type innerResponse struct {
 	Description string                  `yaml:"description,omitempty"`
-	Schema      *innerSchema            `yaml:"schema,omitempty"`
 	Headers     map[string]*innerHeader `yaml:"header,omitempty"`
 	Examples    map[string]string       `yaml:"examples,omitempty"`
-}
-
-type innerProperty struct {
-	Type            string        `yaml:"type,omitempty"`
-	Description     string        `yaml:"description,omitempty"`
-	Format          string        `yaml:"format,omitempty"`
-	Enum            []interface{} `yaml:"enum,omitempty"`
-	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
-	Items           *innerItems   `yaml:"items,omitempty"`
-	Ref             string        `yaml:"$ref,omitempty"`
-}
-
-type innerItems struct {
-	Type    string      `yaml:"type,omitempty"`
-	Format  string      `yaml:"format,omitempty"`
-	Default interface{} `yaml:"default,omitempty"`
-	Ref     string      `yaml:"$ref,omitempty"`
-}
-
-func getInnerItems(items *Items) *innerItems {
-	if items == nil {
-		return nil
-	}
-	return &innerItems{
-		Type:    items.Type,
-		Format:  items.Format,
-		Default: items.Default,
-		Ref:     getRefString(items.Schema),
-	}
-}
-
-type innerSchema struct {
-	Ref string `yaml:"$ref"`
-}
-
-func getRefString(ref string) string {
-	if ref == "" {
-		return ""
-	}
-	return "#/definitions/" + ref
-}
-
-func getInnerSchema(ref string) *innerSchema {
-	if ref == "" {
-		return nil
-	}
-	return &innerSchema{Ref: getRefString(ref)}
+	Schema      *innerSchema            `yaml:"schema,omitempty"`
 }
 
 type innerHeader struct {
@@ -145,7 +77,101 @@ type innerHeader struct {
 	Default     interface{} `yaml:"default,omitempty"`
 }
 
-func mapToInnerParam(params []*Param) []*innerParam {
+// !
+type innerParam struct {
+	Name            string        `yaml:"name"`
+	In              string        `yaml:"in"`
+	Required        bool          `yaml:"required"`
+	Type            string        `yaml:"type,omitempty"`
+	Description     string        `yaml:"description,omitempty"`
+	Format          string        `yaml:"format,omitempty"`
+	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
+	Default         interface{}   `yaml:"default,omitempty"`
+	Enum            []interface{} `yaml:"enum,omitempty"`
+	Schema          *innerSchema  `yaml:"schema,omitempty"`
+	Items           *innerItems   `yaml:"items,omitempty"`
+}
+
+// !
+type innerModel struct {
+	Type        string                  `json:"type"`
+	Required    []string                `json:"required"`
+	Description string                  `json:"description,omitempty"`
+	Properties  map[string]*innerSchema `json:"properties,omitempty"`
+}
+
+// !!
+type innerSchema struct {
+	Ref string `yaml:"$ref,omitempty"`
+
+	Title       string `yaml:"-"`
+	Type        string `yaml:"type,omitempty"`
+	Required    bool   `yaml:"required,omitempty"`
+	Description string `yaml:"description,omitempty"`
+
+	Format          string        `yaml:"format,omitempty"`
+	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
+	Default         interface{}   `yaml:"default,omitempty"`
+	Enum            []interface{} `yaml:"enum,omitempty"`
+	Items           *innerItems   `yaml:"items,omitempty"`
+}
+
+// !!
+type innerItems struct {
+	Ref string `yaml:"$ref,omitempty"`
+
+	Type    string        `yaml:"type,omitempty"`
+	Format  string        `yaml:"format,omitempty"`
+	Default interface{}   `yaml:"default,omitempty"`
+	Enum    []interface{} `yaml:"enum,omitempty"`
+	Items   *innerItems   `yaml:"items,omitempty"`
+}
+
+func mapSchema(schema *Schema) *innerSchema {
+	if schema == nil {
+		return nil
+	}
+	if schema.Ref != "" {
+		return &innerSchema{
+			Ref:         "#/definitions/" + schema.Ref,
+			Title:       schema.Title,
+			Type:        schema.Type,
+			Required:    schema.Required,
+			Description: schema.Description,
+		}
+	}
+	return &innerSchema{
+		Title:           schema.Title,
+		Type:            schema.Type,
+		Required:        schema.Required,
+		Description:     schema.Description,
+		Format:          schema.Format,
+		AllowEmptyValue: schema.AllowEmptyValue,
+		Default:         schema.Default,
+		Enum:            schema.Enum,
+		Items:           mapItems(schema.Items),
+	}
+}
+
+func mapItems(items *Items) *innerItems {
+	if items == nil {
+		return nil
+	}
+	if items.Ref != "" {
+		return &innerItems{
+			Ref: "#/definitions/" + items.Ref,
+		}
+	}
+	return &innerItems{
+		Type:    items.Type,
+		Format:  items.Format,
+		Default: items.Default,
+		Enum:    items.Enum,
+		Items:   mapItems(items.Items),
+	}
+}
+
+func mapParam(params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
 		out[i] = &innerParam{
@@ -158,14 +184,14 @@ func mapToInnerParam(params []*Param) []*innerParam {
 			AllowEmptyValue: p.AllowEmptyValue,
 			Default:         p.Default,
 			Enum:            p.Enum,
-			Schema:          getInnerSchema(p.Schema),
-			Items:           getInnerItems(p.Items),
+			Schema:          mapSchema(p.Schema),
+			Items:           mapItems(p.Items),
 		}
 	}
 	return out
 }
 
-func mapToInnerResponse(responses []*Response) map[string]*innerResponse {
+func mapResponse(responses []*Response) map[string]*innerResponse {
 	out := make(map[string]*innerResponse)
 	for _, r := range responses {
 		headers := map[string]*innerHeader{}
@@ -173,14 +199,13 @@ func mapToInnerResponse(responses []*Response) map[string]*innerResponse {
 			headers[h.Name] = &innerHeader{
 				Type:        h.Type,
 				Description: h.Description,
-				Format:      h.Format,
 				Default:     h.Default,
 			}
 		}
 
 		out[strconv.Itoa(r.Code)] = &innerResponse{
 			Description: r.Description,
-			Schema:      getInnerSchema(r.Schema),
+			Schema:      mapSchema(r.Schema),
 			Examples:    r.Examples,
 			Headers:     headers,
 		}
@@ -188,23 +213,7 @@ func mapToInnerResponse(responses []*Response) map[string]*innerResponse {
 	return out
 }
 
-func mapToInnerProperty(properties []*Property) map[string]*innerProperty {
-	out := make(map[string]*innerProperty)
-	for _, p := range properties {
-		out[p.Name] = &innerProperty{
-			Description:     p.Description,
-			Type:            p.Type,
-			Format:          p.Format,
-			Enum:            p.Enum,
-			AllowEmptyValue: p.AllowEmptyValue,
-			Ref:             getRefString(p.Schema),
-			Items:           getInnerItems(p.Items),
-		}
-	}
-	return out
-}
-
-func mapToInnerDocument(d *Document) *innerDocument {
+func buildDocument(d *Document) *innerDocument {
 	out := &innerDocument{
 		Host:     d.Host,
 		BasePath: d.BasePath,
@@ -249,31 +258,35 @@ func mapToInnerDocument(d *Document) *innerDocument {
 		out.Paths[p.Route][p.Method] = &innerPath{
 			Summary:     p.Summary,
 			Description: p.Description,
-			Deprecated:  p.Deprecated,
 			OperationId: id,
 			Tags:        p.Tags,
 			Consumes:    p.Consumes,
 			Produces:    p.Produces,
 			Securities:  p.Securities,
-			Parameters:  mapToInnerParam(p.Params),
-			Responses:   mapToInnerResponse(p.Responses),
+			Deprecated:  p.Deprecated,
+			Parameters:  mapParam(p.Params),
+			Responses:   mapResponse(p.Responses),
 		}
 	}
 
 	// models
 	for _, m := range d.Models {
 		required := make([]string, 0)
+		schemas := make(map[string]*innerSchema)
 		for _, p := range m.Properties {
+			name := p.Title
+			// p.Title = ""
 			if p.Required {
-				required = append(required, p.Name)
+				required = append(required, name)
 			}
+			schemas[name] = mapSchema(p)
 		}
-		out.Models[m.Title] = &innerModel{
-			Title:       m.Title,
+
+		out.Models[m.Name] = &innerModel{
+			Type:        "object",
 			Description: m.Description,
-			Type:        m.Type,
 			Required:    required,
-			Properties:  mapToInnerProperty(m.Properties),
+			Properties:  schemas,
 		}
 	}
 
@@ -282,8 +295,10 @@ func mapToInnerDocument(d *Document) *innerDocument {
 
 func appendKvs(d *innerDocument, kvs map[string]interface{}) *yaml.MapSlice {
 	out := &yaml.MapSlice{}
-	for k, v := range kvs {
-		*out = append(*out, yaml.MapItem{Key: k, Value: v})
+	if kvs != nil {
+		for k, v := range kvs {
+			*out = append(*out, yaml.MapItem{Key: k, Value: v})
+		}
 	}
 
 	innerValue := reflect.ValueOf(d).Elem()
@@ -313,7 +328,7 @@ func appendKvs(d *innerDocument, kvs map[string]interface{}) *yaml.MapSlice {
 }
 
 func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) error {
-	out := appendKvs(mapToInnerDocument(d), kvs)
+	out := appendKvs(buildDocument(d), kvs)
 
 	doc, err := yaml.Marshal(out)
 	if err != nil {
