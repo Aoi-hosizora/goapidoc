@@ -3,6 +3,7 @@ package yamldoc
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"reflect"
 	"strings"
 )
 
@@ -162,8 +163,41 @@ func mapToInnerDocument(d *Document) *innerDocument {
 	return out
 }
 
-func (d *Document) GenerateYaml(path string, otherKvs ...KV) error {
-	out := mapToInnerDocument(d)
+func appendKvs(d *innerDocument, kvs map[string]interface{}) *yaml.MapSlice {
+	out := &yaml.MapSlice{}
+	for k, v := range kvs {
+		*out = append(*out, yaml.MapItem{Key: k, Value: v})
+	}
+
+	innerValue := reflect.ValueOf(d).Elem()
+	innerType := innerValue.Type()
+	for i := 0; i < innerType.NumField(); i++ {
+		field := innerType.Field(i)
+
+		tag := field.Tag.Get("yaml")
+		omitempty := false
+		if tag == "" {
+			tag = field.Name
+		} else if strings.Index(tag, ",omitempty") != -1 {
+			omitempty = true
+		}
+
+		name := strings.TrimSpace(strings.Split(tag, ",")[0])
+		value := innerValue.Field(i).Interface()
+
+		if name != "-" && name != "" {
+			if !omitempty || (value != nil && value != "") {
+				*out = append(*out, yaml.MapItem{Key: name, Value: value})
+			}
+		}
+	}
+
+	return out
+}
+
+func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) error {
+	out := appendKvs(mapToInnerDocument(d), kvs)
+
 	doc, err := yaml.Marshal(out)
 	if err != nil {
 		return err
@@ -175,6 +209,6 @@ func (d *Document) GenerateYaml(path string, otherKvs ...KV) error {
 	return nil
 }
 
-func GenerateYaml(path string, otherKvs ...KV) error {
-	return _document.GenerateYaml(path, otherKvs...)
+func GenerateYaml(path string, kvs map[string]interface{}) error {
+	return _document.GenerateYaml(path, kvs)
 }

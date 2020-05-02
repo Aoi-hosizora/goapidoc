@@ -43,12 +43,12 @@ func (r *Path) SetSecurities(securities ...string) *Path {
 	return r
 }
 
-func (r *Path) SetParam(params ...*Param) *Path {
+func (r *Path) SetParams(params ...*Param) *Path {
 	r.Params = params
 	return r
 }
 
-func (r *Path) SetResponse(responses ...*Response) *Path {
+func (r *Path) SetResponses(responses ...*Response) *Path {
 	r.Responses = responses
 	return r
 }

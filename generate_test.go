@@ -17,25 +17,26 @@ func TestGenerateYaml(t *testing.T) {
 	SetTags(NewTag("ping", "ping-controller"), NewTag("user", "user-controller"))
 	SetSecurities(NewSecurity("jwt", "header", "Authorization"))
 
-	AddPath(NewPath("GET", "/api/v1/ping", "ping").
-		SetDescription("ping the server").
-		SetTags("ping").
-		SetConsumes("application/json").
-		SetProduces("application/json"))
+	AddPaths(
+		NewPath("GET", "/api/v1/ping", "ping").
+			SetDescription("ping the server").
+			SetTags("ping").
+			SetConsumes("application/json").
+			SetProduces("application/json"),
+		NewPath("GET", "/api/v1/user/{id}", "get user").
+			SetDescription("get user from database").
+			SetTags("user").
+			SetConsumes("application/json").
+			SetProduces("application/json").
+			SetSecurities("jwt").
+			SetParams(
+				NewParam("id", "path", "integer", true, "user id"),
+				NewParam("page", "query", "integer", false, "current page").SetDefault(1),
+				NewParam("total", "query", "integer", false, "page size").SetDefault(10),
+				NewParam("order", "query", "string", false, "order string").SetDefault(""),
+			),
+	)
 
-	AddPath(NewPath("GET", "/api/v1/user/{id}", "get user").
-		SetDescription("get user from database").
-		SetTags("user").
-		SetConsumes("application/json").
-		SetProduces("application/json").
-		SetSecurities("jwt").
-		SetParam(
-			NewParam("id", "path", "integer", true, "user id"),
-			NewParam("page", "query", "integer", false, "current page").SetDefault(1),
-			NewParam("total", "query", "integer", false, "page size").SetDefault(10),
-			NewParam("order", "query", "string", false, "order string").SetDefault(""),
-		))
-
-	doc, _ := yaml.Marshal(mapToInnerDocument(_document))
+	doc, _ := yaml.Marshal(appendKvs(mapToInnerDocument(_document), map[string]interface{}{"swagger": "2.0"}))
 	fmt.Println(string(doc))
 }

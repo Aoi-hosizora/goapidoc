@@ -21,13 +21,13 @@ func (d *Document) SetSecurities(security ...*Security) *Document {
 	return d
 }
 
-func (d *Document) AddPath(path *Path) *Document {
-	d.Paths = append(d.Paths, path)
+func (d *Document) AddPaths(path ...*Path) *Document {
+	d.Paths = append(d.Paths, path...)
 	return d
 }
 
-func (d *Document) AddModel(model *Model) *Document {
-	d.Models = append(d.Models, model)
+func (d *Document) AddModels(models ...*Model) *Document {
+	d.Models = append(d.Models, models...)
 	return d
 }
 
@@ -48,20 +48,10 @@ func SetSecurities(securities ...*Security) {
 	_document.SetSecurities(securities...)
 }
 
-func AddPath(path *Path) {
-	_document.AddPath(path)
+func AddPaths(paths ...*Path) {
+	_document.AddPaths(paths...)
 }
 
-func AddModel(model *Model) {
-	_document.AddModel(model)
-}
-
-// key-value pair
-type KV struct {
-	Key   string
-	Value interface{}
-}
-
-func NewKV(key string, value interface{}) *KV {
-	return &KV{Key: key, Value: value}
+func AddModels(models ...*Model) {
+	_document.AddModels(models...)
 }
