@@ -1,4 +1,4 @@
-package yamldoc
+package restdoc
 
 type Param struct {
 	Name        string

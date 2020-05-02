@@ -1,8 +1,7 @@
-package yamldoc
+package restdoc
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"log"
 	"testing"
 )
@@ -96,9 +95,15 @@ func TestGenerateYaml(t *testing.T) {
 		),
 	)
 
-	doc, _ := yaml.Marshal(appendKvs(buildDocument(_document), map[string]interface{}{"swagger": "2.0"}))
+	// doc, _ := yaml.Marshal(appendKvs(buildDocument(_document), map[string]interface{}{"swagger": "2.0"}))
+	// fmt.Println(string(doc))
+
+	doc, _ := jsonMarshal(appendKvs(buildDocument(_document), map[string]interface{}{"swagger": "2.0"}))
 	fmt.Println(string(doc))
 
 	err := GenerateYaml("./docs/api.yaml", map[string]interface{}{"swagger": "2.0"})
+	log.Println(err)
+
+	err = GenerateJson("./docs/api.json", map[string]interface{}{"swagger": "2.0"})
 	log.Println(err)
 }

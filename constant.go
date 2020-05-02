@@ -1,4 +1,4 @@
-package yamldoc
+package restdoc
 
 // noinspection GoUnusedConst
 const (

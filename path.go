@@ -1,4 +1,4 @@
-package yamldoc
+package restdoc
 
 // Route path
 type Path struct {

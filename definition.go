@@ -1,4 +1,4 @@
-package yamldoc
+package restdoc
 
 // Model definitions
 type Definition struct {

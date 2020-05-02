@@ -1,4 +1,4 @@
-package yamldoc
+package restdoc
 
 // Global document
 var _document = &Document{}

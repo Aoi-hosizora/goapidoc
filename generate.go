@@ -1,6 +1,8 @@
-package yamldoc
+package restdoc
 
 import (
+	"bytes"
+	"encoding/json"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"reflect"
@@ -11,123 +13,123 @@ import (
 // region inner-type
 
 type innerDocument struct {
-	Host        string                           `yaml:"host"`
-	BasePath    string                           `yaml:"basePath"`
-	Info        *innerInfo                       `yaml:"info"`
-	Tags        []*innerTag                      `yaml:"tags,omitempty"`
-	Securities  map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty"`
-	Paths       map[string]map[string]*innerPath `yaml:"paths,omitempty"`
-	Definitions map[string]*innerDefinition      `yaml:"definitions,omitempty"`
+	Host        string                           `yaml:"host"                          json:"host"`
+	BasePath    string                           `yaml:"basePath"                      json:"basePath"`
+	Info        *innerInfo                       `yaml:"info"                          json:"info"`
+	Tags        []*innerTag                      `yaml:"tags,omitempty"                json:"tags,omitempty"`
+	Securities  map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
+	Paths       map[string]map[string]*innerPath `yaml:"paths,omitempty"               json:"paths,omitempty"`
+	Definitions map[string]*innerDefinition      `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
 }
 
 type innerTag struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description,omitempty"`
+	Name        string `yaml:"name"                  json:"name"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 }
 
 type innerLicense struct {
-	Name string `yaml:"name"`
-	Url  string `yaml:"url,omitempty"`
+	Name string `yaml:"name"          json:"name"`
+	Url  string `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 type innerContact struct {
-	Name  string `yaml:"name"`
-	Url   string `yaml:"url,omitempty"`
-	Email string `yaml:"email,omitempty"`
+	Name  string `yaml:"name"            json:"name"`
+	Url   string `yaml:"url,omitempty"   json:"url,omitempty"`
+	Email string `yaml:"email,omitempty" json:"email,omitempty"`
 }
 
 type innerInfo struct {
-	Title          string        `yaml:"title"`
-	Description    string        `yaml:"description"`
-	Version        string        `yaml:"version"`
-	TermsOfService string        `yaml:"termsOfService,omitempty"`
-	License        *innerLicense `yaml:"license,omitempty"`
-	Contact        *innerContact `yaml:"contact,omitempty"`
+	Title          string        `yaml:"title"                    json:"title"`
+	Description    string        `yaml:"description"              json:"description"`
+	Version        string        `yaml:"version"                  json:"version"`
+	TermsOfService string        `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
+	License        *innerLicense `yaml:"license,omitempty"        json:"license,omitempty"`
+	Contact        *innerContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
 }
 
 type innerSecurity struct {
-	Type string `yaml:"type"`
-	Name string `yaml:"name"`
-	In   string `yaml:"in"`
+	Type string `yaml:"type" json:"type"`
+	Name string `yaml:"name" json:"name"`
+	In   string `yaml:"in"   json:"in"`
 }
 
 // !!!
 type innerPath struct {
-	Summary     string                    `yaml:"summary"`
-	OperationId string                    `yaml:"operationId"`
-	Description string                    `yaml:"description,omitempty"`
-	Tags        []string                  `yaml:"tags,omitempty"`
-	Consumes    []string                  `yaml:"consumes,omitempty"`
-	Produces    []string                  `yaml:"produces,omitempty"`
-	Securities  []string                  `yaml:"security,omitempty"`
-	Deprecated  bool                      `yaml:"deprecated,omitempty"`
-	Parameters  []*innerParam             `yaml:"parameters,omitempty"`
-	Responses   map[string]*innerResponse `yaml:"responses,omitempty"`
+	Summary     string                    `yaml:"summary"               json:"summary"`
+	OperationId string                    `yaml:"operationId"           json:"operationId"`
+	Description string                    `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags        []string                  `yaml:"tags,omitempty"        json:"tags,omitempty"`
+	Consumes    []string                  `yaml:"consumes,omitempty"    json:"consumes,omitempty"`
+	Produces    []string                  `yaml:"produces,omitempty"    json:"produces,omitempty"`
+	Securities  []string                  `yaml:"security,omitempty"    json:"security,omitempty"`
+	Deprecated  bool                      `yaml:"deprecated,omitempty"  json:"deprecated,omitempty"`
+	Parameters  []*innerParam             `yaml:"parameters,omitempty"  json:"parameters,omitempty"`
+	Responses   map[string]*innerResponse `yaml:"responses,omitempty"   json:"responses,omitempty"`
 }
 
 // !!!
 type innerResponse struct {
-	Description string                  `yaml:"description,omitempty"`
-	Headers     map[string]*innerHeader `yaml:"headers,omitempty"`
-	Examples    map[string]string       `yaml:"examples,omitempty"`
-	Schema      *innerSchema            `yaml:"schema,omitempty"`
+	Description string                  `yaml:"description,omitempty" json:"description,omitempty"`
+	Headers     map[string]*innerHeader `yaml:"headers,omitempty"     json:"headers,omitempty"`
+	Examples    map[string]string       `yaml:"examples,omitempty"    json:"examples,omitempty"`
+	Schema      *innerSchema            `yaml:"schema,omitempty"      json:"schema,omitempty"`
 }
 
 type innerHeader struct {
-	Type        string      `yaml:"type,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	Format      string      `yaml:"format,omitempty"`
-	Default     interface{} `yaml:"default,omitempty"`
+	Type        string      `yaml:"type,omitempty"        json:"type,omitempty"`
+	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
+	Format      string      `yaml:"format,omitempty"      json:"format,omitempty"`
+	Default     interface{} `yaml:"default,omitempty"     json:"default,omitempty"`
 }
 
 // !!!
 type innerParam struct {
-	Name            string        `yaml:"name"`
-	In              string        `yaml:"in"`
-	Required        bool          `yaml:"required"`
-	Type            string        `yaml:"type,omitempty"`
-	Description     string        `yaml:"description,omitempty"`
-	Format          string        `yaml:"format,omitempty"`
-	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
-	Default         interface{}   `yaml:"default,omitempty"`
-	Enum            []interface{} `yaml:"enum,omitempty"`
-	Schema          *innerSchema  `yaml:"schema,omitempty"`
-	Items           *innerItems   `yaml:"items,omitempty"`
+	Name            string        `yaml:"name"                      json:"name"`
+	In              string        `yaml:"in"                        json:"in"`
+	Required        bool          `yaml:"required"                  json:"required"`
+	Type            string        `yaml:"type,omitempty"            json:"type,omitempty"`
+	Description     string        `yaml:"description,omitempty"     json:"description,omitempty"`
+	Format          string        `yaml:"format,omitempty"          json:"format,omitempty"`
+	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
+	Default         interface{}   `yaml:"default,omitempty"         json:"default,omitempty"`
+	Enum            []interface{} `yaml:"enum,omitempty"            json:"enum,omitempty"`
+	Schema          *innerSchema  `yaml:"schema,omitempty"          json:"schema,omitempty"`
+	Items           *innerItems   `yaml:"items,omitempty"           json:"items,omitempty"`
 }
 
 // !!!
 type innerDefinition struct {
-	Type        string                  `json:"type"`
-	Required    []string                `json:"required"`
-	Description string                  `json:"description,omitempty"`
-	Properties  map[string]*innerSchema `json:"properties,omitempty"`
+	Type        string                  `json:"type"                  json:"type"`
+	Required    []string                `json:"required"              json:"required"`
+	Description string                  `json:"description,omitempty" json:"description,omitempty"`
+	Properties  map[string]*innerSchema `json:"properties,omitempty"  json:"properties,omitempty"`
 }
 
 // !!! (include Schema and Property)
 type innerSchema struct {
-	Type            string        `yaml:"type,omitempty"`
-	Required        bool          `yaml:"required,omitempty"`
-	Description     string        `yaml:"description,omitempty"`
-	Format          string        `yaml:"format,omitempty"`
-	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
-	Default         interface{}   `yaml:"default,omitempty"`
-	Enum            []interface{} `yaml:"enum,omitempty"`
+	Type            string        `yaml:"type,omitempty"            json:"type,omitempty"`
+	Required        bool          `yaml:"required,omitempty"        json:"required,omitempty"`
+	Description     string        `yaml:"description,omitempty"     json:"description,omitempty"`
+	Format          string        `yaml:"format,omitempty"          json:"format,omitempty"`
+	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
+	Default         interface{}   `yaml:"default,omitempty"         json:"default,omitempty"`
+	Enum            []interface{} `yaml:"enum,omitempty"            json:"enum,omitempty"`
 
-	OriginRef string      `yaml:"originRef,omitempty"`
-	Ref       string      `yaml:"$ref,omitempty"`
-	Items     *innerItems `yaml:"items,omitempty"`
+	OriginRef string      `yaml:"originRef,omitempty" json:"originRef,omitempty"`
+	Ref       string      `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
+	Items     *innerItems `yaml:"items,omitempty"     json:"items,omitempty"`
 }
 
 // !!!
 type innerItems struct {
-	Type    string        `yaml:"type,omitempty"`
-	Format  string        `yaml:"format,omitempty"`
-	Default interface{}   `yaml:"default,omitempty"`
-	Enum    []interface{} `yaml:"enum,omitempty"`
+	Type    string        `yaml:"type,omitempty"    json:"type,omitempty"`
+	Format  string        `yaml:"format,omitempty"  json:"format,omitempty"`
+	Default interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
+	Enum    []interface{} `yaml:"enum,omitempty"    json:"enum,omitempty"`
 
-	OriginRef string      `yaml:"originRef,omitempty"`
-	Ref       string      `yaml:"$ref,omitempty"`
-	Items     *innerItems `yaml:"items,omitempty"`
+	OriginRef string      `yaml:"originRef,omitempty" json:"originRef,omitempty"`
+	Ref       string      `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
+	Items     *innerItems `yaml:"items,omitempty"     json:"items,omitempty"`
 }
 
 // endregion
@@ -300,11 +302,11 @@ func buildDocument(d *Document) *innerDocument {
 	return out
 }
 
-func appendKvs(d *innerDocument, kvs map[string]interface{}) *yaml.MapSlice {
-	out := &yaml.MapSlice{}
+func appendKvs(d *innerDocument, kvs map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{})
 	if kvs != nil {
 		for k, v := range kvs {
-			*out = append(*out, yaml.MapItem{Key: k, Value: v})
+			out[k] = v
 		}
 	}
 
@@ -326,7 +328,7 @@ func appendKvs(d *innerDocument, kvs map[string]interface{}) *yaml.MapSlice {
 
 		if name != "-" && name != "" {
 			if !omitempty || (value != nil && value != "") {
-				*out = append(*out, yaml.MapItem{Key: name, Value: value})
+				out[name] = value
 			}
 		}
 	}
@@ -334,14 +336,46 @@ func appendKvs(d *innerDocument, kvs map[string]interface{}) *yaml.MapSlice {
 	return out
 }
 
+func saveFile(path string, data []byte) error {
+	err := ioutil.WriteFile(path, data, 0777)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) error {
 	out := appendKvs(buildDocument(d), kvs)
-
 	doc, err := yaml.Marshal(out)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path, doc, 0777)
+
+	err = saveFile(path, doc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// stop json to escape
+func jsonMarshal(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetIndent("", "  ")
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
+}
+
+func (d *Document) GenerateJson(path string, kvs map[string]interface{}) error {
+	out := appendKvs(buildDocument(d), kvs)
+	doc, err := jsonMarshal(out)
+	if err != nil {
+		return err
+	}
+
+	err = saveFile(path, doc)
 	if err != nil {
 		return err
 	}
@@ -350,4 +384,8 @@ func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) error {
 
 func GenerateYaml(path string, kvs map[string]interface{}) error {
 	return _document.GenerateYaml(path, kvs)
+}
+
+func GenerateJson(path string, kvs map[string]interface{}) error {
+	return _document.GenerateJson(path, kvs)
 }

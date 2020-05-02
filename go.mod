@@ -1,4 +1,4 @@
-module github.com/Aoi-hosizora/go-yaml-doc
+module github.com/Aoi-hosizora/go-rest-doc
 
 go 1.13
 

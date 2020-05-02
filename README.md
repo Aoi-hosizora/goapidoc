@@ -1,7 +1,6 @@
-# go-yaml-doc
+# go-rest-doc
 
-+ A tool written in golang for generating yaml-format api document
-+ If you want to adapt to swagger 2, you need to add `map[string]interface{}{"swagger": "2.0"}`
++ A tool written in golang for generating rest api document
 
 ### Usage
 

@@ -1,4 +1,4 @@
-package yamldoc
+package restdoc
 
 // The Schema Object allows the definition of input and output data types.
 // These types can be objects, but also primitives and arrays.
