@@ -5,10 +5,10 @@ type Document struct {
 	BasePath string
 	Info     *Info
 
-	Tags     []*Tag
-	Security []*Security
-	Paths    []*Path
-	Models   []*Model
+	Tags       []*Tag
+	Securities []*Security
+	Paths      []*Path
+	Models     []*Model
 }
 
 func (d *Document) SetTags(tags ...*Tag) *Document {
@@ -17,7 +17,7 @@ func (d *Document) SetTags(tags ...*Tag) *Document {
 }
 
 func (d *Document) SetSecurities(security ...*Security) *Document {
-	d.Security = security
+	d.Securities = security
 	return d
 }
 
@@ -31,7 +31,8 @@ func (d *Document) AddModel(model *Model) *Document {
 	return d
 }
 
-var _document *Document
+// global document
+var _document = &Document{}
 
 func SetDocument(host string, basePath string, info *Info) {
 	_document.Host = host
@@ -53,4 +54,14 @@ func AddPath(path *Path) {
 
 func AddModel(model *Model) {
 	_document.AddModel(model)
+}
+
+// key-value pair
+type KV struct {
+	Key   string
+	Value interface{}
+}
+
+func NewKV(key string, value interface{}) *KV {
+	return &KV{Key: key, Value: value}
 }

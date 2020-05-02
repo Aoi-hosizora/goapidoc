@@ -28,7 +28,6 @@ func (i *Info) SetContact(contact *Contact) *Info {
 	return i
 }
 
-
 type License struct {
 	Name string
 	Url  string
@@ -51,12 +50,12 @@ func NewContact(name string, url string, email string) *Contact {
 type Security struct {
 	Title string
 	Type  string // only support for apiKey
-	Name  string
 	In    string
+	Name  string
 }
 
-func NewSecurity(title string, name string, in string) *Security {
-	return &Security{Title: title, Type: "apiKey", Name: name, In: in}
+func NewSecurity(title string, in string, name string) *Security {
+	return &Security{Title: title, Type: "apiKey", In: in, Name: name}
 }
 
 type Tag struct {

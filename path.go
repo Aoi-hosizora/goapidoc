@@ -6,7 +6,6 @@ type Path struct {
 
 	Summary     string
 	Description string
-	OperationId string
 	Tags        []string
 	Consumes    []string
 	Produces    []string
@@ -15,13 +14,8 @@ type Path struct {
 	Responses   []*Response
 }
 
-func NewPath(method string, route string) *Path {
-	return &Path{Method: method, Route: route}
-}
-
-func (r *Path) SetSummary(summary string) *Path {
-	r.Summary = summary
-	return r
+func NewPath(method string, route string, summary string) *Path {
+	return &Path{Method: method, Route: route, Summary: summary}
 }
 
 func (r *Path) SetDescription(description string) *Path {
