@@ -7,8 +7,9 @@ const (
 	NUMBER  = "number"  // type: float, double
 	STRING  = "string"  // type: string, byte, binary, date, dateTime, password
 	BOOLEAN = "boolean" // type: boolean
-	OBJECT  = "object"  // type: customer
-	ARRAY   = "array"   // type: customer
+	ARRAY   = "array"   // type: array
+	FILE    = "file"    // type: file
+	OBJECT  = "object"  // model type: object
 
 	// format
 	INT32    = "int32"     // format: signed 32 bits
@@ -27,6 +28,15 @@ const (
 	HEADER = "header"   // param
 	BODY   = "body"     // param
 	FORM   = "formData" // param
+
+	// method
+	GET     = "get"     // method
+	PUT     = "put"     // method
+	POST    = "post"    // method
+	DELETE  = "delete"  // method
+	OPTIONS = "options" // method
+	HEAD    = "head"    // method
+	PATCH   = "patch"   // method
 
 	// mime
 	JSON  = "application/json"                  // mime data

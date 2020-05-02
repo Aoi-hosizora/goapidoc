@@ -17,19 +17,20 @@ func (m *Model) SetProperties(properties ...*Property) *Model {
 }
 
 type Property struct {
-	Title           string
+	Name            string
 	Description     string
 	Type            string
 	Required        bool
 	AllowEmptyValue bool
 	Format          string
+	Enum            []interface{}
 
-	Schema string
-	Enum   []string
+	Schema string // if `type` is object
+	Items  *Items // is `type` is array
 }
 
-func NewProperty(title string, description string, propType string, required bool) *Property {
-	return &Property{Title: title, Description: description, Type: propType, Required: required}
+func NewProperty(name string, description string, propType string, required bool) *Property {
+	return &Property{Name: name, Description: description, Type: propType, Required: required}
 }
 
 func (p *Property) SetAllowEmptyValue(allowEmptyValue bool) *Property {
@@ -42,12 +43,17 @@ func (p *Property) SetFormat(format string) *Property {
 	return p
 }
 
-func (p *Property) SetSchema(schema string) *Property {
-	p.Schema = schema
+func (p *Property) SetEnum(enum ...interface{}) *Property {
+	p.Enum = enum
 	return p
 }
 
-func (p *Property) SetEnum(enum ...string) *Property {
-	p.Enum = enum
+func (p *Property) SetSchema(ref string) *Property {
+	p.Schema = ref
+	return p
+}
+
+func (p *Property) SetItems(item *Items) *Property {
+	p.Items = item
 	return p
 }

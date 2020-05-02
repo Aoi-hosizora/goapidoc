@@ -12,6 +12,7 @@ type Path struct {
 	Securities  []string
 	Params      []*Param
 	Responses   []*Response
+	Deprecated  bool
 }
 
 func NewPath(method string, route string, summary string) *Path {
@@ -53,47 +54,16 @@ func (r *Path) SetResponses(responses ...*Response) *Path {
 	return r
 }
 
-type Param struct {
-	Name        string
-	In          string
-	Type        string
-	Required    bool
-	Description string
-
-	Format  string
-	Default interface{}
-	Schema  string
-	Enum    []interface{}
-}
-
-func NewParam(name string, in string, paramType string, required bool, description string) *Param {
-	return &Param{Name: name, In: in, Type: paramType, Required: required, Description: description}
-}
-
-func (p *Param) SetFormat(format string) *Param {
-	p.Format = format
-	return p
-}
-
-func (p *Param) SetDefault(defaultValue interface{}) *Param {
-	p.Default = defaultValue
-	return p
-}
-
-func (p *Param) SetSchema(schema string) *Param {
-	p.Schema = schema
-	return p
-}
-
-func (p *Param) SetEnum(enum ...interface{}) *Param {
-	p.Enum = enum
-	return p
+func (r *Path) SetDeprecated(deprecated bool) *Path {
+	r.Deprecated = deprecated
+	return r
 }
 
 type Response struct {
 	Code        int
 	Description string
 	Schema      string
+	Headers     []*Header
 	Examples    map[string]string
 }
 
@@ -106,12 +76,39 @@ func (r *Response) SetDescription(description string) *Response {
 	return r
 }
 
-func (r *Response) SetSchema(schema string) *Response {
-	r.Schema = schema
+func (r *Response) SetSchema(ref string) *Response {
+	r.Schema = ref
+	return r
+}
+
+func (r *Response) SetHeaders(headers ...*Header) *Response {
+	r.Headers = headers
 	return r
 }
 
 func (r *Response) SetExamples(examples map[string]string) *Response {
 	r.Examples = examples
 	return r
+}
+
+type Header struct {
+	Name        string
+	Description string
+	Type        string
+	Format      string
+	Default     interface{}
+}
+
+func NewHeader(name string, description string, headerType string) *Header {
+	return &Header{Name: name, Description: description, Type: headerType}
+}
+
+func (h *Header) SetFormat(format string) *Header {
+	h.Format = format
+	return h
+}
+
+func (h *Header) SetDefault(defaultValue string) *Header {
+	h.Default = defaultValue
+	return h
 }

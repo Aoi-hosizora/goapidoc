@@ -6,7 +6,6 @@
 
 ```go
 import . "github.com/Aoi-hosizora/go-yaml-doc"
-
 SetDocument(
     "localhost:10086", "/",
     NewInfo("test-api", "a demo description", "1.0").
@@ -24,7 +23,7 @@ AddPaths(
         SetConsumes(JSON).
         SetProduces(JSON).
         SetResponses(
-            NewResponse(200).SetDescription("success").SetExamples(map[string]string{"application/json": `{"ping": "pong"}`}),
+            NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: `{"ping": "pong"}`}),
         ),
     NewPath("GET", "/api/v1/user", "get user").
         SetDescription("get user from database").
@@ -48,10 +47,11 @@ AddPaths(
         SetSecurities("jwt").
         SetParams(
             NewParam("id", "path", "integer", true, "user id"),
-            NewParam("body", "body", "object", true, "request body").SetSchema("User"),
+            NewParam("body", "body", "", true, "request body").SetSchema("User"),
         ).
         SetResponses(
-            NewResponse(200).SetSchema("Result"),
+            NewResponse(200).SetDescription("success").SetSchema("Result").
+                SetHeaders(NewHeader("Content-Type", "Content-Type", "string").SetDefault(JSON)),
             NewResponse(404).SetDescription("not found"),
         ),
 )
@@ -73,7 +73,7 @@ AddModels(
         NewProperty("page", "current page", "integer", true),
         NewProperty("total", "data count", "integer", true),
         NewProperty("limit", "page size", "integer", true),
-        NewProperty("data", "page data", "array", true).SetSchema("User"),
+        NewProperty("data", "page data", "array", true).SetItems(NewItems("").SetSchema("User")),
     ),
     NewModel("Result<Page<User>>", "user response").SetProperties(
         NewProperty("code", "status code", "integer", true),

@@ -52,6 +52,7 @@ type innerSecurity struct {
 type innerPath struct {
 	Summary     string                    `yaml:"summary"`
 	OperationId string                    `yaml:"operationId"`
+	Deprecated  bool                      `yaml:"deprecated"`
 	Description string                    `yaml:"description,omitempty"`
 	Tags        []string                  `yaml:"tags,omitempty"`
 	Consumes    []string                  `yaml:"consumes,omitempty"`
@@ -70,63 +71,95 @@ type innerModel struct {
 }
 
 type innerParam struct {
-	Name        string        `yaml:"name"`
-	In          string        `yaml:"in"`
-	Type        string        `yaml:"type"`
-	Required    bool          `yaml:"required"`
-	Description string        `yaml:"description,omitempty"`
-	Format      string        `yaml:"format,omitempty"`
-	Schema      *innerSchema  `yaml:"schema,omitempty"`
-	Default     interface{}   `yaml:"default,omitempty"`
-	Enum        []interface{} `yaml:"enum,omitempty"`
+	Name            string        `yaml:"name"`
+	In              string        `yaml:"in"`
+	Required        bool          `yaml:"required"`
+	Description     string        `yaml:"description,omitempty"`
+	Type            string        `yaml:"type,omitempty"`
+	Format          string        `yaml:"format,omitempty"`
+	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
+	Default         interface{}   `yaml:"default,omitempty"`
+	Enum            []interface{} `yaml:"enum,omitempty"`
+	Schema          *innerSchema  `yaml:"schema,omitempty"`
+	Items           *innerItems   `yaml:"items,omitempty"`
 }
 
 type innerResponse struct {
-	Description string            `yaml:"description,omitempty"`
-	Schema      *innerSchema      `yaml:"schema,omitempty"`
-	Examples    map[string]string `yaml:"examples,omitempty"`
+	Description string                  `yaml:"description,omitempty"`
+	Schema      *innerSchema            `yaml:"schema,omitempty"`
+	Headers     map[string]*innerHeader `yaml:"header,omitempty"`
+	Examples    map[string]string       `yaml:"examples,omitempty"`
 }
 
 type innerProperty struct {
-	Type        string       `yaml:"type"`
-	Description string       `yaml:"description,omitempty"`
-	Format      string       `yaml:"format,omitempty"`
-	Enum        []string     `yaml:"enum,omitempty"`
-	Ref         string       `yaml:"$ref,omitempty"`
-	Items       *innerSchema `yaml:"items,omitempty"`
+	Type            string        `yaml:"type,omitempty"`
+	Description     string        `yaml:"description,omitempty"`
+	Format          string        `yaml:"format,omitempty"`
+	Enum            []interface{} `yaml:"enum,omitempty"`
+	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty"`
+	Items           *innerItems   `yaml:"items,omitempty"`
+	Ref             string        `yaml:"$ref,omitempty"`
+}
+
+type innerItems struct {
+	Type    string      `yaml:"type,omitempty"`
+	Format  string      `yaml:"format,omitempty"`
+	Default interface{} `yaml:"default,omitempty"`
+	Ref     string      `yaml:"$ref,omitempty"`
+}
+
+func getInnerItems(items *Items) *innerItems {
+	if items == nil {
+		return nil
+	}
+	return &innerItems{
+		Type:    items.Type,
+		Format:  items.Format,
+		Default: items.Default,
+		Ref:     getRefString(items.Schema),
+	}
 }
 
 type innerSchema struct {
 	Ref string `yaml:"$ref"`
 }
 
-func getRef(ref string) string {
+func getRefString(ref string) string {
 	if ref == "" {
 		return ""
 	}
 	return "#/definitions/" + ref
 }
 
-func getSchema(ref string) *innerSchema {
+func getInnerSchema(ref string) *innerSchema {
 	if ref == "" {
 		return nil
 	}
-	return &innerSchema{Ref: "#/definitions/" + ref}
+	return &innerSchema{Ref: getRefString(ref)}
+}
+
+type innerHeader struct {
+	Type        string      `yaml:"type,omitempty"`
+	Description string      `yaml:"description,omitempty"`
+	Format      string      `yaml:"format,omitempty"`
+	Default     interface{} `yaml:"default,omitempty"`
 }
 
 func mapToInnerParam(params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
 		out[i] = &innerParam{
-			Name:        p.Name,
-			In:          p.In,
-			Type:        p.Type,
-			Required:    p.Required,
-			Description: p.Description,
-			Format:      p.Format,
-			Schema:      getSchema(p.Schema),
-			Default:     p.Default,
-			Enum:        p.Enum,
+			Name:            p.Name,
+			In:              p.In,
+			Required:        p.Required,
+			Description:     p.Description,
+			Type:            p.Type,
+			Format:          p.Format,
+			AllowEmptyValue: p.AllowEmptyValue,
+			Default:         p.Default,
+			Enum:            p.Enum,
+			Schema:          getInnerSchema(p.Schema),
+			Items:           getInnerItems(p.Items),
 		}
 	}
 	return out
@@ -135,10 +168,21 @@ func mapToInnerParam(params []*Param) []*innerParam {
 func mapToInnerResponse(responses []*Response) map[string]*innerResponse {
 	out := make(map[string]*innerResponse)
 	for _, r := range responses {
+		headers := map[string]*innerHeader{}
+		for _, h := range r.Headers {
+			headers[h.Name] = &innerHeader{
+				Type:        h.Type,
+				Description: h.Description,
+				Format:      h.Format,
+				Default:     h.Default,
+			}
+		}
+
 		out[strconv.Itoa(r.Code)] = &innerResponse{
 			Description: r.Description,
-			Schema:      getSchema(r.Schema),
+			Schema:      getInnerSchema(r.Schema),
 			Examples:    r.Examples,
+			Headers:     headers,
 		}
 	}
 	return out
@@ -147,16 +191,14 @@ func mapToInnerResponse(responses []*Response) map[string]*innerResponse {
 func mapToInnerProperty(properties []*Property) map[string]*innerProperty {
 	out := make(map[string]*innerProperty)
 	for _, p := range properties {
-		out[p.Title] = &innerProperty{
-			Description: p.Description,
-			Type:        p.Type,
-			Format:      p.Format,
-			Enum:        p.Enum,
-		}
-		if p.Type == "object" {
-			out[p.Title].Ref = getRef(p.Schema)
-		} else if p.Type == "array" {
-			out[p.Title].Items = getSchema(p.Schema)
+		out[p.Name] = &innerProperty{
+			Description:     p.Description,
+			Type:            p.Type,
+			Format:          p.Format,
+			Enum:            p.Enum,
+			AllowEmptyValue: p.AllowEmptyValue,
+			Ref:             getRefString(p.Schema),
+			Items:           getInnerItems(p.Items),
 		}
 	}
 	return out
@@ -207,6 +249,7 @@ func mapToInnerDocument(d *Document) *innerDocument {
 		out.Paths[p.Route][p.Method] = &innerPath{
 			Summary:     p.Summary,
 			Description: p.Description,
+			Deprecated:  p.Deprecated,
 			OperationId: id,
 			Tags:        p.Tags,
 			Consumes:    p.Consumes,
@@ -222,7 +265,7 @@ func mapToInnerDocument(d *Document) *innerDocument {
 		required := make([]string, 0)
 		for _, p := range m.Properties {
 			if p.Required {
-				required = append(required, p.Title)
+				required = append(required, p.Name)
 			}
 		}
 		out.Models[m.Title] = &innerModel{
