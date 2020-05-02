@@ -4,6 +4,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -11,35 +12,35 @@ type innerDocument struct {
 	Host       string                           `yaml:"host"`
 	BasePath   string                           `yaml:"basePath"`
 	Info       *innerInfo                       `yaml:"info"`
-	Tags       []*innerTag                      `yaml:"tags"`
-	Securities map[string]*innerSecurity        `yaml:"securityDefinitions"`
-	Paths      map[string]map[string]*innerPath `yaml:"paths"`
-	Models     map[string]*innerModel           `yaml:"definitions"`
+	Tags       []*innerTag                      `yaml:"tags,omitempty"`
+	Securities map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty"`
+	Paths      map[string]map[string]*innerPath `yaml:"paths,omitempty"`
+	Models     map[string]*innerModel           `yaml:"definitions,omitempty"`
 }
 
 type innerTag struct {
 	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
+	Description string `yaml:"description,omitempty"`
 }
 
 type innerLicense struct {
 	Name string `yaml:"name"`
-	Url  string `yaml:"url"`
+	Url  string `yaml:"url,omitempty"`
 }
 
 type innerContact struct {
 	Name  string `yaml:"name"`
-	Url   string `yaml:"url"`
-	Email string `yaml:"email"`
+	Url   string `yaml:"url,omitempty"`
+	Email string `yaml:"email,omitempty"`
 }
 
 type innerInfo struct {
 	Title          string        `yaml:"title"`
 	Description    string        `yaml:"description"`
 	Version        string        `yaml:"version"`
-	TermsOfService string        `yaml:"termsOfService"`
-	License        *innerLicense `yaml:"license"`
-	Contact        *innerContact `yaml:"contact"`
+	TermsOfService string        `yaml:"termsOfService,omitempty"`
+	License        *innerLicense `yaml:"license,omitempty"`
+	Contact        *innerContact `yaml:"contact,omitempty"`
 }
 
 type innerSecurity struct {
@@ -49,44 +50,116 @@ type innerSecurity struct {
 }
 
 type innerPath struct {
-	Summary     string           `yaml:"summary"`
-	Description string           `yaml:"description"`
-	OperationId string           `yaml:"operationId"`
-	Tags        []string         `yaml:"tags"`
-	Consumes    []string         `yaml:"consumes"`
-	Produces    []string         `yaml:"produces"`
-	Securities  []string         `yaml:"security,omitempty"`
-	Parameters  []*innerParam    `yaml:"parameters"`
-	Responses   []*innerResponse `yaml:"responses"`
-}
-
-type innerParam struct {
-}
-
-type innerResponse struct {
+	Summary     string                    `yaml:"summary"`
+	Description string                    `yaml:"description,omitempty"`
+	OperationId string                    `yaml:"operationId"`
+	Tags        []string                  `yaml:"tags,omitempty"`
+	Consumes    []string                  `yaml:"consumes,omitempty"`
+	Produces    []string                  `yaml:"produces,omitempty"`
+	Securities  []string                  `yaml:"security,omitempty"`
+	Parameters  []*innerParam             `yaml:"parameters,omitempty"`
+	Responses   map[string]*innerResponse `yaml:"responses,omitempty"`
 }
 
 type innerModel struct {
 	Title       string                    `json:"title"`
-	Description string                    `json:"description"`
+	Description string                    `json:"description,omitempty"`
 	Type        string                    `json:"type"`
 	Required    []string                  `json:"required"`
-	Properties  map[string]*innerProperty `json:"properties"`
+	Properties  map[string]*innerProperty `json:"properties,omitempty"`
+}
+
+type innerParam struct {
+	Name        string        `yaml:"name"`
+	In          string        `yaml:"in"`
+	Type        string        `yaml:"type"`
+	Required    bool          `yaml:"required"`
+	Description string        `yaml:"description,omitempty"`
+	Format      string        `yaml:"format,omitempty"`
+	Schema      *innerSchema  `yaml:"schema,omitempty"`
+	Default     interface{}   `yaml:"default,omitempty"`
+	Enum        []interface{} `yaml:"enum,omitempty"`
+}
+
+type innerResponse struct {
+	Description string            `yaml:"description,omitempty"`
+	Schema      *innerSchema      `yaml:"schema,omitempty"`
+	Examples    map[string]string `yaml:"examples,omitempty"`
 }
 
 type innerProperty struct {
+	Description string       `yaml:"description,omitempty"`
+	Type        string       `yaml:"type"`
+	Format      string       `yaml:"format,omitempty"`
+	Enum        []string     `yaml:"enum,omitempty"`
+	Ref         string       `yaml:"$ref,omitempty"`
+	Items       *innerSchema `yaml:"items,omitempty"`
+}
+
+type innerSchema struct {
+	Ref string `yaml:"$ref"`
+}
+
+func getRef(ref string) string {
+	if ref == "" {
+		return ""
+	}
+	return "#/definitions/" + ref
+}
+
+func getSchema(ref string) *innerSchema {
+	if ref == "" {
+		return nil
+	}
+	return &innerSchema{Ref: "#/definitions/" + ref}
 }
 
 func mapToInnerParam(params []*Param) []*innerParam {
-	return []*innerParam{}
+	out := make([]*innerParam, len(params))
+	for i, p := range params {
+		out[i] = &innerParam{
+			Name:        p.Name,
+			In:          p.In,
+			Type:        p.Type,
+			Required:    p.Required,
+			Description: p.Description,
+			Format:      p.Format,
+			Schema:      getSchema(p.Schema),
+			Default:     p.Default,
+			Enum:        p.Enum,
+		}
+	}
+	return out
 }
 
-func mapToInnerResponse(responses []*Response) []*innerResponse {
-	return []*innerResponse{}
+func mapToInnerResponse(responses []*Response) map[string]*innerResponse {
+	out := make(map[string]*innerResponse)
+	for _, r := range responses {
+		out[strconv.Itoa(r.Code)] = &innerResponse{
+			Description: r.Description,
+			Schema:      getSchema(r.Schema),
+			Examples:    r.Examples,
+		}
+	}
+	return out
 }
 
 func mapToInnerProperty(properties []*Property) map[string]*innerProperty {
-	return map[string]*innerProperty{}
+	out := make(map[string]*innerProperty)
+	for _, p := range properties {
+		out[p.Title] = &innerProperty{
+			Description: p.Description,
+			Type:        p.Type,
+			Format:      p.Format,
+			Enum:        p.Enum,
+		}
+		if p.Type == "object" {
+			out[p.Title].Ref = getRef(p.Schema)
+		} else if p.Type == "array" {
+			out[p.Title].Items = getSchema(p.Schema)
+		}
+	}
+	return out
 }
 
 func mapToInnerDocument(d *Document) *innerDocument {
@@ -128,6 +201,7 @@ func mapToInnerDocument(d *Document) *innerDocument {
 		}
 		p.Method = strings.ToLower(p.Method)
 		id := strings.ReplaceAll(p.Route, "/", "-")
+		id = strings.ReplaceAll(strings.ReplaceAll(id, "{", ""), "}", "")
 		id += "-" + p.Method
 
 		out.Paths[p.Route][p.Method] = &innerPath{
@@ -154,7 +228,7 @@ func mapToInnerDocument(d *Document) *innerDocument {
 		out.Models[m.Title] = &innerModel{
 			Title:       m.Title,
 			Description: m.Description,
-			Type:        m.Title,
+			Type:        m.Type,
 			Required:    required,
 			Properties:  mapToInnerProperty(m.Properties),
 		}

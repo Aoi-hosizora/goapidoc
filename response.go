@@ -4,7 +4,7 @@ type Response struct {
 	Code        int
 	Description string
 	Schema      string
-	Example     string
+	Examples    map[string]string
 }
 
 func NewResponse(code int) *Response {
@@ -21,7 +21,7 @@ func (r *Response) SetSchema(schema string) *Response {
 	return r
 }
 
-func (r *Response) SetExample(example string) *Response {
-	r.Example = example
+func (r *Response) SetExamples(examples map[string]string) *Response {
+	r.Examples = examples
 	return r
 }

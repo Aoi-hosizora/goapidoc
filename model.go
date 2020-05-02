@@ -2,12 +2,13 @@ package yamldoc
 
 type Model struct {
 	Title       string
+	Type        string // object
 	Description string
 	Properties  []*Property
 }
 
 func NewModel(title string, description string) *Model {
-	return &Model{Title: title, Description: description}
+	return &Model{Title: title, Type: "object", Description: description}
 }
 
 func (m *Model) SetProperties(properties ...*Property) *Model {
@@ -21,9 +22,10 @@ type Property struct {
 	Type            string
 	Required        bool
 	AllowEmptyValue bool
+	Format          string
 
-	Ref   string
-	Enums []string
+	Schema string
+	Enum   []string
 }
 
 func NewProperty(title string, description string, propType string, required bool) *Property {
@@ -35,12 +37,17 @@ func (p *Property) SetAllowEmptyValue(allowEmptyValue bool) *Property {
 	return p
 }
 
-func (p *Property) SetRef(ref string) *Property {
-	p.Ref = ref
+func (p *Property) SetFormat(format string) *Property {
+	p.Format = format
 	return p
 }
 
-func (p *Property) SetEnums(enums ...string) *Property {
-	p.Enums = enums
+func (p *Property) SetSchema(schema string) *Property {
+	p.Schema = schema
+	return p
+}
+
+func (p *Property) SetEnum(enum ...string) *Property {
+	p.Enum = enum
 	return p
 }
