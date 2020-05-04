@@ -20,6 +20,7 @@ type innerDocument struct {
 	Securities  map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
 	Paths       map[string]map[string]*innerPath `yaml:"paths,omitempty"               json:"paths,omitempty"`
 	Definitions map[string]*innerDefinition      `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
+	_Additions  map[string]*innerDefinition      `yaml:"-"                             json:"-"`
 }
 
 type innerTag struct {
@@ -136,15 +137,16 @@ type innerItems struct {
 
 // region map-func
 
-func mapSchema(schema *Schema) *innerSchema {
+func mapSchema(doc *innerDocument, schema *Schema) *innerSchema {
 	if schema == nil {
 		return nil
 	}
 	if schema.Ref != "" {
-		return &innerSchema{
-			OriginRef: schema.Ref,
-			Ref:       "#/definitions/" + schema.Ref,
+		if len(schema.Options) == 0 {
+			return &innerSchema{OriginRef: schema.Ref, Ref: "#/definitions/" + schema.Ref}
 		}
+		newRef := mapRefOptions(doc, schema.Ref, schema.Options)
+		return &innerSchema{OriginRef: newRef, Ref: "#/definitions/" + newRef}
 	}
 	return &innerSchema{
 		Type:            schema.Type,
@@ -154,30 +156,76 @@ func mapSchema(schema *Schema) *innerSchema {
 		AllowEmptyValue: schema.AllowEmptyValue,
 		Default:         schema.Default,
 		Enum:            schema.Enum,
-		Items:           mapItems(schema.Items),
+		Items:           mapItems(doc, schema.Items),
 	}
 }
 
-func mapItems(items *Items) *innerItems {
+func mapItems(doc *innerDocument, items *Items) *innerItems {
 	if items == nil {
 		return nil
 	}
 	if items.Ref != "" {
-		return &innerItems{
-			OriginRef: items.Ref,
-			Ref:       "#/definitions/" + items.Ref,
+		if len(items.Options) == 0 {
+			return &innerItems{OriginRef: items.Ref, Ref: "#/definitions/" + items.Ref}
 		}
+		newRef := mapRefOptions(doc, items.Ref, items.Options)
+		return &innerItems{OriginRef: newRef, Ref: "#/definitions/" + newRef}
 	}
 	return &innerItems{
 		Type:    items.Type,
 		Format:  items.Format,
 		Default: items.Default,
 		Enum:    items.Enum,
-		Items:   mapItems(items.Items),
+		Items:   mapItems(doc, items.Items),
 	}
 }
 
-func mapParams(params []*Param) []*innerParam {
+func mapRefOptions(doc *innerDocument, ref string, options []*AdditionOption) (newRef string) {
+	def, ok := doc.Definitions[ref]
+	if !ok {
+		return ref
+	}
+
+	newDef := &innerDefinition{
+		Type:        def.Type,
+		Required:    def.Required,
+		Description: def.Description,
+		Properties:  make(map[string]*innerSchema),
+	}
+	for k, v := range def.Properties {
+		newDef.Properties[k] = v
+	}
+	types := make([]string, len(options))
+
+	for i, o := range options {
+		if _, ok := newDef.Properties[o.Field]; !ok {
+			continue
+		}
+		if o.Items != nil {
+			items := mapItems(doc, o.Items)
+			newDef.Properties[o.Field].Items = items
+			if items.OriginRef != "" {
+				types[i] = items.OriginRef
+			} else {
+				types[i] = items.Type
+			}
+		} else {
+			schema := mapSchema(doc, o.Schema)
+			newDef.Properties[o.Field] = schema
+			if schema.OriginRef != "" {
+				types[i] = schema.OriginRef
+			} else {
+				types[i] = schema.Type
+			}
+		}
+	}
+
+	newRef = ref + "<" + strings.Join(types, ",") + ">"
+	doc.Definitions[newRef] = newDef
+	return newRef
+}
+
+func mapParams(doc *innerDocument, params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
 		out[i] = &innerParam{
@@ -190,14 +238,14 @@ func mapParams(params []*Param) []*innerParam {
 			AllowEmptyValue: p.AllowEmptyValue,
 			Default:         p.Default,
 			Enum:            p.Enum,
-			Schema:          mapSchema(p.Schema),
-			Items:           mapItems(p.Items),
+			Schema:          mapSchema(doc, p.Schema),
+			Items:           mapItems(doc, p.Items),
 		}
 	}
 	return out
 }
 
-func mapResponses(responses []*Response) map[string]*innerResponse {
+func mapResponses(doc *innerDocument, responses []*Response) map[string]*innerResponse {
 	out := make(map[string]*innerResponse)
 	for _, r := range responses {
 		headers := map[string]*innerHeader{}
@@ -210,7 +258,7 @@ func mapResponses(responses []*Response) map[string]*innerResponse {
 
 		out[strconv.Itoa(r.Code)] = &innerResponse{
 			Description: r.Description,
-			Schema:      mapSchema(r.Schema),
+			Schema:      mapSchema(doc, r.Schema),
 			Examples:    r.Examples,
 			Headers:     headers,
 		}
@@ -218,14 +266,14 @@ func mapResponses(responses []*Response) map[string]*innerResponse {
 	return out
 }
 
-func mapDefinition(definition *Definition) *innerDefinition {
+func mapDefinition(doc *innerDocument, definition *Definition) *innerDefinition {
 	required := make([]string, 0)
 	schemas := make(map[string]*innerSchema)
 	for _, p := range definition.Properties {
 		if p.Required {
 			required = append(required, p.Title)
 		}
-		schemas[p.Title] = mapSchema(p.Schema)
+		schemas[p.Title] = mapSchema(doc, p.Schema)
 	}
 
 	return &innerDefinition{
@@ -269,6 +317,11 @@ func buildDocument(d *Document) *innerDocument {
 		}
 	}
 
+	// models
+	for _, d := range d.Definitions {
+		out.Definitions[d.Name] = mapDefinition(out, d)
+	}
+
 	// paths
 	for _, p := range d.Paths {
 		_, ok := out.Paths[p.Route]
@@ -289,14 +342,9 @@ func buildDocument(d *Document) *innerDocument {
 			Produces:    p.Produces,
 			Securities:  p.Securities,
 			Deprecated:  p.Deprecated,
-			Parameters:  mapParams(p.Params),
-			Responses:   mapResponses(p.Responses),
+			Parameters:  mapParams(out, p.Params),
+			Responses:   mapResponses(out, p.Responses),
 		}
-	}
-
-	// models
-	for _, d := range d.Definitions {
-		out.Definitions[d.Name] = mapDefinition(d)
 	}
 
 	return out
@@ -324,9 +372,8 @@ func appendKvs(d *innerDocument, kvs map[string]interface{}) map[string]interfac
 		}
 
 		name := strings.TrimSpace(strings.Split(tag, ",")[0])
-		value := innerValue.Field(i).Interface()
-
 		if name != "-" && name != "" {
+			value := innerValue.Field(i).Interface()
 			if !omitempty || (value != nil && value != "") {
 				out[name] = value
 			}

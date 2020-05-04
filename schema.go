@@ -1,5 +1,7 @@
 package apidoc
 
+// !! Only `schema.go` has `Ref` definition: `NewSchemaRef` `NewItemsRef`
+
 // The Schema Object allows the definition of input and output data types.
 // These types can be objects, but also primitives and arrays.
 //
@@ -21,16 +23,19 @@ type Schema struct {
 	Default         interface{}
 	Enum            []interface{}
 
-	Ref   string // `type` == object
-	Items *Items // `type` == array
+	Options []*AdditionOption // for ref
+	Ref     string            // `type` == object
+	Items   *Items            // `type` == array
 }
 
+// Schema for response and parameter
 func NewSchema(schemaType string, required bool) *Schema {
 	return &Schema{Required: required, Type: schemaType, Format: defaultFormat(schemaType)}
 }
 
-func NewSchemaRef(ref string) *Schema {
-	return &Schema{Ref: ref}
+// $ref
+func NewSchemaRef(ref string, options ...*AdditionOption) *Schema {
+	return &Schema{Ref: ref, Options: options}
 }
 
 func (s *Schema) SetDescription(description string) *Schema {
@@ -58,14 +63,8 @@ func (s *Schema) SetEnum(enum ...interface{}) *Schema {
 	return s
 }
 
-// Set object
-func (s *Schema) SetRef(ref string) *Schema {
-	s.Ref = ref
-	return s
-}
-
-// Set array
 func (s *Schema) SetItems(items *Items) *Schema {
+	s.Type = ARRAY
 	s.Items = items
 	return s
 }
@@ -79,16 +78,19 @@ type Items struct {
 	Default interface{}
 	Enum    []interface{}
 
-	Ref   string
-	Items *Items // `type` == array
+	Options []*AdditionOption // for ref
+	Ref     string
+	Items   *Items // `type` == array
 }
 
+// Items for response and parameter
 func NewItems(itemType string) *Items {
 	return &Items{Type: itemType, Format: defaultFormat(itemType)}
 }
 
-func NewItemsRef(ref string) *Items {
-	return &Items{Ref: ref}
+// $ref
+func NewItemsRef(ref string, options ...*AdditionOption) *Items {
+	return &Items{Ref: ref, Options: options}
 }
 
 func (i *Items) SetFormat(format string) *Items {
@@ -106,14 +108,23 @@ func (i *Items) SetEnum(enum ...interface{}) *Items {
 	return i
 }
 
-// Set object
-func (i *Items) SetRef(ref string) *Items {
-	i.Ref = ref
+func (i *Items) SetItems(items *Items) *Items {
+	i.Type = ARRAY
+	i.Items = items
 	return i
 }
 
-// Set array
-func (i *Items) SetItems(items *Items) *Items {
-	i.Items = items
-	return i
+// Addition schema option
+type AdditionOption struct {
+	Field  string
+	Schema *Schema
+	Items  *Items
+}
+
+func NewSchemaOption(field string, schema *Schema) *AdditionOption {
+	return &AdditionOption{Field: field, Schema: schema}
+}
+
+func NewItemsOption(field string, items *Items) *AdditionOption {
+	return &AdditionOption{Field: field, Items: items}
 }

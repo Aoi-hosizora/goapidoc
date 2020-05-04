@@ -31,8 +31,7 @@ func TestGenerateYaml(t *testing.T) {
 			SetResponses(
 				NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: "{\n\t\"ping\": \"pong\"\n}"}),
 			),
-		NewPath(GET, "/api/v1/user", "get user").
-			SetDescription("get user from database").
+		NewPath(GET, "/api/v1/user", "get users").
 			SetTags("user").
 			SetConsumes(JSON).
 			SetProduces(JSON).
@@ -43,10 +42,19 @@ func TestGenerateYaml(t *testing.T) {
 				NewParam("order", QUERY, STRING, false, "order string").SetDefault(""),
 			).
 			SetResponses(
-				NewResponse(200).SetSchema(NewSchemaRef("Result<Page<User>>")),
+				NewResponse(200).SetSchema(
+					NewSchemaRef("_Result", NewSchemaOption("data",
+						NewSchemaRef("_Page", NewItemsOption("data", NewItemsRef("User")))))),
+			),
+		NewPath(GET, "/api/v1/user/{id}", "get a user").
+			SetTags("user").
+			SetConsumes(JSON).
+			SetProduces(JSON).
+			SetParams(NewParam("id", PATH, INTEGER, true, "user id")).
+			SetResponses(
+				NewResponse(200).SetSchema(NewSchemaRef("_Result", NewSchemaOption("data", NewSchemaRef("User")))),
 			),
 		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
-			SetDescription("update user to database").
 			SetTags("user").
 			SetConsumes(JSON).
 			SetProduces(JSON).
@@ -62,9 +70,10 @@ func TestGenerateYaml(t *testing.T) {
 			),
 		NewPath(HEAD, "/api/v1/test", "test path").
 			SetParams(
-				NewParam("arr", QUERY, ARRAY, true, "test").SetItems(NewItems(INTEGER).SetFormat(INT64).SetItems(NewItems(INTEGER))),
+				NewParam("arr", QUERY, ARRAY, true, "test").SetItems(NewItems(ARRAY).SetItems(NewItems(INTEGER).SetFormat(INT64))),
 				NewParam("ref", QUERY, ARRAY, true, "test").SetItems(NewItemsRef("User")),
 				NewParam("enum", QUERY, STRING, true, "test").SetEnum("male", "female"),
+				NewParam("option", QUERY, ARRAY, true, "test").SetItems(NewItemsRef("Result", NewSchemaOption("code", NewSchema(STRING, true)))),
 			),
 	)
 
@@ -82,16 +91,28 @@ func TestGenerateYaml(t *testing.T) {
 			NewProperty("birthday", STRING, true, "user birthday").SetFormat(DATE),
 			NewProperty("scores", ARRAY, true, "user scores").SetItems(NewItems(NUMBER)),
 		),
-		NewDefinition("Page<User>", "user response").SetProperties(
+		// NewDefinition("Page<User>", "user response").SetProperties(
+		// 	NewProperty("page", INTEGER, true, "current page"),
+		// 	NewProperty("total", INTEGER, true, "data count"),
+		// 	NewProperty("limit", INTEGER, true, "page size"),
+		// 	NewArrayProperty("data", NewItemsRef("User"), true, "page data"),
+		// ),
+		// NewDefinition("Result<Page<User>>", "user response").SetProperties(
+		// 	NewProperty("code", INTEGER, true, "status code"),
+		// 	NewProperty("message", STRING, true, "status message"),
+		// 	NewObjectProperty("data", "Page<User>", true, "result data"),
+		// ),
+
+		NewDefinition("_Result", "global response").SetProperties(
+			NewProperty("code", INTEGER, true, "status code"),
+			NewProperty("message", INTEGER, true, "status message"),
+			NewProperty("data", OBJECT, true, "response data"),
+		),
+		NewDefinition("_Page", "global page response").SetProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
-			NewArrayProperty("data", NewItemsRef("User"), true, "page data"),
-		),
-		NewDefinition("Result<Page<User>>", "user response").SetProperties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", STRING, true, "status message"),
-			NewObjectProperty("data", "Page<User>", true, "result data"),
+			NewProperty("data", ARRAY, true, "page data"),
 		),
 	)
 

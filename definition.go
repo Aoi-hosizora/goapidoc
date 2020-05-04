@@ -23,8 +23,10 @@ type Property struct {
 }
 
 // normal property
-func NewProperty(name string, schemaType string, required bool, description string) *Property {
-	return &Property{Title: name, Schema: &Schema{Type: schemaType, Required: required, Description: description}}
+func NewProperty(name string, propertyType string, required bool, description string) *Property {
+	return &Property{Title: name, Schema: &Schema{
+		Type: propertyType, Format: defaultFormat(propertyType), Required: required, Description: description,
+	}}
 }
 
 // sugar: object property
@@ -54,11 +56,6 @@ func (p *Property) SetDefault(defaultValue interface{}) *Property {
 
 func (p *Property) SetEnum(enum ...interface{}) *Property {
 	p.Enum = enum
-	return p
-}
-
-func (p *Property) SetRef(ref string) *Property {
-	p.Ref = ref
 	return p
 }
 
