@@ -1,11 +1,11 @@
-# go-rest-doc
+# go-api-doc
 
 + A tool written in golang for generating rest api document
 
 ### Usage
 
 ```go
-import . "github.com/Aoi-hosizora/go-yaml-doc"
+import . "github.com/Aoi-hosizora/go-api-doc"
 
 SetDocument(
     "localhost:10086", "/",

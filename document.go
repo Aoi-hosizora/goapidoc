@@ -1,4 +1,4 @@
-package restdoc
+package apidoc
 
 // Global document
 var _document = &Document{}

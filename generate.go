@@ -1,4 +1,4 @@
-package restdoc
+package apidoc
 
 import (
 	"bytes"

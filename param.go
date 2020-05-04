@@ -1,4 +1,4 @@
-package restdoc
+package apidoc
 
 type Param struct {
 	Name        string

@@ -1,4 +1,4 @@
-package restdoc
+package apidoc
 
 // noinspection GoUnusedConst
 const (

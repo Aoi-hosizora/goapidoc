@@ -1,4 +1,4 @@
-package restdoc
+package apidoc
 
 // Route path
 type Path struct {
