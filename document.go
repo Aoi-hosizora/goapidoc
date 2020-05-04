@@ -68,8 +68,8 @@ type Info struct {
 	Contact        *Contact
 }
 
-func NewInfo(title string, description string, version string) *Info {
-	return &Info{Title: title, Description: description, Version: version}
+func NewInfo(title string, desc string, version string) *Info {
+	return &Info{Title: title, Description: desc, Version: version}
 }
 
 func (i *Info) SetTermsOfService(service string) *Info {
@@ -126,6 +126,6 @@ type Tag struct {
 	Description string
 }
 
-func NewTag(name string, description string) *Tag {
-	return &Tag{Name: name, Description: description}
+func NewTag(name string, desc string) *Tag {
+	return &Tag{Name: name, Description: desc}
 }

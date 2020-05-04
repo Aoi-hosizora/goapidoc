@@ -17,10 +17,10 @@ type Param struct {
 	Items  *Items  // `in` != body && `type` == array
 }
 
-func NewParam(name string, in string, paramType string, required bool, description string) *Param {
+func NewParam(name string, in string, t string, req bool, desc string) *Param {
 	return &Param{
-		Name: name, In: in, Required: required, Description: description,
-		Type: paramType, Format: defaultFormat(paramType),
+		Name: name, In: in, Required: req, Description: desc,
+		Type: t, Format: defaultFormat(t),
 	}
 }
 
@@ -29,13 +29,13 @@ func (p *Param) SetFormat(format string) *Param {
 	return p
 }
 
-func (p *Param) SetAllowEmptyValue(allowEmptyValue bool) *Param {
-	p.AllowEmptyValue = allowEmptyValue
+func (p *Param) SetAllowEmptyValue(allow bool) *Param {
+	p.AllowEmptyValue = allow
 	return p
 }
 
-func (p *Param) SetDefault(defaultValue interface{}) *Param {
-	p.Default = defaultValue
+func (p *Param) SetDefault(def interface{}) *Param {
+	p.Default = def
 	return p
 }
 
@@ -53,6 +53,7 @@ func (p *Param) SetSchema(schema *Schema) *Param {
 
 // Set array (when `type` == array)
 func (p *Param) SetItems(items *Items) *Param {
+	p.Type = ARRAY
 	p.Items = items
 	return p
 }

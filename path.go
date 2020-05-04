@@ -21,8 +21,8 @@ func NewPath(method string, route string, summary string) *Path {
 	return &Path{Method: method, Route: route, Summary: summary}
 }
 
-func (r *Path) SetDescription(description string) *Path {
-	r.Description = description
+func (r *Path) SetDescription(desc string) *Path {
+	r.Description = desc
 	return r
 }
 
@@ -77,8 +77,8 @@ func NewResponse(code int) *Response {
 	return &Response{Code: code}
 }
 
-func (r *Response) SetDescription(description string) *Response {
-	r.Description = description
+func (r *Response) SetDescription(desc string) *Response {
+	r.Description = desc
 	return r
 }
 
@@ -105,6 +105,6 @@ type Header struct {
 	Description string
 }
 
-func NewHeader(name string, headerType string, description string) *Header {
-	return &Header{Name: name, Description: description, Type: headerType}
+func NewHeader(name string, t string, desc string) *Header {
+	return &Header{Name: name, Description: desc, Type: t}
 }

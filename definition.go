@@ -7,8 +7,8 @@ type Definition struct {
 	Properties  []*Property
 }
 
-func NewDefinition(title string, description string) *Definition {
-	return &Definition{Name: title, Description: description}
+func NewDefinition(title string, desc string) *Definition {
+	return &Definition{Name: title, Description: desc}
 }
 
 func (m *Definition) SetProperties(properties ...*Property) *Definition {
@@ -23,20 +23,20 @@ type Property struct {
 }
 
 // normal property
-func NewProperty(name string, propertyType string, required bool, description string) *Property {
+func NewProperty(name string, t string, req bool, desc string) *Property {
 	return &Property{Title: name, Schema: &Schema{
-		Type: propertyType, Format: defaultFormat(propertyType), Required: required, Description: description,
+		Type: t, Format: defaultFormat(t), Required: req, Description: desc,
 	}}
 }
 
 // sugar: object property
-func NewObjectProperty(name string, ref string, required bool, description string) *Property {
-	return &Property{Title: name, Schema: &Schema{Type: OBJECT, Ref: ref, Required: required, Description: description}}
+func NewObjectProperty(name string, ref string, req bool) *Property {
+	return &Property{Title: name, Schema: &Schema{Type: OBJECT, Ref: ref, Required: req}}
 }
 
 // sugar: array property
-func NewArrayProperty(name string, items *Items, required bool, description string) *Property {
-	return &Property{Title: name, Schema: &Schema{Type: ARRAY, Items: items, Required: required, Description: description}}
+func NewArrayProperty(name string, items *Items, req bool) *Property {
+	return &Property{Title: name, Schema: &Schema{Type: ARRAY, Items: items, Required: req}}
 }
 
 func (p *Property) SetFormat(format string) *Property {
@@ -44,13 +44,13 @@ func (p *Property) SetFormat(format string) *Property {
 	return p
 }
 
-func (p *Property) SetAllowEmptyValue(allowEmptyValue bool) *Property {
-	p.AllowEmptyValue = allowEmptyValue
+func (p *Property) SetAllowEmptyValue(allow bool) *Property {
+	p.AllowEmptyValue = allow
 	return p
 }
 
-func (p *Property) SetDefault(defaultValue interface{}) *Property {
-	p.Default = defaultValue
+func (p *Property) SetDefault(def interface{}) *Property {
+	p.Default = def
 	return p
 }
 

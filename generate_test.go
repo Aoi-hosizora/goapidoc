@@ -42,9 +42,7 @@ func TestGenerateYaml(t *testing.T) {
 				NewParam("order", QUERY, STRING, false, "order string").SetDefault(""),
 			).
 			SetResponses(
-				NewResponse(200).SetSchema(
-					NewSchemaRef("_Result", NewSchemaOption("data",
-						NewSchemaRef("_Page", NewItemsOption("data", NewItemsRef("User")))))),
+				NewResponse(200).SetSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", RefItems("User")))),
 			),
 		NewPath(GET, "/api/v1/user/{id}", "get a user").
 			SetTags("user").
@@ -52,7 +50,7 @@ func TestGenerateYaml(t *testing.T) {
 			SetProduces(JSON).
 			SetParams(NewParam("id", PATH, INTEGER, true, "user id")).
 			SetResponses(
-				NewResponse(200).SetSchema(NewSchemaRef("_Result", NewSchemaOption("data", NewSchemaRef("User")))),
+				NewResponse(200).SetSchema(RefSchema("_Result", "data", RefSchema("User"))),
 			),
 		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
 			SetTags("user").
@@ -61,19 +59,21 @@ func TestGenerateYaml(t *testing.T) {
 			SetSecurities("jwt").
 			SetParams(
 				NewParam("id", PATH, INTEGER, true, "user id"),
-				NewParam("body", BODY, OBJECT, true, "request body").SetSchema(NewSchemaRef("User")),
+				NewParam("body", BODY, OBJECT, true, "request body").SetSchema(RefSchema("User")),
 			).
 			SetResponses(
-				NewResponse(200).SetDescription("success").SetSchema(NewSchemaRef("Result")).SetHeaders(NewHeader("Content-Type", STRING, "demo")),
-				NewResponse(404).SetDescription("not found"),
+				NewResponse(200).SetDescription("success").SetSchema(RefSchema("Result")),
+				NewResponse(404).SetDescription("not found").SetHeaders(NewHeader("Content-Type", STRING, "demo")),
 				NewResponse(400).SetDescription("bad request").SetSchema(NewSchema(STRING, true)).SetExamples(map[string]string{JSON: "bad request"}),
 			),
 		NewPath(HEAD, "/api/v1/test", "test path").
 			SetParams(
-				NewParam("arr", QUERY, ARRAY, true, "test").SetItems(NewItems(ARRAY).SetItems(NewItems(INTEGER).SetFormat(INT64))),
-				NewParam("ref", QUERY, ARRAY, true, "test").SetItems(NewItemsRef("User")),
+				NewParam("arr", QUERY, ARRAY, true, "test").SetItems(ArrItems(NewItems(INTEGER).SetFormat(INT64))),
+				NewParam("ref", QUERY, ARRAY, true, "test").SetItems(RefItems("User")),
 				NewParam("enum", QUERY, STRING, true, "test").SetEnum("male", "female"),
-				NewParam("option", QUERY, ARRAY, true, "test").SetItems(NewItemsRef("Result", NewSchemaOption("code", NewSchema(STRING, true)))),
+				NewParam("option1", QUERY, ARRAY, true, "test").SetItems(RefItems("Result", "code", NewSchema(STRING, true))),
+				NewParam("option2", QUERY, ARRAY, true, "test").SetItems(RefItems("Result", "code", NewItems(STRING))),
+				NewParam("arr2", BODY, ARRAY, true, "test").SetSchema(ArrSchema(NewItems(INTEGER))),
 			),
 	)
 
@@ -91,17 +91,17 @@ func TestGenerateYaml(t *testing.T) {
 			NewProperty("birthday", STRING, true, "user birthday").SetFormat(DATE),
 			NewProperty("scores", ARRAY, true, "user scores").SetItems(NewItems(NUMBER)),
 		),
-		// NewDefinition("Page<User>", "user response").SetProperties(
-		// 	NewProperty("page", INTEGER, true, "current page"),
-		// 	NewProperty("total", INTEGER, true, "data count"),
-		// 	NewProperty("limit", INTEGER, true, "page size"),
-		// 	NewArrayProperty("data", NewItemsRef("User"), true, "page data"),
-		// ),
-		// NewDefinition("Result<Page<User>>", "user response").SetProperties(
-		// 	NewProperty("code", INTEGER, true, "status code"),
-		// 	NewProperty("message", STRING, true, "status message"),
-		// 	NewObjectProperty("data", "Page<User>", true, "result data"),
-		// ),
+		NewDefinition("!Page<User>", "user response").SetProperties(
+			NewProperty("page", INTEGER, true, "current page"),
+			NewProperty("total", INTEGER, true, "data count"),
+			NewProperty("limit", INTEGER, true, "page size"),
+			NewArrayProperty("data", RefItems("User"), true),
+		),
+		NewDefinition("!Result<Page<User>>", "user response").SetProperties(
+			NewProperty("code", INTEGER, true, "status code"),
+			NewProperty("message", STRING, true, "status message"),
+			NewObjectProperty("data", "Page<User>", true),
+		),
 
 		NewDefinition("_Result", "global response").SetProperties(
 			NewProperty("code", INTEGER, true, "status code"),

@@ -143,10 +143,10 @@ func mapSchema(doc *innerDocument, schema *Schema) *innerSchema {
 	}
 	if schema.Ref != "" {
 		if len(schema.Options) == 0 {
-			return &innerSchema{OriginRef: schema.Ref, Ref: "#/definitions/" + schema.Ref}
+			return &innerSchema{OriginRef: schema.Ref, Ref: "#/definitions/" + schema.Ref, Required: schema.Required}
 		}
 		newRef := mapRefOptions(doc, schema.Ref, schema.Options)
-		return &innerSchema{OriginRef: newRef, Ref: "#/definitions/" + newRef}
+		return &innerSchema{OriginRef: newRef, Ref: "#/definitions/" + newRef, Required: schema.Required}
 	}
 	return &innerSchema{
 		Type:            schema.Type,
@@ -201,15 +201,8 @@ func mapRefOptions(doc *innerDocument, ref string, options []*AdditionOption) (n
 		if _, ok := newDef.Properties[o.Field]; !ok {
 			continue
 		}
-		if o.Items != nil {
-			items := mapItems(doc, o.Items)
-			newDef.Properties[o.Field].Items = items
-			if items.OriginRef != "" {
-				types[i] = items.OriginRef
-			} else {
-				types[i] = items.Type
-			}
-		} else {
+		if o.Items == nil {
+			// object schema (ref)
 			schema := mapSchema(doc, o.Schema)
 			newDef.Properties[o.Field] = schema
 			if schema.OriginRef != "" {
@@ -217,10 +210,30 @@ func mapRefOptions(doc *innerDocument, ref string, options []*AdditionOption) (n
 			} else {
 				types[i] = schema.Type
 			}
+		} else {
+			// array schema (items)
+			items := mapItems(doc, o.Items)
+			newSchema := &innerSchema{}
+			*newSchema = *newDef.Properties[o.Field]
+			newSchema.Type = ARRAY
+			newSchema.Items = items
+			newDef.Properties[o.Field] = newSchema
+			if items.OriginRef != "" {
+				types[i] = items.OriginRef
+			} else {
+				types[i] = items.Type
+			}
 		}
 	}
 
 	newRef = ref + "<" + strings.Join(types, ",") + ">"
+	for {
+		if _, ok := doc.Definitions[newRef]; ok {
+			newRef = newRef + "'"
+		} else {
+			break
+		}
+	}
 	doc.Definitions[newRef] = newDef
 	return newRef
 }
