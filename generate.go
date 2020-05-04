@@ -56,16 +56,16 @@ type innerSecurity struct {
 
 // !!!
 type innerPath struct {
-	Summary     string                    `yaml:"summary"               json:"summary"`
-	OperationId string                    `yaml:"operationId"           json:"operationId"`
-	Description string                    `yaml:"description,omitempty" json:"description,omitempty"`
-	Tags        []string                  `yaml:"tags,omitempty"        json:"tags,omitempty"`
-	Consumes    []string                  `yaml:"consumes,omitempty"    json:"consumes,omitempty"`
-	Produces    []string                  `yaml:"produces,omitempty"    json:"produces,omitempty"`
-	Securities  []string                  `yaml:"security,omitempty"    json:"security,omitempty"`
-	Deprecated  bool                      `yaml:"deprecated,omitempty"  json:"deprecated,omitempty"`
-	Parameters  []*innerParam             `yaml:"parameters,omitempty"  json:"parameters,omitempty"`
-	Responses   map[string]*innerResponse `yaml:"responses,omitempty"   json:"responses,omitempty"`
+	Summary     string                     `yaml:"summary"               json:"summary"`
+	OperationId string                     `yaml:"operationId"           json:"operationId"`
+	Description string                     `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags        []string                   `yaml:"tags,omitempty"        json:"tags,omitempty"`
+	Consumes    []string                   `yaml:"consumes,omitempty"    json:"consumes,omitempty"`
+	Produces    []string                   `yaml:"produces,omitempty"    json:"produces,omitempty"`
+	Securities  []map[string][]interface{} `yaml:"security,omitempty"    json:"security,omitempty"`
+	Deprecated  bool                       `yaml:"deprecated,omitempty"  json:"deprecated,omitempty"`
+	Parameters  []*innerParam              `yaml:"parameters,omitempty"  json:"parameters,omitempty"`
+	Responses   map[string]*innerResponse  `yaml:"responses,omitempty"   json:"responses,omitempty"`
 }
 
 // !!!
@@ -291,6 +291,10 @@ func buildDocument(d *Document) *innerDocument {
 		id := strings.ReplaceAll(p.Route, "/", "-")
 		id = strings.ReplaceAll(strings.ReplaceAll(id, "{", ""), "}", "")
 		id += "-" + p.Method
+		securities := make([]map[string][]interface{}, len(p.Securities))
+		for i, s := range p.Securities {
+			securities[i] = map[string][]interface{}{s: {}}
+		}
 
 		out.Paths[p.Route][p.Method] = &innerPath{
 			Summary:     p.Summary,
@@ -299,7 +303,7 @@ func buildDocument(d *Document) *innerDocument {
 			Tags:        p.Tags,
 			Consumes:    p.Consumes,
 			Produces:    p.Produces,
-			Securities:  p.Securities,
+			Securities:  securities,
 			Deprecated:  p.Deprecated,
 			Parameters:  mapParams(out, p.Params),
 			Responses:   mapResponses(out, p.Responses),
