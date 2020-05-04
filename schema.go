@@ -32,9 +32,12 @@ func NewSchema(t string, req bool) *Schema {
 }
 
 // Create a schema that is a reference type, can have options
-// $ref, options must be (string, *Schema|*Items) pairs
+// $ref, options must be (string, *Schema|*Items|string) pairs
+// Example: Result Page UserDto
+//     RefSchema(Result, data, RefSchema(Page, data, UserDto)) -> make Result.Data(interface{}) be Page, make Page.Data(interface{}) be UserDto
+//     RefSchema(Result, data, UserDto)                        -> make Result.Data(interface{}) be UserDto
 func RefSchema(ref string, options ...interface{}) *Schema {
-	return &Schema{Ref: ref, Options: handleWithOptions(options)}
+	return &Schema{Ref: ref, Options: handleWithOptions(options...)}
 }
 
 // Create a schema that is a array, could not have options, please use it in `Ref`
@@ -92,9 +95,9 @@ func NewItems(t string) *Items {
 }
 
 // Create a items that is a reference type, can have options
-// $ref, options must be (string, *Schema|*Items) pairs
+// $ref, options must be (string, *Schema|*Items|string) pairs
 func RefItems(ref string, options ...interface{}) *Items {
-	return &Items{Ref: ref, Options: handleWithOptions(options)}
+	return &Items{Ref: ref, Options: handleWithOptions(options...)}
 }
 
 // Create a items that is an array type, could not have options, please use it in `Ref`
@@ -116,34 +119,4 @@ func (i *Items) SetDefault(def interface{}) *Items {
 func (i *Items) SetEnum(enum ...interface{}) *Items {
 	i.Enum = enum
 	return i
-}
-
-// Addition schema option
-type AdditionOption struct {
-	Field  string
-	Schema *Schema
-	Items  *Items
-}
-
-func handleWithOptions(options ...interface{}) []*AdditionOption {
-	if len(options)&1 == 1 {
-		options = options[:len(options)-1]
-	}
-	out := make([]*AdditionOption, 0)
-	idx := 0
-	for idx < len(options) {
-		field, ok := options[idx].(string)
-		if !ok {
-			return out
-		}
-		if schema, ok := options[idx+1].(*Schema); ok {
-			out = append(out, &AdditionOption{Field: field, Schema: schema})
-		} else if items, ok := options[idx+1].(*Items); ok {
-			out = append(out, &AdditionOption{Field: field, Items: items})
-		} else {
-			return out
-		}
-		idx += 2
-	}
-	return out
 }

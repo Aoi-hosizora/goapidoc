@@ -180,64 +180,6 @@ func mapItems(doc *innerDocument, items *Items) *innerItems {
 	}
 }
 
-func mapRefOptions(doc *innerDocument, ref string, options []*AdditionOption) (newRef string) {
-	def, ok := doc.Definitions[ref]
-	if !ok {
-		return ref
-	}
-
-	newDef := &innerDefinition{
-		Type:        def.Type,
-		Required:    def.Required,
-		Description: def.Description,
-		Properties:  make(map[string]*innerSchema),
-	}
-	for k, v := range def.Properties {
-		newDef.Properties[k] = v
-	}
-	types := make([]string, len(options))
-
-	for i, o := range options {
-		if _, ok := newDef.Properties[o.Field]; !ok {
-			continue
-		}
-		if o.Items == nil {
-			// object schema (ref)
-			schema := mapSchema(doc, o.Schema)
-			newDef.Properties[o.Field] = schema
-			if schema.OriginRef != "" {
-				types[i] = schema.OriginRef
-			} else {
-				types[i] = schema.Type
-			}
-		} else {
-			// array schema (items)
-			items := mapItems(doc, o.Items)
-			newSchema := &innerSchema{}
-			*newSchema = *newDef.Properties[o.Field]
-			newSchema.Type = ARRAY
-			newSchema.Items = items
-			newDef.Properties[o.Field] = newSchema
-			if items.OriginRef != "" {
-				types[i] = items.OriginRef
-			} else {
-				types[i] = items.Type
-			}
-		}
-	}
-
-	newRef = ref + "<" + strings.Join(types, ",") + ">"
-	for {
-		if _, ok := doc.Definitions[newRef]; ok {
-			newRef = newRef + "'"
-		} else {
-			break
-		}
-	}
-	doc.Definitions[newRef] = newDef
-	return newRef
-}
-
 func mapParams(doc *innerDocument, params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
@@ -308,13 +250,17 @@ func buildDocument(d *Document) *innerDocument {
 			Description:    d.Info.Description,
 			Version:        d.Info.Version,
 			TermsOfService: d.Info.TermsOfService,
-			License:        &innerLicense{Name: d.Info.License.Name, Url: d.Info.License.Url},
-			Contact:        &innerContact{Name: d.Info.Contact.Name, Url: d.Info.Contact.Url, Email: d.Info.Contact.Email},
 		},
 		Tags:        []*innerTag{},
 		Securities:  map[string]*innerSecurity{},
 		Paths:       map[string]map[string]*innerPath{},
 		Definitions: map[string]*innerDefinition{},
+	}
+	if d.Info.License != nil {
+		out.Info.License = &innerLicense{Name: d.Info.License.Name, Url: d.Info.License.Url}
+	}
+	if d.Info.Contact != nil {
+		out.Info.Contact = &innerContact{Name: d.Info.Contact.Name, Url: d.Info.Contact.Url, Email: d.Info.Contact.Email}
 	}
 	for _, t := range d.Tags {
 		out.Tags = append(out.Tags, &innerTag{

@@ -42,7 +42,7 @@ func TestGenerateYaml(t *testing.T) {
 				NewParam("order", QUERY, STRING, false, "order string").SetDefault(""),
 			).
 			SetResponses(
-				NewResponse(200).SetSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", RefItems("User")))),
+				NewResponse(200).SetSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", "User"))),
 			),
 		NewPath(GET, "/api/v1/user/{id}", "get a user").
 			SetTags("user").
@@ -50,7 +50,7 @@ func TestGenerateYaml(t *testing.T) {
 			SetProduces(JSON).
 			SetParams(NewParam("id", PATH, INTEGER, true, "user id")).
 			SetResponses(
-				NewResponse(200).SetSchema(RefSchema("_Result", "data", RefSchema("User"))),
+				NewResponse(200).SetSchema(RefSchema("_Result", "data", "User")),
 			),
 		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
 			SetTags("user").
