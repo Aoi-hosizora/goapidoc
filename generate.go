@@ -137,49 +137,6 @@ type innerItems struct {
 
 // region map-func
 
-func mapSchema(doc *innerDocument, schema *Schema) *innerSchema {
-	if schema == nil {
-		return nil
-	}
-	if schema.Ref != "" {
-		if len(schema.Options) == 0 {
-			return &innerSchema{OriginRef: schema.Ref, Ref: "#/definitions/" + schema.Ref, Required: schema.Required}
-		}
-		newRef := mapRefOptions(doc, schema.Ref, schema.Options)
-		return &innerSchema{OriginRef: newRef, Ref: "#/definitions/" + newRef, Required: schema.Required}
-	}
-	return &innerSchema{
-		Type:            schema.Type,
-		Required:        schema.Required,
-		Description:     schema.Description,
-		Format:          schema.Format,
-		AllowEmptyValue: schema.AllowEmptyValue,
-		Default:         schema.Default,
-		Enum:            schema.Enum,
-		Items:           mapItems(doc, schema.Items),
-	}
-}
-
-func mapItems(doc *innerDocument, items *Items) *innerItems {
-	if items == nil {
-		return nil
-	}
-	if items.Ref != "" {
-		if len(items.Options) == 0 {
-			return &innerItems{OriginRef: items.Ref, Ref: "#/definitions/" + items.Ref}
-		}
-		newRef := mapRefOptions(doc, items.Ref, items.Options)
-		return &innerItems{OriginRef: newRef, Ref: "#/definitions/" + newRef}
-	}
-	return &innerItems{
-		Type:    items.Type,
-		Format:  items.Format,
-		Default: items.Default,
-		Enum:    items.Enum,
-		Items:   mapItems(doc, items.Items),
-	}
-}
-
 func mapParams(doc *innerDocument, params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
@@ -226,9 +183,9 @@ func mapDefinition(doc *innerDocument, definition *Definition) *innerDefinition 
 	schemas := make(map[string]*innerSchema)
 	for _, p := range definition.Properties {
 		if p.Required {
-			required = append(required, p.Title)
+			required = append(required, p.Name)
 		}
-		schemas[p.Title] = mapSchema(doc, p.Schema)
+		schemas[p.Name] = mapSchema(doc, p.Schema)
 	}
 
 	return &innerDefinition{

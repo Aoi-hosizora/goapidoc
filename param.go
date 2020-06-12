@@ -12,11 +12,6 @@ type Param struct {
 	AllowEmptyValue bool
 	Default         interface{}
 	Enum            []interface{}
-
-	// Deprecated
-	Schema *Schema // `in` == body
-	// Deprecated
-	Items  *Items  // `in` != body && `type` == array
 }
 
 func NewParam(name string, in string, t string, req bool, desc string) *Param {
@@ -60,21 +55,5 @@ func (p *Param) WithDefault(def interface{}) *Param {
 
 func (p *Param) WithEnum(enum ...interface{}) *Param {
 	p.Enum = enum
-	return p
-}
-
-// Set object (when `in` == body)
-// Deprecated
-func (p *Param) WithSchema(schema *Schema) *Param {
-	p.Type = ""
-	p.Schema = schema
-	return p
-}
-
-// Set array (when `type` == array)
-// Deprecated
-func (p *Param) WithItems(items *Items) *Param {
-	p.Type = ARRAY
-	p.Items = items
 	return p
 }

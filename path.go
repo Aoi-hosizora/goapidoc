@@ -66,22 +66,15 @@ func (r *Path) WithResponses(responses ...*Response) *Path {
 // Route response
 type Response struct {
 	Code int
+	Type string
 
-	Type        string
 	Description string
 	Examples    map[string]string // content-type: example
 	Headers     []*Header
-	// Deprecated
-	Schema      *Schema
 }
 
-func NewResponse(code int) *Response {
-	return &Response{Code: code}
-}
-
-func (r *Response) WithType(t string) *Response {
-	r.Type = t
-	return r
+func NewResponse(code int, t string) *Response {
+	return &Response{Code: code, Type: t}
 }
 
 func (r *Response) WithDescription(desc string) *Response {
@@ -96,13 +89,6 @@ func (r *Response) WithExamples(examples map[string]string) *Response {
 
 func (r *Response) WithHeaders(headers ...*Header) *Response {
 	r.Headers = headers
-	return r
-}
-
-// !! Set schema, support objects, primitives and arrays
-// Deprecated
-func (r *Response) WithSchema(schema *Schema) *Response {
-	r.Schema = schema
 	return r
 }
 

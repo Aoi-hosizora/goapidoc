@@ -4,8 +4,9 @@ package goapidoc
 type Definition struct {
 	Name        string
 	Description string
-	Generics    []string
-	Properties  []*Property
+
+	Generics   []string
+	Properties []*Property
 }
 
 func NewDefinition(title string, desc string) *Definition {
@@ -24,28 +25,19 @@ func (d *Definition) WithProperties(properties ...*Property) *Definition {
 
 // Model property
 type Property struct {
-	// Deprecated
-	*Schema
-	Title string
+	Name        string
+	Type        string
+	Required    bool
+	Description string
+
+	Format          string
+	AllowEmptyValue bool
+	Default         interface{}
+	Enum            []interface{}
 }
 
-// normal property
 func NewProperty(name string, t string, req bool, desc string) *Property {
-	return &Property{Title: name, Schema: &Schema{
-		Type: t, Format: defaultFormat(t), Required: req, Description: desc,
-	}}
-}
-
-// sugar: object property
-// Deprecated
-func NewObjectProperty(name string, ref string, req bool) *Property {
-	return &Property{Title: name, Schema: &Schema{Type: OBJECT, Ref: ref, Required: req}}
-}
-
-// sugar: array property
-// Deprecated
-func NewArrayProperty(name string, items *Items, req bool) *Property {
-	return &Property{Title: name, Schema: &Schema{Type: ARRAY, Items: items, Required: req}}
+	return &Property{Name: name, Type: t, Format: defaultFormat(t), Required: req, Description: desc}
 }
 
 func (p *Property) WithFormat(format string) *Property {
@@ -65,11 +57,5 @@ func (p *Property) WithDefault(def interface{}) *Property {
 
 func (p *Property) WithEnum(enum ...interface{}) *Property {
 	p.Enum = enum
-	return p
-}
-
-// Deprecated
-func (p *Property) WithItems(items *Items) *Property {
-	p.Items = items
 	return p
 }
