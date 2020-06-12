@@ -1,4 +1,4 @@
-package apidoc
+package goapidoc
 
 // Model definitions
 type Definition struct {

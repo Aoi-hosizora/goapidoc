@@ -1,4 +1,4 @@
-package apidoc
+package goapidoc
 
 type Param struct {
 	Name        string
@@ -13,7 +13,9 @@ type Param struct {
 	Default         interface{}
 	Enum            []interface{}
 
+	// Deprecated
 	Schema *Schema // `in` == body
+	// Deprecated
 	Items  *Items  // `in` != body && `type` == array
 }
 

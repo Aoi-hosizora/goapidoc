@@ -1,4 +1,4 @@
-package apidoc
+package goapidoc
 
 // Route path
 type Path struct {
@@ -67,14 +67,21 @@ func (r *Path) WithResponses(responses ...*Response) *Path {
 type Response struct {
 	Code int
 
+	Type        string
 	Description string
 	Examples    map[string]string // content-type: example
 	Headers     []*Header
+	// Deprecated
 	Schema      *Schema
 }
 
 func NewResponse(code int) *Response {
 	return &Response{Code: code}
+}
+
+func (r *Response) WithType(t string) *Response {
+	r.Type = t
+	return r
 }
 
 func (r *Response) WithDescription(desc string) *Response {
@@ -102,7 +109,7 @@ func (r *Response) WithSchema(schema *Schema) *Response {
 // Response header
 type Header struct {
 	Name        string
-	Type        string
+	Type        string // base type
 	Description string
 }
 

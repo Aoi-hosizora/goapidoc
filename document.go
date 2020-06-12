@@ -1,4 +1,4 @@
-package apidoc
+package goapidoc
 
 // Global document
 var _document = &Document{}
