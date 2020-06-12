@@ -78,37 +78,37 @@ func TestGenerateYaml(t *testing.T) {
 	)
 
 	AddDefinitions(
-		NewDefinition("Result", "global response").SetProperties(
+		NewDefinition("Result", "global response").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
 		),
-		NewDefinition("User", "user response").SetProperties(
+		NewDefinition("User", "user response").WithProperties(
 			NewProperty("id", INTEGER, true, "user id"),
 			NewProperty("name", STRING, true, "user name"),
-			NewProperty("profile", STRING, false, "user profile").SetAllowEmptyValue(true),
-			NewProperty("gender", STRING, true, "user gender").SetEnum("male", "female"),
-			NewProperty("create_at", STRING, true, "user register time").SetFormat(DATETIME),
-			NewProperty("birthday", STRING, true, "user birthday").SetFormat(DATE),
-			NewProperty("scores", ARRAY, true, "user scores").SetItems(NewItems(NUMBER)),
+			NewProperty("profile", STRING, false, "user profile").WithAllowEmptyValue(true),
+			NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female"),
+			NewProperty("create_at", STRING, true, "user register time").WithFormat(DATETIME),
+			NewProperty("birthday", STRING, true, "user birthday").WithFormat(DATE),
+			NewProperty("scores", ARRAY, true, "user scores").WithItems(NewItems(NUMBER)),
 		),
-		NewDefinition("!Page<User>", "user response").SetProperties(
+		NewDefinition("!Page<User>", "user response").WithProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
 			NewArrayProperty("data", RefItems("User"), true),
 		),
-		NewDefinition("!Result<Page<User>>", "user response").SetProperties(
+		NewDefinition("!Result<Page<User>>", "user response").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
 			NewObjectProperty("data", "Page<User>", true),
 		),
 
-		NewDefinition("_Result", "global response").SetProperties(
+		NewDefinition("_Result", "global response").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", INTEGER, true, "status message"),
 			NewProperty("data", OBJECT, true, "response data"),
 		),
-		NewDefinition("_Page", "global page response").SetProperties(
+		NewDefinition("_Page", "global page response").WithProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),

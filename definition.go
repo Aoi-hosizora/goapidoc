@@ -4,6 +4,7 @@ package goapidoc
 type Definition struct {
 	Name        string
 	Description string
+	Generics    []string
 	Properties  []*Property
 }
 
@@ -11,13 +12,19 @@ func NewDefinition(title string, desc string) *Definition {
 	return &Definition{Name: title, Description: desc}
 }
 
-func (m *Definition) SetProperties(properties ...*Property) *Definition {
-	m.Properties = append(m.Properties, properties...)
-	return m
+func (d *Definition) WithGenerics(generics ...string) *Definition {
+	d.Generics = generics
+	return d
+}
+
+func (d *Definition) WithProperties(properties ...*Property) *Definition {
+	d.Properties = append(d.Properties, properties...)
+	return d
 }
 
 // Model property
 type Property struct {
+	// Deprecated
 	*Schema
 	Title string
 }
@@ -30,46 +37,39 @@ func NewProperty(name string, t string, req bool, desc string) *Property {
 }
 
 // sugar: object property
+// Deprecated
 func NewObjectProperty(name string, ref string, req bool) *Property {
 	return &Property{Title: name, Schema: &Schema{Type: OBJECT, Ref: ref, Required: req}}
 }
 
 // sugar: array property
+// Deprecated
 func NewArrayProperty(name string, items *Items, req bool) *Property {
 	return &Property{Title: name, Schema: &Schema{Type: ARRAY, Items: items, Required: req}}
 }
 
-func (p *Property) SetFormat(format string) *Property {
+func (p *Property) WithFormat(format string) *Property {
 	p.Format = format
 	return p
 }
 
-func (p *Property) SetAllowEmptyValue(allow bool) *Property {
+func (p *Property) WithAllowEmptyValue(allow bool) *Property {
 	p.AllowEmptyValue = allow
 	return p
 }
 
-func (p *Property) SetDefault(def interface{}) *Property {
+func (p *Property) WithDefault(def interface{}) *Property {
 	p.Default = def
 	return p
 }
 
-func (p *Property) SetEnum(enum ...interface{}) *Property {
+func (p *Property) WithEnum(enum ...interface{}) *Property {
 	p.Enum = enum
 	return p
 }
 
-func (p *Property) SetItems(items *Items) *Property {
+// Deprecated
+func (p *Property) WithItems(items *Items) *Property {
 	p.Items = items
 	return p
-}
-
-// get default format from type
-func defaultFormat(t string) string {
-	if t == INTEGER {
-		return INT32
-	} else if t == NUMBER {
-		return DOUBLE
-	}
-	return ""
 }
