@@ -268,11 +268,15 @@ func buildDocument(d *Document) *innerDocument {
 			Description: t.Description,
 		})
 	}
-	for _, s := range d.Securities {
-		out.Securities[s.Title] = &innerSecurity{
-			Type: s.Type,
-			Name: s.Name,
-			In:   s.In,
+	if len(d.Securities) == 0 {
+		d.Securities = nil
+	} else {
+		for _, s := range d.Securities {
+			out.Securities[s.Title] = &innerSecurity{
+				Type: s.Type,
+				Name: s.Name,
+				In:   s.In,
+			}
 		}
 	}
 

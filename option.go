@@ -5,6 +5,7 @@ import (
 )
 
 // Addition schema option
+// Deprecated
 type AdditionOption struct {
 	Field  string
 	Ref    string

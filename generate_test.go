@@ -10,9 +10,9 @@ func TestGenerateYaml(t *testing.T) {
 	SetDocument(
 		"localhost:10086", "/",
 		NewInfo("test-api", "a demo description", "1.0").
-			SetTermsOfService("http://xxx.yyy.zzz").
-			SetLicense(NewLicense("MIT", "http://xxx.yyy.zzz")).
-			SetContact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
+			WithTermsOfService("http://xxx.yyy.zzz").
+			WithLicense(NewLicense("MIT", "http://xxx.yyy.zzz")).
+			WithContact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
 	)
 	SetTags(
 		NewTag("ping", "ping-controller"),
@@ -24,56 +24,56 @@ func TestGenerateYaml(t *testing.T) {
 
 	AddPaths(
 		NewPath(GET, "/api/v1/ping", "ping").
-			SetDescription("ping the server").
-			SetTags("ping").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetResponses(
-				NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: "{\n\t\"ping\": \"pong\"\n}"}),
+			WithDescription("ping the server").
+			WithTags("ping").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithResponses(
+				NewResponse(200).WithDescription("success").WithExamples(map[string]string{JSON: "{\n\t\"ping\": \"pong\"\n}"}),
 			),
 		NewPath(GET, "/api/v1/user", "get users").
-			SetTags("user").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetSecurities("jwt").
-			SetParams(
-				NewParam("page", QUERY, INTEGER, false, "current page").SetDefault(1),
-				NewParam("total", QUERY, INTEGER, false, "page size").SetDefault(10),
-				NewParam("order", QUERY, STRING, false, "order string").SetDefault(""),
+			WithTags("user").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithSecurities("jwt").
+			WithParams(
+				NewParam("page", QUERY, INTEGER, false, "current page").WithDefault(1),
+				NewParam("total", QUERY, INTEGER, false, "page size").WithDefault(10),
+				NewParam("order", QUERY, STRING, false, "order string").WithDefault(""),
 			).
-			SetResponses(
-				NewResponse(200).SetSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", "User"))),
+			WithResponses(
+				NewResponse(200).WithSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", "User"))),
 			),
 		NewPath(GET, "/api/v1/user/{id}", "get a user").
-			SetTags("user").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetParams(NewParam("id", PATH, INTEGER, true, "user id")).
-			SetResponses(
-				NewResponse(200).SetSchema(RefSchema("_Result", "data", "User")),
+			WithTags("user").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithParams(NewParam("id", PATH, INTEGER, true, "user id")).
+			WithResponses(
+				NewResponse(200).WithSchema(RefSchema("_Result", "data", "User")),
 			),
 		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
-			SetTags("user").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetSecurities("jwt").
-			SetParams(
+			WithTags("user").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithSecurities("jwt").
+			WithParams(
 				NewParam("id", PATH, INTEGER, true, "user id"),
-				NewParam("body", BODY, OBJECT, true, "request body").SetSchema(RefSchema("User")),
+				NewParam("body", BODY, OBJECT, true, "request body").WithSchema(RefSchema("User")),
 			).
-			SetResponses(
-				NewResponse(200).SetDescription("success").SetSchema(RefSchema("Result")),
-				NewResponse(404).SetDescription("not found").SetHeaders(NewHeader("Content-Type", STRING, "demo")),
-				NewResponse(400).SetDescription("bad request").SetSchema(NewSchema(STRING, true)).SetExamples(map[string]string{JSON: "bad request"}),
+			WithResponses(
+				NewResponse(200).WithDescription("success").WithSchema(RefSchema("Result")),
+				NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Type", STRING, "demo")),
+				NewResponse(400).WithDescription("bad request").WithSchema(NewSchema(STRING, true)).WithExamples(map[string]string{JSON: "bad request"}),
 			),
 		NewPath(HEAD, "/api/v1/test", "test path").
-			SetParams(
-				NewParam("arr", QUERY, ARRAY, true, "test").SetItems(ArrItems(NewItems(INTEGER).SetFormat(INT64))),
-				NewParam("ref", QUERY, ARRAY, true, "test").SetItems(RefItems("User")),
-				NewParam("enum", QUERY, STRING, true, "test").SetEnum("male", "female"),
-				NewParam("option1", QUERY, ARRAY, true, "test").SetItems(RefItems("Result", "code", NewSchema(STRING, true))),
-				NewParam("option2", QUERY, ARRAY, true, "test").SetItems(RefItems("Result", "code", NewItems(STRING))),
-				NewParam("arr2", BODY, ARRAY, true, "test").SetSchema(ArrSchema(NewItems(INTEGER))),
+			WithParams(
+				NewParam("arr", QUERY, ARRAY, true, "test").WithItems(ArrItems(NewItems(INTEGER).SetFormat(INT64))),
+				NewParam("ref", QUERY, ARRAY, true, "test").WithItems(RefItems("User")),
+				NewParam("enum", QUERY, STRING, true, "test").WithEnum("male", "female"),
+				NewParam("option1", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewSchema(STRING, true))),
+				NewParam("option2", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewItems(STRING))),
+				NewParam("arr2", BODY, ARRAY, true, "test").WithSchema(ArrSchema(NewItems(INTEGER))),
 			),
 	)
 
