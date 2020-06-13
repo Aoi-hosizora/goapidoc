@@ -67,7 +67,7 @@ func TestGenerateYaml(t *testing.T) {
 			WithResponses(
 				// NewResponse(200).WithDescription("success").WithSchema(RefSchema("Result")),
 				NewResponse(200).WithType("Result").WithDescription("success"),
-				NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Type", STRING, "demo")),
+				NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Kind", STRING, "demo")),
 				// NewResponse(400).WithDescription("bad request").WithSchema(NewSchema(STRING, true)).WithExamples(map[string]string{JSON: "bad request"}),
 				NewResponse(400).WithType(STRING).WithDescription("bad request").WithExamples(map[string]string{JSON: "bad request"}),
 			),
@@ -79,11 +79,12 @@ func TestGenerateYaml(t *testing.T) {
 				// NewParam("option1", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewSchema(STRING, true))),
 				// NewParam("option2", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewItems(STRING))),
 				// NewParam("arr2", BODY, ARRAY, true, "test").WithSchema(ArrSchema(NewItems(INTEGER))),
-				NewParam("arr", QUERY, "integer[]", true, "test"),
+				NewParam("arr", QUERY, "integer#int64[]", true, "test"),
 				NewParam("ref", QUERY, "User[]", true, "test"),
 				NewParam("enum", QUERY, STRING, true, "test").WithEnum("male", "female"),
 				NewParam("option1", QUERY, "Result<string>[]", true, "test"),
 				NewParam("option2", QUERY, "Result<string[]>[]", true, "test"),
+				NewParam("test", BODY, "_ResultPage<User>", true, "test"),
 				NewParam("arr2", BODY, INTEGER, true, "test"),
 			),
 	)
@@ -98,8 +99,8 @@ func TestGenerateYaml(t *testing.T) {
 			NewProperty("name", STRING, true, "user name"),
 			NewProperty("profile", STRING, false, "user profile").WithAllowEmptyValue(true),
 			NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female"),
-			NewProperty("create_at", STRING, true, "user register time").WithFormat(DATETIME),
-			NewProperty("birthday", STRING, true, "user birthday").WithFormat(DATE),
+			NewProperty("create_at", "string#date-time", true, "user register time"),
+			NewProperty("birthday", "string#date", true, "user birthday"),
 			NewProperty("scores", "number[]", true, "user scores"),
 		),
 		NewDefinition("!Page<User>", "user response").WithProperties(
@@ -107,25 +108,28 @@ func TestGenerateYaml(t *testing.T) {
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
 			NewProperty("data", "User[]", true, "page data"),
-			// NewArrayProperty("data", RefItems("User"), true),
 		),
 		NewDefinition("!Result<Page<User>>", "user response").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
-			NewProperty("data", "Page<User>", true, "result data"),
-			// NewObjectProperty("data", "Page<User>", true),
+			NewProperty("data", "!Page<User>", true, "result data"),
 		),
 
-		NewDefinition("_Result", "global response").WithProperties(
+		NewDefinition("_Result", "global response").WithGenerics("T").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", INTEGER, true, "status message"),
-			NewProperty("data", OBJECT, true, "response data"),
+			NewProperty("data", "T", true, "response data"),
 		),
-		NewDefinition("_Page", "global page response").WithProperties(
+		NewDefinition("_Page", "global page response").WithGenerics("T").WithProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
-			NewProperty("data", ARRAY, true, "page data"),
+			NewProperty("data", "T[]", true, "page data"),
+		),
+		NewDefinition("_ResultPage", "global response").WithGenerics("T").WithProperties(
+			NewProperty("code", INTEGER, true, "status code"),
+			NewProperty("message", INTEGER, true, "status message"),
+			NewProperty("data", "_Page<T>", true, "response data"),
 		),
 	)
 

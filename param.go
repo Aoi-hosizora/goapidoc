@@ -8,14 +8,13 @@ type Param struct {
 	Description string
 
 	// `in` != body
-	Format          string
 	AllowEmptyValue bool
 	Default         interface{}
 	Enum            []interface{}
 }
 
 func NewParam(name string, in string, t string, req bool, desc string) *Param {
-	return &Param{Name: name, In: in, Required: req, Description: desc, Type: t, Format: defaultFormat(t)}
+	return &Param{Name: name, In: in, Required: req, Description: desc, Type: t}
 }
 
 func NewPathParam(name string, t string, req bool, desc string) *Param {
@@ -36,11 +35,6 @@ func NewBodyParam(name string, t string, req bool, desc string) *Param {
 
 func NewHeaderParam(name string, t string, req bool, desc string) *Param {
 	return NewParam(name, HEADER, t, req, desc)
-}
-
-func (p *Param) WithFormat(format string) *Param {
-	p.Format = format
-	return p
 }
 
 func (p *Param) WithAllowEmptyValue(allow bool) *Param {

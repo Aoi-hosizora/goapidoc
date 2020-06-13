@@ -30,19 +30,13 @@ type Property struct {
 	Required    bool
 	Description string
 
-	Format          string
 	AllowEmptyValue bool
 	Default         interface{}
 	Enum            []interface{}
 }
 
 func NewProperty(name string, t string, req bool, desc string) *Property {
-	return &Property{Name: name, Type: t, Format: defaultFormat(t), Required: req, Description: desc}
-}
-
-func (p *Property) WithFormat(format string) *Property {
-	p.Format = format
-	return p
+	return &Property{Name: name, Type: t, Required: req, Description: desc}
 }
 
 func (p *Property) WithAllowEmptyValue(allow bool) *Property {

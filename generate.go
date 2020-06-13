@@ -20,7 +20,6 @@ type innerDocument struct {
 	Securities  map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
 	Paths       map[string]map[string]*innerPath `yaml:"paths,omitempty"               json:"paths,omitempty"`
 	Definitions map[string]*innerDefinition      `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
-	_Additions  map[string]*innerDefinition      `yaml:"-"                             json:"-"`
 }
 
 type innerTag struct {
@@ -100,10 +99,10 @@ type innerParam struct {
 
 // !!!
 type innerDefinition struct {
-	Type        string                  `json:"type"                  json:"type"`
-	Required    []string                `json:"required"              json:"required"`
-	Description string                  `json:"description,omitempty" json:"description,omitempty"`
-	Properties  map[string]*innerSchema `json:"properties,omitempty"  json:"properties,omitempty"`
+	Type        string                  `yaml:"type"                  json:"type"`
+	Required    []string                `yaml:"required"              json:"required"`
+	Description string                  `yaml:"description,omitempty" json:"description,omitempty"`
+	Properties  map[string]*innerSchema `yaml:"properties,omitempty"  json:"properties,omitempty"`
 }
 
 // !!! (include Schema and Property)
@@ -137,22 +136,57 @@ type innerItems struct {
 
 // region handle-type
 
-func handleInnerObject(obj *innerObject) (origin string, ref string) {
+func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject) (origin string, ref string) {
 	if obj == nil || obj.Type == "" {
 		return "", ""
 	}
-	/*
-		"schema": {
-		  "originRef": "User",
-		  "$ref": "#/definitions/User"
-		}
-	*/
+
 	origin = obj.Type
-	ref = "#/definitions/" + obj.Type
+	if len(obj.Generic) != 0 {
+		origin += "<"
+		for _, g := range obj.Generic {
+			if g.Kind == innerPrimeKind {
+				origin += g.OutPrime.Type
+			} else if g.Kind == innerArrayKind {
+				origin += g.OutArray.Type.Name
+			} else if g.Kind == innerObjectKind {
+				newOrigin, _ := handleInnerObject(doc, innerDoc, g.OutObject)
+				origin += newOrigin
+			}
+			origin += ","
+		}
+		origin = origin[:len(origin)-1]
+		origin += ">"
+
+		var gdef Definition
+		for _, def := range doc.Definitions {
+			if def.Name == obj.Type && len(def.Generics) == len(obj.Generic) {
+				gdef = *def
+				break
+			}
+		}
+		if gdef.Name != "" {
+			for idx, g := range obj.Generic {
+				gActual := g.Name
+				gtype := gdef.Generics[idx]
+				for _, prop := range gdef.Properties {
+					if prop.Type == gtype { // T -> Type
+						prop.Type = gActual
+					} else if strings.Contains(prop.Type, gtype+"[]") { // T[] -> Type[]
+						prop.Type = strings.ReplaceAll(prop.Type, gtype+"[]", gActual+"[]")
+					} else if strings.Contains(prop.Type, "<"+gtype+">") { // <T> -> <Type>
+						prop.Type = strings.ReplaceAll(prop.Type, "<"+gtype+">", "<"+gActual+">")
+					}
+				}
+			}
+			innerDoc.Definitions[origin] = mapDefinition(doc, innerDoc, &gdef)
+		}
+	}
+	ref = "#/definitions/" + origin
 	return origin, ref
 }
 
-func handleInnerArray(arr *innerArray) *innerItems {
+func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *innerArray) *innerItems {
 	if arr == nil {
 		return nil
 	}
@@ -170,18 +204,18 @@ func handleInnerArray(arr *innerArray) *innerItems {
 		  "$ref": "#/definitions/User"
 		}
 	*/
-	if arr.Type.Type == innerBaseType {
+	if arr.Type.Kind == innerPrimeKind {
 		return &innerItems{
-			Type:   arr.Type.OutType,
-			Format: defaultFormat(arr.Type.OutType),
+			Type:   arr.Type.OutPrime.Type,
+			Format: arr.Type.OutPrime.Format,
 		}
-	} else if arr.Type.Type == innerArrayType {
+	} else if arr.Type.Kind == innerArrayKind {
 		return &innerItems{
 			Type:  ARRAY,
-			Items: handleInnerArray(arr.Type.OutItems),
+			Items: handleInnerArray(doc, innerDoc, arr.Type.OutArray),
 		}
-	} else if arr.Type.Type == innerObjectType {
-		origin, ref := handleInnerObject(arr.Type.OutSchema)
+	} else if arr.Type.Kind == innerObjectKind {
+		origin, ref := handleInnerObject(doc, innerDoc, arr.Type.OutObject)
 		if origin != "" {
 			return &innerItems{
 				OriginRef: origin,
@@ -192,7 +226,7 @@ func handleInnerArray(arr *innerArray) *innerItems {
 	return nil
 }
 
-func mapParameterSchema(t string) (string, *innerSchema, *innerItems) {
+func mapParameterSchema(doc *Document, innerDoc *innerDocument, t string) (string, string, *innerSchema, *innerItems) {
 	it := parseInnerType(t)
 	/*
 		{
@@ -210,17 +244,18 @@ func mapParameterSchema(t string) (string, *innerSchema, *innerItems) {
 		}
 	*/
 	typeStr := ""
+	formatStr := ""
 	var items *innerItems
 	var schema *innerSchema
 
-	if it.Type == innerBaseType {
-		typeStr = it.OutType
-	} else if it.Type == innerArrayType {
+	if it.Kind == innerPrimeKind {
+		typeStr = it.OutPrime.Type
+		formatStr = it.OutPrime.Format
+	} else if it.Kind == innerArrayKind {
 		typeStr = ARRAY
-		items = handleInnerArray(it.OutItems)
-	} else if it.Type == innerObjectType {
-		typeStr = ""
-		origin, ref := handleInnerObject(it.OutSchema)
+		items = handleInnerArray(doc, innerDoc, it.OutArray)
+	} else if it.Kind == innerObjectKind {
+		origin, ref := handleInnerObject(doc, innerDoc, it.OutObject)
 		if origin != "" {
 			schema = &innerSchema{
 				OriginRef: origin,
@@ -228,10 +263,10 @@ func mapParameterSchema(t string) (string, *innerSchema, *innerItems) {
 			}
 		}
 	}
-	return typeStr, schema, items
+	return typeStr, formatStr, schema, items
 }
 
-func mapResponseSchema(t string, req bool) *innerSchema {
+func mapResponseSchema(doc *Document, innerDoc *innerDocument, t string, req bool) *innerSchema {
 	it := parseInnerType(t)
 	/*
 		"schema": {
@@ -247,19 +282,20 @@ func mapResponseSchema(t string, req bool) *innerSchema {
 		  "$ref": "#/definitions/Result"
 		}
 	*/
-	if it.Type == innerBaseType {
+	if it.Kind == innerPrimeKind {
 		return &innerSchema{
-			Type:     it.OutType,
+			Type:     it.OutPrime.Type,
+			Format:   it.OutPrime.Format,
 			Required: req,
 		}
-	} else if it.Type == innerArrayType {
-		items := handleInnerArray(it.OutItems)
+	} else if it.Kind == innerArrayKind {
+		items := handleInnerArray(doc, innerDoc, it.OutArray)
 		return &innerSchema{
 			Type:  ARRAY,
 			Items: items,
 		}
-	} else if it.Type == innerObjectType {
-		origin, ref := handleInnerObject(it.OutSchema)
+	} else if it.Kind == innerObjectKind {
+		origin, ref := handleInnerObject(doc, innerDoc, it.OutObject)
 		if origin != "" {
 			return &innerSchema{
 				OriginRef: origin,
@@ -271,7 +307,7 @@ func mapResponseSchema(t string, req bool) *innerSchema {
 	return nil
 }
 
-func mapPropertySchema(t string) (outType string, origin string, ref string, items *innerItems) {
+func mapPropertySchema(doc *Document, innerDoc *innerDocument, t string) (outType string, outFmt string, origin string, ref string, items *innerItems) {
 	it := parseInnerType(t)
 	/*
 		{
@@ -286,14 +322,15 @@ func mapPropertySchema(t string) (outType string, origin string, ref string, ite
 		  "$ref": "#/definitions/Page<User>"
 		}
 	*/
-	if it.Type == innerBaseType && it.OutType != "" {
-		outType = it.OutType
-	} else if it.Type == innerArrayType && it.OutItems != nil {
+	if it.Kind == innerPrimeKind {
+		outType = it.OutPrime.Type
+		outFmt = it.OutPrime.Format
+	} else if it.Kind == innerArrayKind {
 		outType = ARRAY
-		items = handleInnerArray(it.OutItems)
-	} else if it.Type == innerObjectType && it.OutSchema != nil {
+		items = handleInnerArray(doc, innerDoc, it.OutArray)
+	} else if it.Kind == innerObjectKind {
 		outType = ""
-		origin, ref = handleInnerObject(it.OutSchema)
+		origin, ref = handleInnerObject(doc, innerDoc, it.OutObject)
 	}
 	return
 }
@@ -302,17 +339,17 @@ func mapPropertySchema(t string) (outType string, origin string, ref string, ite
 
 // region map-func
 
-func mapParams(params []*Param) []*innerParam {
+func mapParams(doc *Document, innerDoc *innerDocument, params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
-		t, schema, items := mapParameterSchema(p.Type)
+		t, f, schema, items := mapParameterSchema(doc, innerDoc, p.Type)
 		out[i] = &innerParam{
 			Name:            p.Name,
 			In:              p.In,
 			Required:        p.Required,
 			Description:     p.Description,
 			Type:            t,
-			Format:          p.Format,
+			Format:          f,
 			AllowEmptyValue: p.AllowEmptyValue,
 			Default:         p.Default,
 			Enum:            p.Enum,
@@ -323,7 +360,7 @@ func mapParams(params []*Param) []*innerParam {
 	return out
 }
 
-func mapResponses(responses []*Response) map[string]*innerResponse {
+func mapResponses(doc *Document, innerDoc *innerDocument, responses []*Response) map[string]*innerResponse {
 	out := make(map[string]*innerResponse)
 	for _, r := range responses {
 		headers := map[string]*innerHeader{}
@@ -336,7 +373,7 @@ func mapResponses(responses []*Response) map[string]*innerResponse {
 
 		out[strconv.Itoa(r.Code)] = &innerResponse{
 			Description: r.Description,
-			Schema:      mapResponseSchema(r.Type, r.Required),
+			Schema:      mapResponseSchema(doc, innerDoc, r.Type, r.Required),
 			Examples:    r.Examples,
 			Headers:     headers,
 		}
@@ -344,19 +381,19 @@ func mapResponses(responses []*Response) map[string]*innerResponse {
 	return out
 }
 
-func mapDefinition(def *Definition) *innerDefinition {
+func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *innerDefinition {
 	required := make([]string, 0)
 	properties := make(map[string]*innerSchema)
 	for _, p := range def.Properties {
 		if p.Required {
 			required = append(required, p.Name)
 		}
-		t, origin, ref, items := mapPropertySchema(p.Type)
+		t, f, origin, ref, items := mapPropertySchema(doc, innerDoc, p.Type)
 		properties[p.Name] = &innerSchema{
 			Required:        p.Required,
 			Description:     p.Description,
 			Type:            t,
-			Format:          p.Format,
+			Format:          f,
 			AllowEmptyValue: p.AllowEmptyValue,
 			Default:         p.Default,
 			Enum:            p.Enum,
@@ -416,8 +453,9 @@ func buildDocument(d *Document) *innerDocument {
 	}
 
 	// models
-	for _, d := range d.Definitions {
-		out.Definitions[d.Name] = mapDefinition(d)
+	for idx := 0; idx < len(d.Definitions); idx++ {
+		def := d.Definitions[idx]
+		out.Definitions[def.Name] = mapDefinition(d, out, def)
 	}
 
 	// paths
@@ -428,7 +466,7 @@ func buildDocument(d *Document) *innerDocument {
 		}
 		p.Method = strings.ToLower(p.Method)
 		id := strings.ReplaceAll(p.Route, "/", "-")
-		id = strings.ReplaceAll(strings.ReplaceAll(id, "{", "-"), "}", "-")
+		id = strings.ReplaceAll(strings.ReplaceAll(id, "{", ""), "}", "")
 		id += "-" + p.Method
 		securities := make([]map[string][]interface{}, len(p.Securities))
 		for i, s := range p.Securities {
@@ -444,8 +482,8 @@ func buildDocument(d *Document) *innerDocument {
 			Produces:    p.Produces,
 			Securities:  securities,
 			Deprecated:  p.Deprecated,
-			Parameters:  mapParams(p.Params),
-			Responses:   mapResponses(p.Responses),
+			Parameters:  mapParams(d, out, p.Params),
+			Responses:   mapResponses(d, out, p.Responses),
 		}
 	}
 

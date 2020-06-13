@@ -4,36 +4,44 @@ import (
 	"strings"
 )
 
-type innerTypeEnum int
+type innerTypeKind int
 
 const (
-	innerBaseType innerTypeEnum = iota
-	innerObjectType
-	innerArrayType
+	innerPrimeKind innerTypeKind = iota
+	innerObjectKind
+	innerArrayKind
 )
 
 type innerType struct {
 	Name string
-	Type innerTypeEnum
+	Kind innerTypeKind
 
-	OutType   string       // prime
-	OutSchema *innerObject // object
-	OutItems  *innerArray  // array
+	OutPrime  *innerPrime  // prime
+	OutObject *innerObject // object
+	OutArray  *innerArray  // array
 }
 
+// Obj<integer#int64, string[]>[]
 func parseInnerType(t string) *innerType {
 	t = strings.TrimSpace(t)
-
-	// base
-	if t == INTEGER || t == NUMBER || t == STRING || t == BOOLEAN || t == FILE || t == ARRAY || t == OBJECT {
-		return &innerType{Name: t, Type: innerBaseType, OutType: t}
-	}
 
 	// array
 	if len(t) >= 3 && t[len(t)-2:] == "[]" {
 		return &innerType{
-			Name: t, Type: innerArrayType,
-			OutItems: &innerArray{Type: parseInnerType(t[:len(t)-2])},
+			Name: t, Kind: innerArrayKind,
+			OutArray: &innerArray{Type: parseInnerType(t[:len(t)-2])},
+		}
+	}
+
+	// base
+	for _, tp := range []string{INTEGER, NUMBER, STRING, BOOLEAN, FILE, ARRAY, OBJECT} {
+		if t == tp || (len(t) > len(tp)+1 && strings.HasPrefix(t, tp) && t[len(tp)] == '#') {
+			format := defaultFormat(tp)
+			if t != tp {
+				format = t[len(tp)+1:]
+			}
+			out := &innerPrime{Type: tp, Format: format}
+			return &innerType{Name: t, Kind: innerPrimeKind, OutPrime: out}
 		}
 	}
 
@@ -58,11 +66,17 @@ func parseInnerType(t string) *innerType {
 		for _, generic := range generics {
 			out.Generic = append(out.Generic, parseInnerType(generic))
 		}
-		return &innerType{Name: t, Type: innerObjectType, OutSchema: out}
+		return &innerType{Name: t, Kind: innerObjectKind, OutObject: out}
 	}
 
 	// object without generic
-	return &innerType{Name: t, Type: innerObjectType, OutSchema: &innerObject{Type: t}}
+	return &innerType{Name: t, Kind: innerObjectKind, OutObject: &innerObject{Type: t}}
+}
+
+// integer#int64
+type innerPrime struct {
+	Type   string
+	Format string
 }
 
 // xxx<yyy,...>
