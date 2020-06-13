@@ -148,7 +148,7 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject)
 			if g.Kind == innerPrimeKind {
 				origin += g.OutPrime.Type
 			} else if g.Kind == innerArrayKind {
-				origin += g.OutArray.Type.Name
+				origin += g.Name
 			} else if g.Kind == innerObjectKind {
 				newOrigin, _ := handleInnerObject(doc, innerDoc, g.OutObject)
 				origin += newOrigin
@@ -158,14 +158,31 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject)
 		origin = origin[:len(origin)-1]
 		origin += ">"
 
-		var gdef Definition
+		var gdef *Definition
 		for _, def := range doc.Definitions {
 			if def.Name == obj.Type && len(def.Generics) == len(obj.Generic) {
-				gdef = *def
+				props := make([]*Property, len(def.Properties))
+				for idx, p := range def.Properties {
+					props[idx] = &Property{
+						Name:            p.Name,
+						Type:            p.Type,
+						Required:        p.Required,
+						Description:     p.Description,
+						AllowEmptyValue: p.AllowEmptyValue,
+						Default:         p.Default,
+						Enum:            p.Enum,
+					}
+				}
+				gdef = &Definition{
+					Name:        def.Name,
+					Description: def.Description,
+					Generics:    def.Generics,
+					Properties:  props,
+				}
 				break
 			}
 		}
-		if gdef.Name != "" {
+		if gdef != nil {
 			for idx, g := range obj.Generic {
 				gActual := g.Name
 				gtype := gdef.Generics[idx]
@@ -179,7 +196,7 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject)
 					}
 				}
 			}
-			innerDoc.Definitions[origin] = mapDefinition(doc, innerDoc, &gdef)
+			innerDoc.Definitions[origin] = mapDefinition(doc, innerDoc, gdef)
 		}
 	}
 	ref = "#/definitions/" + origin
@@ -531,18 +548,18 @@ func saveFile(path string, data []byte) error {
 	return nil
 }
 
-func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) error {
+func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) ([]byte, error) {
 	out := appendKvs(buildDocument(d), kvs)
 	doc, err := yaml.Marshal(out)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = saveFile(path, doc)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return doc, nil
 }
 
 // stop json to escape
@@ -555,24 +572,32 @@ func jsonMarshal(t interface{}) ([]byte, error) {
 	return buffer.Bytes(), err
 }
 
-func (d *Document) GenerateJson(path string, kvs map[string]interface{}) error {
+func (d *Document) GenerateJson(path string, kvs map[string]interface{}) ([]byte, error) {
 	out := appendKvs(buildDocument(d), kvs)
 	doc, err := jsonMarshal(out)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = saveFile(path, doc)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return doc, nil
 }
 
-func GenerateYaml(path string, kvs map[string]interface{}) error {
+func GenerateYaml(path string, kvs map[string]interface{}) ([]byte, error) {
 	return _document.GenerateYaml(path, kvs)
 }
 
-func GenerateJson(path string, kvs map[string]interface{}) error {
+func GenerateJson(path string, kvs map[string]interface{}) ([]byte, error) {
 	return _document.GenerateJson(path, kvs)
+}
+
+func GenerateYamlWithSwagger2(path string) ([]byte, error) {
+	return _document.GenerateYaml(path, map[string]interface{}{"swagger": "2.0"})
+}
+
+func GenerateJsonWithSwagger2(path string) ([]byte, error) {
+	return _document.GenerateJson(path, map[string]interface{}{"swagger": "2.0"})
 }

@@ -1,12 +1,34 @@
 package goapidoc
 
 import (
-	"fmt"
 	"log"
 	"testing"
 )
 
-func TestGenerateYaml(t *testing.T) {
+func TestParseInnerType(t *testing.T) {
+	str := "aType<T1<>, T2<TT1<integer[]>>, T3<TT1, TT2>, T4>[][]"
+	res := parseInnerType(str)
+	obj := res.OutArray.Type.OutArray.Type
+	log.Println(res.Name, res.OutArray)
+	log.Println(res.OutArray.Type.Name, res.OutArray.Type.OutArray)
+	log.Println(obj.Name, obj.OutObject.Type, obj.OutObject.Generic)
+
+	g0 := obj.OutObject.Generic[0]   // T1<>
+	g1 := obj.OutObject.Generic[1]   // T2<TT1<integer[]>>
+	g10 := g1.OutObject.Generic[0]   // TT1<integer[]>
+	g100 := g10.OutObject.Generic[0] // integer[]
+	g1000 := g100.OutArray.Type      // integer
+	g2 := obj.OutObject.Generic[2]   // T3<TT1, TT2>
+	g20 := g2.OutObject.Generic[0]   // TT1
+	g21 := g2.OutObject.Generic[1]   // TT2
+	g3 := obj.OutObject.Generic[3]   // T4
+	log.Println(g0.Name, g0.OutObject.Type)
+	log.Println(g1.Name, g1.OutObject.Type, g10.OutObject.Type, g100.Name, g1000.Name)
+	log.Println(g2.Name, g2.OutObject.Type, g20.OutObject.Type, g21.OutObject.Type)
+	log.Println(g3.Name, g3.OutObject.Type)
+}
+
+func TestGenerate(t *testing.T) {
 	SetDocument(
 		"localhost:10086", "/",
 		NewInfo("test-api", "a demo description", "1.0").
@@ -29,7 +51,7 @@ func TestGenerateYaml(t *testing.T) {
 			WithConsumes(JSON).
 			WithProduces(JSON).
 			WithResponses(
-				NewResponse(200).WithDescription("success").WithExamples(map[string]string{JSON: "{\n\t\"ping\": \"pong\"\n}"}),
+				NewResponse(200).WithDescription("success").WithExamples(map[string]string{JSON: "{\n    \"ping\": \"pong\"\n}"}),
 			),
 		NewPath(GET, "/api/v1/user", "get users").
 			WithTags("user").
@@ -37,22 +59,20 @@ func TestGenerateYaml(t *testing.T) {
 			WithProduces(JSON).
 			WithSecurities("jwt").
 			WithParams(
-				NewParam("page", QUERY, INTEGER, false, "current page").WithDefault(1),
-				NewParam("total", QUERY, INTEGER, false, "page size").WithDefault(10),
-				NewParam("order", QUERY, STRING, false, "order string").WithDefault(""),
+				NewQueryParam("page", INTEGER, false, "current page").WithDefault(1),
+				NewQueryParam("total", INTEGER, false, "page size").WithDefault(10),
+				NewQueryParam("order", STRING, false, "order string").WithDefault(""),
 			).
 			WithResponses(
 				NewResponse(200).WithType("_Result<_Page<User>>"),
-				// NewResponse(200).WithSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", "User"))),
 			),
 		NewPath(GET, "/api/v1/user/{id}", "get a user").
 			WithTags("user").
 			WithConsumes(JSON).
 			WithProduces(JSON).
-			WithParams(NewParam("id", PATH, INTEGER, true, "user id")).
+			WithParams(NewPathParam("id", INTEGER, true, "user id")).
 			WithResponses(
 				NewResponse(200).WithType("_Result<User>"),
-				// NewResponse(200).WithSchema(RefSchema("_Result", "data", "User")),
 			),
 		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
 			WithTags("user").
@@ -60,32 +80,23 @@ func TestGenerateYaml(t *testing.T) {
 			WithProduces(JSON).
 			WithSecurities("jwt").
 			WithParams(
-				NewParam("id", PATH, INTEGER, true, "user id"),
-				// NewParam("body", BODY, OBJECT, true, "request body").WithSchema(RefSchema("User")),
-				NewParam("body", BODY, "User", true, "request body"),
+				NewPathParam("id", INTEGER, true, "user id"),
+				NewBodyParam("body", "User", true, "request body"),
 			).
 			WithResponses(
-				// NewResponse(200).WithDescription("success").WithSchema(RefSchema("Result")),
 				NewResponse(200).WithType("Result").WithDescription("success"),
 				NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Kind", STRING, "demo")),
-				// NewResponse(400).WithDescription("bad request").WithSchema(NewSchema(STRING, true)).WithExamples(map[string]string{JSON: "bad request"}),
 				NewResponse(400).WithType(STRING).WithDescription("bad request").WithExamples(map[string]string{JSON: "bad request"}),
 			),
 		NewPath(HEAD, "/api/v1/test", "test path").
 			WithParams(
-				// NewParam("arr", QUERY, ARRAY, true, "test").WithItems(ArrItems(NewItems(INTEGER).SetFormat(INT64))),
-				// NewParam("ref", QUERY, ARRAY, true, "test").WithItems(RefItems("User")),
-				// NewParam("enum", QUERY, STRING, true, "test").WithEnum("male", "female"),
-				// NewParam("option1", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewSchema(STRING, true))),
-				// NewParam("option2", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewItems(STRING))),
-				// NewParam("arr2", BODY, ARRAY, true, "test").WithSchema(ArrSchema(NewItems(INTEGER))),
-				NewParam("arr", QUERY, "integer#int64[]", true, "test"),
-				NewParam("ref", QUERY, "User[]", true, "test"),
-				NewParam("enum", QUERY, STRING, true, "test").WithEnum("male", "female"),
-				NewParam("option1", QUERY, "Result<string>[]", true, "test"),
-				NewParam("option2", QUERY, "Result<string[]>[]", true, "test"),
-				NewParam("test", BODY, "_ResultPage<User>", true, "test"),
-				NewParam("arr2", BODY, INTEGER, true, "test"),
+				NewQueryParam("arr", "integer#int64[]", true, "test"),
+				NewQueryParam("ref", "User[]", true, "test"),
+				NewQueryParam("enum", STRING, true, "test").WithEnum("male", "female"),
+				NewQueryParam("option1", "_Result<string>[]", true, "test"),
+				NewQueryParam("option2", "_Result<string[]>[]", true, "test"),
+				NewBodyParam("test", "_ResultPage<User>", true, "test"),
+				NewBodyParam("arr2", INTEGER, true, "test"),
 			),
 	)
 
@@ -117,7 +128,7 @@ func TestGenerateYaml(t *testing.T) {
 
 		NewDefinition("_Result", "global response").WithGenerics("T").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", INTEGER, true, "status message"),
+			NewProperty("message", STRING, true, "status message"),
 			NewProperty("data", "T", true, "response data"),
 		),
 		NewDefinition("_Page", "global page response").WithGenerics("T").WithProperties(
@@ -133,15 +144,9 @@ func TestGenerateYaml(t *testing.T) {
 		),
 	)
 
-	// doc, _ := yaml.Marshal(appendKvs(buildDocument(_document), map[string]interface{}{"swagger": "2.0"}))
-	// fmt.Println(string(doc))
-
-	doc, _ := jsonMarshal(appendKvs(buildDocument(_document), map[string]interface{}{"swagger": "2.0"}))
-	fmt.Println(string(doc))
-
-	err := GenerateYaml("./docs/api.yaml", map[string]interface{}{"swagger": "2.0"})
+	doc, err := GenerateYamlWithSwagger2("./docs/api.yaml")
 	log.Println(err)
 
-	err = GenerateJson("./docs/api.json", map[string]interface{}{"swagger": "2.0"})
-	log.Println(err)
+	doc, err = GenerateJsonWithSwagger2("./docs/api.json")
+	log.Println(string(doc), err)
 }
