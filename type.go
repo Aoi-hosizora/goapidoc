@@ -108,9 +108,11 @@ func preHandleGeneric(def *Definition) {
 			newGen := "«" + gen + "»"
 			re, err := regexp.Compile("(^|[, <])" + gen + "([, >\\[]|$)") // (^|[, <])x([, >]|$)
 			if err != nil {
-				continue
+				panic("failed to compile generic parameter: " + err.Error())
 			}
+			prop.Type = strings.ReplaceAll(prop.Type, " ", "")
 			prop.Type = re.ReplaceAllString(prop.Type, "$1"+newGen+"$2")
+			prop.Type = strings.ReplaceAll(prop.Type, ",", ", ")
 		}
 	}
 	for idx := range def.Generics {

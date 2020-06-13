@@ -35,8 +35,8 @@ func TestPreHandleGeneric(t *testing.T) {
 			{Type: "inT[]"},
 			{Type: "O<inT[], T[], T, inT<int>>"},
 			{Type: "T"},
-			{Type: "tT<T<T>[]>"},
-			{Type: "TtT<T,tT[],T>[]"},
+			{Type: "tT<T<tT>[][], T>[]"},
+			{Type: "TtT<T,tT[],T[][]>[]"},
 		},
 	}
 	preHandleGeneric(def)

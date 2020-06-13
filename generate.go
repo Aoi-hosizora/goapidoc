@@ -373,6 +373,24 @@ func mapParams(doc *Document, innerDoc *innerDocument, params []*Param) []*inner
 			Schema:          schema,
 			Items:           items,
 		}
+		if p.In == BODY { // must put in schema
+			origin := ""
+			ref := ""
+			if out[i].Schema != nil {
+				origin = out[i].Schema.OriginRef
+				ref = out[i].Schema.Ref
+			}
+			out[i].Schema = &innerSchema{
+				Type:      out[i].Type,
+				Format:    out[i].Format,
+				OriginRef: origin,
+				Ref:       ref,
+				Items:     out[i].Items,
+			}
+			out[i].Type = ""
+			out[i].Format = ""
+			out[i].Items = nil
+		}
 	}
 	return out
 }
