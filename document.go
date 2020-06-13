@@ -1,4 +1,4 @@
-package apidoc
+package goapidoc
 
 // Global document
 var _document = &Document{}
@@ -10,11 +10,11 @@ func SetDocument(host string, basePath string, info *Info) {
 }
 
 func SetTags(tags ...*Tag) {
-	_document.SetTags(tags...)
+	_document.WithTags(tags...)
 }
 
 func SetSecurities(securities ...*Security) {
-	_document.SetSecurities(securities...)
+	_document.WithSecurities(securities...)
 }
 
 func AddPaths(paths ...*Path) {
@@ -37,12 +37,12 @@ type Document struct {
 	Definitions []*Definition
 }
 
-func (d *Document) SetTags(tags ...*Tag) *Document {
+func (d *Document) WithTags(tags ...*Tag) *Document {
 	d.Tags = tags
 	return d
 }
 
-func (d *Document) SetSecurities(security ...*Security) *Document {
+func (d *Document) WithSecurities(security ...*Security) *Document {
 	d.Securities = security
 	return d
 }
@@ -72,17 +72,17 @@ func NewInfo(title string, desc string, version string) *Info {
 	return &Info{Title: title, Description: desc, Version: version}
 }
 
-func (i *Info) SetTermsOfService(service string) *Info {
+func (i *Info) WithTermsOfService(service string) *Info {
 	i.TermsOfService = service
 	return i
 }
 
-func (i *Info) SetLicense(license *License) *Info {
+func (i *Info) WithLicense(license *License) *Info {
 	i.License = license
 	return i
 }
 
-func (i *Info) SetContact(contact *Contact) *Info {
+func (i *Info) WithContact(contact *Contact) *Info {
 	i.Contact = contact
 	return i
 }

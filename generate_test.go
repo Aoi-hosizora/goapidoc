@@ -1,18 +1,40 @@
-package apidoc
+package goapidoc
 
 import (
-	"fmt"
 	"log"
 	"testing"
 )
 
-func TestGenerateYaml(t *testing.T) {
+func TestParseInnerType(t *testing.T) {
+	str := "aType<T1<>, T2<TT1<integer[]>>, T3<TT1, TT2>, T4>[][]"
+	res := parseInnerType(str)
+	obj := res.OutArray.Type.OutArray.Type
+	log.Println(res.Name, res.OutArray)
+	log.Println(res.OutArray.Type.Name, res.OutArray.Type.OutArray)
+	log.Println(obj.Name, obj.OutObject.Type, obj.OutObject.Generic)
+
+	g0 := obj.OutObject.Generic[0]   // T1<>
+	g1 := obj.OutObject.Generic[1]   // T2<TT1<integer[]>>
+	g10 := g1.OutObject.Generic[0]   // TT1<integer[]>
+	g100 := g10.OutObject.Generic[0] // integer[]
+	g1000 := g100.OutArray.Type      // integer
+	g2 := obj.OutObject.Generic[2]   // T3<TT1, TT2>
+	g20 := g2.OutObject.Generic[0]   // TT1
+	g21 := g2.OutObject.Generic[1]   // TT2
+	g3 := obj.OutObject.Generic[3]   // T4
+	log.Println(g0.Name, g0.OutObject.Type)
+	log.Println(g1.Name, g1.OutObject.Type, g10.OutObject.Type, g100.Name, g1000.Name)
+	log.Println(g2.Name, g2.OutObject.Type, g20.OutObject.Type, g21.OutObject.Type)
+	log.Println(g3.Name, g3.OutObject.Type)
+}
+
+func TestGenerate(t *testing.T) {
 	SetDocument(
 		"localhost:10086", "/",
 		NewInfo("test-api", "a demo description", "1.0").
-			SetTermsOfService("http://xxx.yyy.zzz").
-			SetLicense(NewLicense("MIT", "http://xxx.yyy.zzz")).
-			SetContact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
+			WithTermsOfService("http://xxx.yyy.zzz").
+			WithLicense(NewLicense("MIT", "http://xxx.yyy.zzz")).
+			WithContact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
 	)
 	SetTags(
 		NewTag("ping", "ping-controller"),
@@ -24,107 +46,107 @@ func TestGenerateYaml(t *testing.T) {
 
 	AddPaths(
 		NewPath(GET, "/api/v1/ping", "ping").
-			SetDescription("ping the server").
-			SetTags("ping").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetResponses(
-				NewResponse(200).SetDescription("success").SetExamples(map[string]string{JSON: "{\n\t\"ping\": \"pong\"\n}"}),
+			WithDescription("ping the server").
+			WithTags("ping").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithResponses(
+				NewResponse(200).WithDescription("success").WithExamples(map[string]string{JSON: "{\n    \"ping\": \"pong\"\n}"}),
 			),
 		NewPath(GET, "/api/v1/user", "get users").
-			SetTags("user").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetSecurities("jwt").
-			SetParams(
-				NewParam("page", QUERY, INTEGER, false, "current page").SetDefault(1),
-				NewParam("total", QUERY, INTEGER, false, "page size").SetDefault(10),
-				NewParam("order", QUERY, STRING, false, "order string").SetDefault(""),
+			WithTags("user").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithSecurities("jwt").
+			WithParams(
+				NewQueryParam("page", INTEGER, false, "current page").WithDefault(1),
+				NewQueryParam("total", INTEGER, false, "page size").WithDefault(10),
+				NewQueryParam("order", STRING, false, "order string").WithDefault(""),
 			).
-			SetResponses(
-				NewResponse(200).SetSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", "User"))),
+			WithResponses(
+				NewResponse(200).WithType("_Result<_Page<User>>"),
 			),
 		NewPath(GET, "/api/v1/user/{id}", "get a user").
-			SetTags("user").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetParams(NewParam("id", PATH, INTEGER, true, "user id")).
-			SetResponses(
-				NewResponse(200).SetSchema(RefSchema("_Result", "data", "User")),
+			WithTags("user").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithParams(NewPathParam("id", INTEGER, true, "user id")).
+			WithResponses(
+				NewResponse(200).WithType("_Result<User>"),
 			),
 		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
-			SetTags("user").
-			SetConsumes(JSON).
-			SetProduces(JSON).
-			SetSecurities("jwt").
-			SetParams(
-				NewParam("id", PATH, INTEGER, true, "user id"),
-				NewParam("body", BODY, OBJECT, true, "request body").SetSchema(RefSchema("User")),
+			WithTags("user").
+			WithConsumes(JSON).
+			WithProduces(JSON).
+			WithSecurities("jwt").
+			WithParams(
+				NewPathParam("id", INTEGER, true, "user id"),
+				NewBodyParam("body", "User", true, "request body"),
 			).
-			SetResponses(
-				NewResponse(200).SetDescription("success").SetSchema(RefSchema("Result")),
-				NewResponse(404).SetDescription("not found").SetHeaders(NewHeader("Content-Type", STRING, "demo")),
-				NewResponse(400).SetDescription("bad request").SetSchema(NewSchema(STRING, true)).SetExamples(map[string]string{JSON: "bad request"}),
+			WithResponses(
+				NewResponse(200).WithType("Result").WithDescription("success"),
+				NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Kind", STRING, "demo")),
+				NewResponse(400).WithType(STRING).WithDescription("bad request").WithExamples(map[string]string{JSON: "bad request"}),
 			),
 		NewPath(HEAD, "/api/v1/test", "test path").
-			SetParams(
-				NewParam("arr", QUERY, ARRAY, true, "test").SetItems(ArrItems(NewItems(INTEGER).SetFormat(INT64))),
-				NewParam("ref", QUERY, ARRAY, true, "test").SetItems(RefItems("User")),
-				NewParam("enum", QUERY, STRING, true, "test").SetEnum("male", "female"),
-				NewParam("option1", QUERY, ARRAY, true, "test").SetItems(RefItems("Result", "code", NewSchema(STRING, true))),
-				NewParam("option2", QUERY, ARRAY, true, "test").SetItems(RefItems("Result", "code", NewItems(STRING))),
-				NewParam("arr2", BODY, ARRAY, true, "test").SetSchema(ArrSchema(NewItems(INTEGER))),
+			WithParams(
+				NewQueryParam("arr", "integer#int64[]", true, "test"),
+				NewQueryParam("ref", "User[]", true, "test"),
+				NewQueryParam("enum", STRING, true, "test").WithEnum("male", "female"),
+				NewQueryParam("option1", "_Result<string>[]", true, "test"),
+				NewQueryParam("option2", "_Result<string[]>[]", true, "test"),
+				NewBodyParam("test", "_ResultPage<User>", true, "test"),
+				NewBodyParam("arr2", INTEGER, true, "test"),
 			),
 	)
 
 	AddDefinitions(
-		NewDefinition("Result", "global response").SetProperties(
+		NewDefinition("Result", "global response").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
 		),
-		NewDefinition("User", "user response").SetProperties(
+		NewDefinition("User", "user response").WithProperties(
 			NewProperty("id", INTEGER, true, "user id"),
 			NewProperty("name", STRING, true, "user name"),
-			NewProperty("profile", STRING, false, "user profile").SetAllowEmptyValue(true),
-			NewProperty("gender", STRING, true, "user gender").SetEnum("male", "female"),
-			NewProperty("create_at", STRING, true, "user register time").SetFormat(DATETIME),
-			NewProperty("birthday", STRING, true, "user birthday").SetFormat(DATE),
-			NewProperty("scores", ARRAY, true, "user scores").SetItems(NewItems(NUMBER)),
+			NewProperty("profile", STRING, false, "user profile").WithAllowEmptyValue(true),
+			NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female"),
+			NewProperty("create_at", "string#date-time", true, "user register time"),
+			NewProperty("birthday", "string#date", true, "user birthday"),
+			NewProperty("scores", "number[]", true, "user scores"),
 		),
-		NewDefinition("!Page<User>", "user response").SetProperties(
+		NewDefinition("!Page<User>", "user response").WithProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
-			NewArrayProperty("data", RefItems("User"), true),
+			NewProperty("data", "User[]", true, "page data"),
 		),
-		NewDefinition("!Result<Page<User>>", "user response").SetProperties(
+		NewDefinition("!Result<Page<User>>", "user response").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
-			NewObjectProperty("data", "Page<User>", true),
+			NewProperty("data", "!Page<User>", true, "result data"),
 		),
 
-		NewDefinition("_Result", "global response").SetProperties(
+		NewDefinition("_Result", "global response").WithGenerics("T").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", INTEGER, true, "status message"),
-			NewProperty("data", OBJECT, true, "response data"),
+			NewProperty("message", STRING, true, "status message"),
+			NewProperty("data", "T", true, "response data"),
 		),
-		NewDefinition("_Page", "global page response").SetProperties(
+		NewDefinition("_Page", "global page response").WithGenerics("T").WithProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
-			NewProperty("data", ARRAY, true, "page data"),
+			NewProperty("data", "T[]", true, "page data"),
+		),
+		NewDefinition("_ResultPage", "global response").WithGenerics("T").WithProperties(
+			NewProperty("code", INTEGER, true, "status code"),
+			NewProperty("message", INTEGER, true, "status message"),
+			NewProperty("data", "_Page<T>", true, "response data"),
 		),
 	)
 
-	// doc, _ := yaml.Marshal(appendKvs(buildDocument(_document), map[string]interface{}{"swagger": "2.0"}))
-	// fmt.Println(string(doc))
-
-	doc, _ := jsonMarshal(appendKvs(buildDocument(_document), map[string]interface{}{"swagger": "2.0"}))
-	fmt.Println(string(doc))
-
-	err := GenerateYaml("./docs/api.yaml", map[string]interface{}{"swagger": "2.0"})
+	doc, err := GenerateYamlWithSwagger2("./docs/api.yaml")
 	log.Println(err)
 
-	err = GenerateJson("./docs/api.json", map[string]interface{}{"swagger": "2.0"})
-	log.Println(err)
+	doc, err = GenerateJsonWithSwagger2("./docs/api.json")
+	log.Println(string(doc), err)
 }

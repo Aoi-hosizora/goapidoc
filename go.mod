@@ -1,4 +1,4 @@
-module github.com/Aoi-hosizora/go-api-doc
+module github.com/Aoi-hosizora/goapidoc
 
 go 1.13
 
