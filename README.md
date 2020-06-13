@@ -1,4 +1,4 @@
-# go-api-doc
+# goapidoc
 
 + A tool written in golang for generating rest api document
 

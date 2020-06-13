@@ -97,7 +97,8 @@ func TestGenerate(t *testing.T) {
 				NewQueryParam("option2", "_Result<string[]>[]", true, "test"),
 				NewBodyParam("test", "_ResultPage<User>", true, "test"),
 				NewBodyParam("arr2", INTEGER, true, "test"),
-			),
+			).
+			WithResponses(NewResponse(200).WithType("TestGeneric<integer, User, string>")),
 	)
 
 	AddDefinitions(
@@ -141,6 +142,16 @@ func TestGenerate(t *testing.T) {
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", INTEGER, true, "status message"),
 			NewProperty("data", "_Page<T>", true, "response data"),
+		),
+
+		NewDefinition("TestGeneric", "test generic").WithGenerics("T", "U", "W").WithProperties(
+			NewProperty("t", "T", true, "t"),
+			NewProperty("t2", "T[]", true, "t2"),
+			NewProperty("t3", "T[][]", true, "t3"),
+			NewProperty("u", "_Result<U>", true, "u"),
+			NewProperty("u2", "_Result<U[]>", true, "u2"),
+			NewProperty("u3", "_Result<U[]>[]", true, "u3"),
+			NewProperty("w", "W", true, "w"),
 		),
 	)
 
