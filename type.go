@@ -1,6 +1,7 @@
 package goapidoc
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -98,4 +99,21 @@ func defaultFormat(t string) string {
 		return DOUBLE
 	}
 	return ""
+}
+
+// parse generic param before mapDefinition()
+func preHandleGeneric(def *Definition) {
+	for _, prop := range def.Properties {
+		for _, gen := range def.Generics { // T -> «T»
+			newGen := "«" + gen + "»"
+			re, err := regexp.Compile("(^|[, <])" + gen + "([, >\\[]|$)") // (^|[, <])x([, >]|$)
+			if err != nil {
+				continue
+			}
+			prop.Type = re.ReplaceAllString(prop.Type, "$1"+newGen+"$2")
+		}
+	}
+	for idx := range def.Generics {
+		def.Generics[idx] = "«" + def.Generics[idx] + "»"
+	}
 }

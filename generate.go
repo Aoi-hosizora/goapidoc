@@ -470,9 +470,26 @@ func buildDocument(d *Document) *innerDocument {
 	}
 
 	// models
+	for _, def := range d.Definitions {
+		preHandleGeneric(def)
+	}
 	for idx := 0; idx < len(d.Definitions); idx++ {
 		def := d.Definitions[idx]
-		out.Definitions[def.Name] = mapDefinition(d, out, def)
+		ok := true // contain generic
+		for _, prop := range def.Properties {
+			for _, g := range def.Generics {
+				if prop.Type == g || strings.Contains(prop.Type, g+"[]") || strings.Contains(prop.Type, "<"+g+">") {
+					ok = false
+					break
+				}
+			}
+			if !ok {
+				break
+			}
+		}
+		if ok {
+			out.Definitions[def.Name] = mapDefinition(d, out, def)
+		}
 	}
 
 	// paths

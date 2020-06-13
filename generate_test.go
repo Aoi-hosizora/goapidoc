@@ -28,6 +28,24 @@ func TestParseInnerType(t *testing.T) {
 	log.Println(g3.Name, g3.OutObject.Type)
 }
 
+func TestPreHandleGeneric(t *testing.T) {
+	def := &Definition{
+		Generics: []string{"T", "U", "V"},
+		Properties: []*Property{
+			{Type: "inT[]"},
+			{Type: "O<inT[], T[], T, inT<int>>"},
+			{Type: "T"},
+			{Type: "tT<T<T>[]>"},
+			{Type: "TtT<T,tT[],T>[]"},
+		},
+	}
+	preHandleGeneric(def)
+	log.Println(def.Generics)
+	for _, p := range def.Properties {
+		log.Println(p.Type)
+	}
+}
+
 func TestGenerate(t *testing.T) {
 	SetDocument(
 		"localhost:10086", "/",
@@ -115,18 +133,6 @@ func TestGenerate(t *testing.T) {
 			NewProperty("birthday", "string#date", true, "user birthday"),
 			NewProperty("scores", "number[]", true, "user scores"),
 		),
-		NewDefinition("!Page<User>", "user response").WithProperties(
-			NewProperty("page", INTEGER, true, "current page"),
-			NewProperty("total", INTEGER, true, "data count"),
-			NewProperty("limit", INTEGER, true, "page size"),
-			NewProperty("data", "User[]", true, "page data"),
-		),
-		NewDefinition("!Result<Page<User>>", "user response").WithProperties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", STRING, true, "status message"),
-			NewProperty("data", "!Page<User>", true, "result data"),
-		),
-
 		NewDefinition("_Result", "global response").WithGenerics("T").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
