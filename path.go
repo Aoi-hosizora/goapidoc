@@ -65,16 +65,27 @@ func (r *Path) WithResponses(responses ...*Response) *Path {
 
 // Route response
 type Response struct {
-	Code int
-	Type string
+	Code     int
+	Type     string
+	Required bool
 
 	Description string
 	Examples    map[string]string // content-type: example
 	Headers     []*Header
 }
 
-func NewResponse(code int, t string) *Response {
-	return &Response{Code: code, Type: t}
+func NewResponse(code int) *Response {
+	return &Response{Code: code}
+}
+
+func (r *Response) WithType(t string) *Response {
+	r.Type = t
+	return r
+}
+
+func (r *Response) WithRequired(req bool) *Response {
+	r.Required = req
+	return r
 }
 
 func (r *Response) WithDescription(desc string) *Response {

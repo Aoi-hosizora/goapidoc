@@ -42,7 +42,8 @@ func TestGenerateYaml(t *testing.T) {
 				NewParam("order", QUERY, STRING, false, "order string").WithDefault(""),
 			).
 			WithResponses(
-				NewResponse(200).WithSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", "User"))),
+				NewResponse(200).WithType("_Result<_Page<User>>"),
+				// NewResponse(200).WithSchema(RefSchema("_Result", "data", RefSchema("_Page", "data", "User"))),
 			),
 		NewPath(GET, "/api/v1/user/{id}", "get a user").
 			WithTags("user").
@@ -50,7 +51,8 @@ func TestGenerateYaml(t *testing.T) {
 			WithProduces(JSON).
 			WithParams(NewParam("id", PATH, INTEGER, true, "user id")).
 			WithResponses(
-				NewResponse(200).WithSchema(RefSchema("_Result", "data", "User")),
+				NewResponse(200).WithType("_Result<User>"),
+				// NewResponse(200).WithSchema(RefSchema("_Result", "data", "User")),
 			),
 		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
 			WithTags("user").
@@ -59,21 +61,30 @@ func TestGenerateYaml(t *testing.T) {
 			WithSecurities("jwt").
 			WithParams(
 				NewParam("id", PATH, INTEGER, true, "user id"),
-				NewParam("body", BODY, OBJECT, true, "request body").WithSchema(RefSchema("User")),
+				// NewParam("body", BODY, OBJECT, true, "request body").WithSchema(RefSchema("User")),
+				NewParam("body", BODY, "User", true, "request body"),
 			).
 			WithResponses(
-				NewResponse(200).WithDescription("success").WithSchema(RefSchema("Result")),
+				// NewResponse(200).WithDescription("success").WithSchema(RefSchema("Result")),
+				NewResponse(200).WithType("Result").WithDescription("success"),
 				NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Type", STRING, "demo")),
-				NewResponse(400).WithDescription("bad request").WithSchema(NewSchema(STRING, true)).WithExamples(map[string]string{JSON: "bad request"}),
+				// NewResponse(400).WithDescription("bad request").WithSchema(NewSchema(STRING, true)).WithExamples(map[string]string{JSON: "bad request"}),
+				NewResponse(400).WithType(STRING).WithDescription("bad request").WithExamples(map[string]string{JSON: "bad request"}),
 			),
 		NewPath(HEAD, "/api/v1/test", "test path").
 			WithParams(
-				NewParam("arr", QUERY, ARRAY, true, "test").WithItems(ArrItems(NewItems(INTEGER).SetFormat(INT64))),
-				NewParam("ref", QUERY, ARRAY, true, "test").WithItems(RefItems("User")),
+				// NewParam("arr", QUERY, ARRAY, true, "test").WithItems(ArrItems(NewItems(INTEGER).SetFormat(INT64))),
+				// NewParam("ref", QUERY, ARRAY, true, "test").WithItems(RefItems("User")),
+				// NewParam("enum", QUERY, STRING, true, "test").WithEnum("male", "female"),
+				// NewParam("option1", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewSchema(STRING, true))),
+				// NewParam("option2", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewItems(STRING))),
+				// NewParam("arr2", BODY, ARRAY, true, "test").WithSchema(ArrSchema(NewItems(INTEGER))),
+				NewParam("arr", QUERY, "integer[]", true, "test"),
+				NewParam("ref", QUERY, "User[]", true, "test"),
 				NewParam("enum", QUERY, STRING, true, "test").WithEnum("male", "female"),
-				NewParam("option1", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewSchema(STRING, true))),
-				NewParam("option2", QUERY, ARRAY, true, "test").WithItems(RefItems("Result", "code", NewItems(STRING))),
-				NewParam("arr2", BODY, ARRAY, true, "test").WithSchema(ArrSchema(NewItems(INTEGER))),
+				NewParam("option1", QUERY, "Result<string>[]", true, "test"),
+				NewParam("option2", QUERY, "Result<string[]>[]", true, "test"),
+				NewParam("arr2", BODY, INTEGER, true, "test"),
 			),
 	)
 
@@ -89,18 +100,20 @@ func TestGenerateYaml(t *testing.T) {
 			NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female"),
 			NewProperty("create_at", STRING, true, "user register time").WithFormat(DATETIME),
 			NewProperty("birthday", STRING, true, "user birthday").WithFormat(DATE),
-			NewProperty("scores", ARRAY, true, "user scores").WithItems(NewItems(NUMBER)),
+			NewProperty("scores", "number[]", true, "user scores"),
 		),
 		NewDefinition("!Page<User>", "user response").WithProperties(
 			NewProperty("page", INTEGER, true, "current page"),
 			NewProperty("total", INTEGER, true, "data count"),
 			NewProperty("limit", INTEGER, true, "page size"),
-			NewArrayProperty("data", RefItems("User"), true),
+			NewProperty("data", "User[]", true, "page data"),
+			// NewArrayProperty("data", RefItems("User"), true),
 		),
 		NewDefinition("!Result<Page<User>>", "user response").WithProperties(
 			NewProperty("code", INTEGER, true, "status code"),
 			NewProperty("message", STRING, true, "status message"),
-			NewObjectProperty("data", "Page<User>", true),
+			NewProperty("data", "Page<User>", true, "result data"),
+			// NewObjectProperty("data", "Page<User>", true),
 		),
 
 		NewDefinition("_Result", "global response").WithProperties(

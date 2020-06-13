@@ -25,7 +25,7 @@ func parseInnerType(t string) *innerType {
 	t = strings.TrimSpace(t)
 
 	// base
-	if t == INTEGER || t == NUMBER || t == STRING || t == BOOLEAN || t == FILE {
+	if t == INTEGER || t == NUMBER || t == STRING || t == BOOLEAN || t == FILE || t == ARRAY || t == OBJECT {
 		return &innerType{Name: t, Type: innerBaseType, OutType: t}
 	}
 
