@@ -99,10 +99,10 @@ type innerParam struct {
 
 // !!!
 type innerDefinition struct {
-	Type        string                  `yaml:"type"                  json:"type"`
-	Required    []string                `yaml:"required"              json:"required"`
-	Description string                  `yaml:"description,omitempty" json:"description,omitempty"`
-	Properties  map[string]*innerSchema `yaml:"properties,omitempty"  json:"properties,omitempty"`
+	Type        string         `yaml:"type"                  json:"type"`
+	Required    []string       `yaml:"required"              json:"required"`
+	Description string         `yaml:"description,omitempty" json:"description,omitempty"`
+	Properties  *LinkedHashMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*innerSchema
 }
 
 // !!! (include Schema and Property)
@@ -418,13 +418,13 @@ func mapResponses(doc *Document, innerDoc *innerDocument, responses []*Response)
 
 func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *innerDefinition {
 	required := make([]string, 0)
-	properties := make(map[string]*innerSchema)
+	properties := NewLinkedHashMap() // make(map[string]*innerSchema)
 	for _, p := range def.Properties {
 		if p.Required {
 			required = append(required, p.Name)
 		}
 		t, f, origin, ref, items := mapPropertySchema(doc, innerDoc, p.Type)
-		properties[p.Name] = &innerSchema{
+		properties.Set(p.Name, &innerSchema{
 			Required:        p.Required,
 			Description:     p.Description,
 			Type:            t,
@@ -435,7 +435,7 @@ func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *inn
 			OriginRef:       origin,
 			Ref:             ref,
 			Items:           items,
-		}
+		})
 	}
 
 	return &innerDefinition{
@@ -475,16 +475,18 @@ func buildDocument(d *Document) *innerDocument {
 			Description: t.Description,
 		})
 	}
-	if len(d.Securities) == 0 {
-		d.Securities = nil
-	} else {
-		for _, s := range d.Securities {
-			out.Securities[s.Title] = &innerSecurity{
-				Type: s.Type,
-				Name: s.Name,
-				In:   s.In,
-			}
+	if len(out.Tags) == 0 {
+		out.Tags = nil
+	}
+	for _, s := range d.Securities {
+		out.Securities[s.Title] = &innerSecurity{
+			Type: s.Type,
+			Name: s.Name,
+			In:   s.In,
 		}
+	}
+	if len(out.Securities) == 0 {
+		out.Securities = nil
 	}
 
 	// models
