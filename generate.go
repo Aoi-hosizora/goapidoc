@@ -475,9 +475,6 @@ func buildDocument(d *Document) *innerDocument {
 			Description: t.Description,
 		})
 	}
-	if len(out.Tags) == 0 {
-		out.Tags = nil
-	}
 	for _, s := range d.Securities {
 		out.Securities[s.Title] = &innerSecurity{
 			Type: s.Type,
@@ -623,18 +620,30 @@ func (d *Document) GenerateJson(path string, kvs map[string]interface{}) ([]byte
 	return doc, nil
 }
 
+func (d *Document) GenerateYamlWithSwagger2(path string) ([]byte, error) {
+	return d.GenerateYaml(path, map[string]interface{}{"swagger": "2.0"})
+}
+
+func (d *Document) GenerateJsonWithSwagger2(path string) ([]byte, error) {
+	return d.GenerateJson(path, map[string]interface{}{"swagger": "2.0"})
+}
+
+// noinspection GoUnusedExportedFunction
 func GenerateYaml(path string, kvs map[string]interface{}) ([]byte, error) {
 	return _document.GenerateYaml(path, kvs)
 }
 
+// noinspection GoUnusedExportedFunction
 func GenerateJson(path string, kvs map[string]interface{}) ([]byte, error) {
 	return _document.GenerateJson(path, kvs)
 }
 
+// noinspection GoUnusedExportedFunction
 func GenerateYamlWithSwagger2(path string) ([]byte, error) {
-	return _document.GenerateYaml(path, map[string]interface{}{"swagger": "2.0"})
+	return _document.GenerateJsonWithSwagger2(path)
 }
 
+// noinspection GoUnusedExportedFunction
 func GenerateJsonWithSwagger2(path string) ([]byte, error) {
-	return _document.GenerateJson(path, map[string]interface{}{"swagger": "2.0"})
+	return _document.GenerateJsonWithSwagger2(path)
 }
