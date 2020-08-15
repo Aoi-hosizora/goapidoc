@@ -125,7 +125,12 @@ type Param struct {
 	// `in` != body
 	AllowEmptyValue bool
 	Default         interface{}
+	Example         interface{}
 	Enum            []interface{}
+	MinLength       int
+	MaxLength       int
+	Minimum         int
+	Maximum         int
 }
 
 func NewParam(name string, in string, t string, req bool, desc string) *Param {
@@ -162,7 +167,32 @@ func (p *Param) WithDefault(def interface{}) *Param {
 	return p
 }
 
+func (p *Param) WithExample(ex interface{}) *Param {
+	p.Example = ex
+	return p
+}
+
 func (p *Param) WithEnum(enum ...interface{}) *Param {
 	p.Enum = enum
+	return p
+}
+
+func (p *Param) WithMinLength(min int) *Param {
+	p.MinLength = min
+	return p
+}
+
+func (p *Param) WithMaxLength(max int) *Param {
+	p.MaxLength = max
+	return p
+}
+
+func (p *Param) WithMinimum(min int) *Param {
+	p.Minimum = min
+	return p
+}
+
+func (p *Param) WithMaximum(max int) *Param {
+	p.Maximum = max
 	return p
 }

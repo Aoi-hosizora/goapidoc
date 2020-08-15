@@ -1,6 +1,5 @@
 package goapidoc
 
-// noinspection GoUnusedConst
 const (
 	// type
 	INTEGER = "integer" // type: integer, long

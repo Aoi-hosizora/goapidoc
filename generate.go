@@ -92,7 +92,12 @@ type innerParam struct {
 	Format          string        `yaml:"format,omitempty"          json:"format,omitempty"`
 	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
 	Default         interface{}   `yaml:"default,omitempty"         json:"default,omitempty"`
+	Example         interface{}   `yaml:"example,omitempty"         json:"example,omitempty"`
 	Enum            []interface{} `yaml:"enum,omitempty"            json:"enum,omitempty"`
+	Maximum         int           `yaml:"maximum,omitempty"         json:"maximum,omitempty"`
+	Minimum         int           `yaml:"minimum,omitempty"         json:"minimum,omitempty"`
+	MaxLength       int           `yaml:"maxLength,omitempty"       json:"maxLength,omitempty"`
+	MinLength       int           `yaml:"minLength,omitempty"       json:"minLength,omitempty"`
 	Schema          *innerSchema  `yaml:"schema,omitempty"          json:"schema,omitempty"`
 	Items           *innerItems   `yaml:"items,omitempty"           json:"items,omitempty"`
 }
@@ -113,7 +118,12 @@ type innerSchema struct {
 	Format          string        `yaml:"format,omitempty"          json:"format,omitempty"`
 	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
 	Default         interface{}   `yaml:"default,omitempty"         json:"default,omitempty"`
+	Example         interface{}   `yaml:"example,omitempty"         json:"example,omitempty"`
 	Enum            []interface{} `yaml:"enum,omitempty"            json:"enum,omitempty"`
+	Maximum         int           `yaml:"maximum,omitempty"         json:"maximum,omitempty"`
+	Minimum         int           `yaml:"minimum,omitempty"         json:"minimum,omitempty"`
+	MaxLength       int           `yaml:"maxLength,omitempty"       json:"maxLength,omitempty"`
+	MinLength       int           `yaml:"minLength,omitempty"       json:"minLength,omitempty"`
 
 	OriginRef string      `yaml:"originRef,omitempty" json:"originRef,omitempty"`
 	Ref       string      `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
@@ -370,6 +380,11 @@ func mapParams(doc *Document, innerDoc *innerDocument, params []*Param) []*inner
 			AllowEmptyValue: p.AllowEmptyValue,
 			Default:         p.Default,
 			Enum:            p.Enum,
+			Example:         p.Example,
+			Maximum:         p.Maximum,
+			Minimum:         p.Minimum,
+			MaxLength:       p.MaxLength,
+			MinLength:       p.MinLength,
 			Schema:          schema,
 			Items:           items,
 		}
@@ -431,7 +446,12 @@ func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *inn
 			Format:          f,
 			AllowEmptyValue: p.AllowEmptyValue,
 			Default:         p.Default,
+			Example:         p.Example,
 			Enum:            p.Enum,
+			Maximum:         p.Maximum,
+			Minimum:         p.Minimum,
+			MaxLength:       p.MaxLength,
+			MinLength:       p.MinLength,
 			OriginRef:       origin,
 			Ref:             ref,
 			Items:           items,

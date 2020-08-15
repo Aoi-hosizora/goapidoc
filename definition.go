@@ -32,7 +32,12 @@ type Property struct {
 
 	AllowEmptyValue bool
 	Default         interface{}
+	Example         interface{}
 	Enum            []interface{}
+	MinLength       int
+	MaxLength       int
+	Minimum         int
+	Maximum         int
 }
 
 func NewProperty(name string, t string, req bool, desc string) *Property {
@@ -49,7 +54,32 @@ func (p *Property) WithDefault(def interface{}) *Property {
 	return p
 }
 
+func (p *Property) WithExample(ex interface{}) *Property {
+	p.Example = ex
+	return p
+}
+
 func (p *Property) WithEnum(enum ...interface{}) *Property {
 	p.Enum = enum
+	return p
+}
+
+func (p *Property) WithMinLength(min int) *Property {
+	p.MinLength = min
+	return p
+}
+
+func (p *Property) WithMaxLength(max int) *Property {
+	p.MaxLength = max
+	return p
+}
+
+func (p *Property) WithMinimum(min int) *Property {
+	p.Minimum = min
+	return p
+}
+
+func (p *Property) WithMaximum(max int) *Property {
+	p.Maximum = max
 	return p
 }

@@ -77,9 +77,9 @@ func TestGenerate(t *testing.T) {
 			WithProduces(JSON).
 			WithSecurities("jwt").
 			WithParams(
-				NewQueryParam("page", INTEGER, false, "current page").WithDefault(1),
-				NewQueryParam("total", INTEGER, false, "page size").WithDefault(10),
-				NewQueryParam("order", STRING, false, "order string").WithDefault(""),
+				NewQueryParam("page", INTEGER, false, "current page").WithDefault(1).WithMinimum(1).WithMaximum(50),
+				NewQueryParam("total", INTEGER, false, "page size").WithDefault(10).WithExample(20),
+				NewQueryParam("order", STRING, false, "order string").WithDefault("").WithMinLength(1).WithMaxLength(50),
 			).
 			WithResponses(
 				NewResponse(200).WithType("_Result<_Page<User>>"),
@@ -125,10 +125,10 @@ func TestGenerate(t *testing.T) {
 			NewProperty("message", STRING, true, "status message"),
 		),
 		NewDefinition("User", "user response").WithProperties(
-			NewProperty("id", INTEGER, true, "user id"),
+			NewProperty("id", INTEGER, true, "user id").WithMinimum(1).WithMaximum(65535),
 			NewProperty("name", STRING, true, "user name"),
-			NewProperty("profile", STRING, false, "user profile").WithAllowEmptyValue(true),
-			NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female"),
+			NewProperty("profile", STRING, false, "user profile").WithAllowEmptyValue(true).WithMinLength(1).WithMaxLength(255),
+			NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female").WithExample("female"),
 			NewProperty("create_at", "string#date-time", true, "user register time"),
 			NewProperty("birthday", "string#date", true, "user birthday"),
 			NewProperty("scores", "number[]", true, "user scores"),
