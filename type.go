@@ -5,32 +5,49 @@ import (
 	"strings"
 )
 
-type innerTypeKind int
+type apiTypeKind int
 
 const (
-	innerPrimeKind innerTypeKind = iota
-	innerObjectKind
-	innerArrayKind
+	apiPrimeKind apiTypeKind = iota
+	apiObjectKind
+	apiArrayKind
 )
 
-type innerType struct {
-	Name string
-	Kind innerTypeKind
+// Obj<integer#int64, string[]>[]
+type apiType struct {
+	name string
+	kind apiTypeKind
 
-	OutPrime  *innerPrime  // prime
-	OutObject *innerObject // object
-	OutArray  *innerArray  // array
+	outPrime  *apiPrime  // prime
+	outObject *apiObject // object
+	outArray  *apiArray  // array
 }
 
-// Obj<integer#int64, string[]>[]
-func parseInnerType(t string) *innerType {
+// integer#int64
+type apiPrime struct {
+	typ    string
+	format string
+}
+
+// xxx<yyy,...>
+type apiObject struct {
+	generic []*apiType // yyy,...
+	typ     string     // xxx
+}
+
+// xxx[][]
+type apiArray struct {
+	typ *apiType // xxx[]
+}
+
+func parseApiType(t string) *apiType {
 	t = strings.TrimSpace(t)
 
 	// array
 	if len(t) >= 3 && t[len(t)-2:] == "[]" {
-		return &innerType{
-			Name: t, Kind: innerArrayKind,
-			OutArray: &innerArray{Type: parseInnerType(t[:len(t)-2])},
+		return &apiType{
+			name: t, kind: apiArrayKind,
+			outArray: &apiArray{typ: parseApiType(t[:len(t)-2])},
 		}
 	}
 
@@ -41,8 +58,8 @@ func parseInnerType(t string) *innerType {
 			if t != tp {
 				format = t[len(tp)+1:]
 			}
-			out := &innerPrime{Type: tp, Format: format}
-			return &innerType{Name: t, Kind: innerPrimeKind, OutPrime: out}
+			out := &apiPrime{typ: tp, format: format}
+			return &apiType{name: t, kind: apiPrimeKind, outPrime: out}
 		}
 	}
 
@@ -63,32 +80,15 @@ func parseInnerType(t string) *innerType {
 				generics = append(generics, temp[idx])
 			}
 		}
-		out := &innerObject{Type: t[:start]}
+		out := &apiObject{typ: t[:start]}
 		for _, generic := range generics {
-			out.Generic = append(out.Generic, parseInnerType(generic))
+			out.generic = append(out.generic, parseApiType(generic))
 		}
-		return &innerType{Name: t, Kind: innerObjectKind, OutObject: out}
+		return &apiType{name: t, kind: apiObjectKind, outObject: out}
 	}
 
 	// object without generic
-	return &innerType{Name: t, Kind: innerObjectKind, OutObject: &innerObject{Type: t}}
-}
-
-// integer#int64
-type innerPrime struct {
-	Type   string
-	Format string
-}
-
-// xxx<yyy,...>
-type innerObject struct {
-	Generic []*innerType // yyy,...
-	Type    string       // xxx
-}
-
-// xxx[][]
-type innerArray struct {
-	Type *innerType // xxx[]
+	return &apiType{name: t, kind: apiObjectKind, outObject: &apiObject{typ: t}}
 }
 
 // get default format from type

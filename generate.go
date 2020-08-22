@@ -1,10 +1,7 @@
 package goapidoc
 
 import (
-	"bytes"
-	"encoding/json"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"reflect"
 	"strconv"
 	"strings"
@@ -146,21 +143,21 @@ type innerItems struct {
 
 // region handle-type
 
-func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject) (origin string, ref string) {
-	if obj == nil || obj.Type == "" {
+func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *apiObject) (origin string, ref string) {
+	if obj == nil || obj.typ == "" {
 		return "", ""
 	}
 
-	origin = obj.Type
-	if len(obj.Generic) != 0 {
+	origin = obj.typ
+	if len(obj.generic) != 0 {
 		origin += "<"
-		for _, g := range obj.Generic {
-			if g.Kind == innerPrimeKind {
-				origin += g.OutPrime.Type
-			} else if g.Kind == innerArrayKind {
-				origin += g.Name
-			} else if g.Kind == innerObjectKind {
-				newOrigin, _ := handleInnerObject(doc, innerDoc, g.OutObject)
+		for _, g := range obj.generic {
+			if g.kind == apiPrimeKind {
+				origin += g.outPrime.typ
+			} else if g.kind == apiArrayKind {
+				origin += g.name
+			} else if g.kind == apiObjectKind {
+				newOrigin, _ := handleInnerObject(doc, innerDoc, g.outObject)
 				origin += newOrigin
 			}
 			origin += ","
@@ -170,7 +167,7 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject)
 
 		var gdef *Definition
 		for _, def := range doc.Definitions {
-			if def.Name == obj.Type && len(def.Generics) == len(obj.Generic) {
+			if def.Name == obj.typ && len(def.Generics) == len(obj.generic) {
 				props := make([]*Property, len(def.Properties))
 				for idx, p := range def.Properties {
 					props[idx] = &Property{
@@ -193,8 +190,8 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject)
 			}
 		}
 		if gdef != nil {
-			for idx, g := range obj.Generic {
-				gActual := g.Name
+			for idx, g := range obj.generic {
+				gActual := g.name
 				gtype := gdef.Generics[idx]
 				for _, prop := range gdef.Properties {
 					if prop.Type == gtype { // T -> Type
@@ -213,7 +210,7 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *innerObject)
 	return origin, ref
 }
 
-func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *innerArray) *innerItems {
+func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *apiArray) *innerItems {
 	if arr == nil {
 		return nil
 	}
@@ -231,18 +228,18 @@ func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *innerArray) *
 		  "$ref": "#/definitions/User"
 		}
 	*/
-	if arr.Type.Kind == innerPrimeKind {
+	if arr.typ.kind == apiPrimeKind {
 		return &innerItems{
-			Type:   arr.Type.OutPrime.Type,
-			Format: arr.Type.OutPrime.Format,
+			Type:   arr.typ.outPrime.typ,
+			Format: arr.typ.outPrime.format,
 		}
-	} else if arr.Type.Kind == innerArrayKind {
+	} else if arr.typ.kind == apiArrayKind {
 		return &innerItems{
 			Type:  ARRAY,
-			Items: handleInnerArray(doc, innerDoc, arr.Type.OutArray),
+			Items: handleInnerArray(doc, innerDoc, arr.typ.outArray),
 		}
-	} else if arr.Type.Kind == innerObjectKind {
-		origin, ref := handleInnerObject(doc, innerDoc, arr.Type.OutObject)
+	} else if arr.typ.kind == apiObjectKind {
+		origin, ref := handleInnerObject(doc, innerDoc, arr.typ.outObject)
 		if origin != "" {
 			return &innerItems{
 				OriginRef: origin,
@@ -254,7 +251,7 @@ func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *innerArray) *
 }
 
 func mapParameterSchema(doc *Document, innerDoc *innerDocument, t string) (string, string, *innerSchema, *innerItems) {
-	it := parseInnerType(t)
+	it := parseApiType(t)
 	/*
 		{
 		  "type": "string"
@@ -275,14 +272,14 @@ func mapParameterSchema(doc *Document, innerDoc *innerDocument, t string) (strin
 	var items *innerItems
 	var schema *innerSchema
 
-	if it.Kind == innerPrimeKind {
-		typeStr = it.OutPrime.Type
-		formatStr = it.OutPrime.Format
-	} else if it.Kind == innerArrayKind {
+	if it.kind == apiPrimeKind {
+		typeStr = it.outPrime.typ
+		formatStr = it.outPrime.format
+	} else if it.kind == apiArrayKind {
 		typeStr = ARRAY
-		items = handleInnerArray(doc, innerDoc, it.OutArray)
-	} else if it.Kind == innerObjectKind {
-		origin, ref := handleInnerObject(doc, innerDoc, it.OutObject)
+		items = handleInnerArray(doc, innerDoc, it.outArray)
+	} else if it.kind == apiObjectKind {
+		origin, ref := handleInnerObject(doc, innerDoc, it.outObject)
 		if origin != "" {
 			schema = &innerSchema{
 				OriginRef: origin,
@@ -294,7 +291,7 @@ func mapParameterSchema(doc *Document, innerDoc *innerDocument, t string) (strin
 }
 
 func mapResponseSchema(doc *Document, innerDoc *innerDocument, t string, req bool) *innerSchema {
-	it := parseInnerType(t)
+	it := parseApiType(t)
 	/*
 		"schema": {
 		  "type": "string",
@@ -309,20 +306,20 @@ func mapResponseSchema(doc *Document, innerDoc *innerDocument, t string, req boo
 		  "$ref": "#/definitions/Result"
 		}
 	*/
-	if it.Kind == innerPrimeKind {
+	if it.kind == apiPrimeKind {
 		return &innerSchema{
-			Type:     it.OutPrime.Type,
-			Format:   it.OutPrime.Format,
+			Type:     it.outPrime.typ,
+			Format:   it.outPrime.format,
 			Required: req,
 		}
-	} else if it.Kind == innerArrayKind {
-		items := handleInnerArray(doc, innerDoc, it.OutArray)
+	} else if it.kind == apiArrayKind {
+		items := handleInnerArray(doc, innerDoc, it.outArray)
 		return &innerSchema{
 			Type:  ARRAY,
 			Items: items,
 		}
-	} else if it.Kind == innerObjectKind {
-		origin, ref := handleInnerObject(doc, innerDoc, it.OutObject)
+	} else if it.kind == apiObjectKind {
+		origin, ref := handleInnerObject(doc, innerDoc, it.outObject)
 		if origin != "" {
 			return &innerSchema{
 				OriginRef: origin,
@@ -335,7 +332,7 @@ func mapResponseSchema(doc *Document, innerDoc *innerDocument, t string, req boo
 }
 
 func mapPropertySchema(doc *Document, innerDoc *innerDocument, t string) (outType string, outFmt string, origin string, ref string, items *innerItems) {
-	it := parseInnerType(t)
+	it := parseApiType(t)
 	/*
 		{
 		  "type": "integer"
@@ -349,15 +346,15 @@ func mapPropertySchema(doc *Document, innerDoc *innerDocument, t string) (outTyp
 		  "$ref": "#/definitions/Page<User>"
 		}
 	*/
-	if it.Kind == innerPrimeKind {
-		outType = it.OutPrime.Type
-		outFmt = it.OutPrime.Format
-	} else if it.Kind == innerArrayKind {
+	if it.kind == apiPrimeKind {
+		outType = it.outPrime.typ
+		outFmt = it.outPrime.format
+	} else if it.kind == apiArrayKind {
 		outType = ARRAY
-		items = handleInnerArray(doc, innerDoc, it.OutArray)
-	} else if it.Kind == innerObjectKind {
+		items = handleInnerArray(doc, innerDoc, it.outArray)
+	} else if it.kind == apiObjectKind {
 		outType = ""
-		origin, ref = handleInnerObject(doc, innerDoc, it.OutObject)
+		origin, ref = handleInnerObject(doc, innerDoc, it.outObject)
 	}
 	return
 }
@@ -594,14 +591,6 @@ func appendKvs(d *innerDocument, kvs map[string]interface{}) map[string]interfac
 	return out
 }
 
-func saveFile(path string, data []byte) error {
-	err := ioutil.WriteFile(path, data, 0777)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) ([]byte, error) {
 	out := appendKvs(buildDocument(d), kvs)
 	doc, err := yaml.Marshal(out)
@@ -614,16 +603,6 @@ func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) ([]byte
 		return nil, err
 	}
 	return doc, nil
-}
-
-// stop json to escape
-func jsonMarshal(t interface{}) ([]byte, error) {
-	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
-	encoder.SetIndent("", "  ")
-	encoder.SetEscapeHTML(false)
-	err := encoder.Encode(t)
-	return buffer.Bytes(), err
 }
 
 func (d *Document) GenerateJson(path string, kvs map[string]interface{}) ([]byte, error) {
@@ -648,22 +627,18 @@ func (d *Document) GenerateJsonWithSwagger2(path string) ([]byte, error) {
 	return d.GenerateJson(path, map[string]interface{}{"swagger": "2.0"})
 }
 
-// noinspection GoUnusedExportedFunction
 func GenerateYaml(path string, kvs map[string]interface{}) ([]byte, error) {
 	return _document.GenerateYaml(path, kvs)
 }
 
-// noinspection GoUnusedExportedFunction
 func GenerateJson(path string, kvs map[string]interface{}) ([]byte, error) {
 	return _document.GenerateJson(path, kvs)
 }
 
-// noinspection GoUnusedExportedFunction
 func GenerateYamlWithSwagger2(path string) ([]byte, error) {
 	return _document.GenerateJsonWithSwagger2(path)
 }
 
-// noinspection GoUnusedExportedFunction
 func GenerateJsonWithSwagger2(path string) ([]byte, error) {
 	return _document.GenerateJsonWithSwagger2(path)
 }

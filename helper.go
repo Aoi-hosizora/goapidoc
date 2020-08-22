@@ -4,7 +4,25 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 )
+
+func jsonMarshal(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetIndent("", "  ")
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
+}
+
+func saveFile(path string, data []byte) error {
+	err := ioutil.WriteFile(path, data, 0777)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 type LinkedHashMap struct {
 	m map[string]interface{}
