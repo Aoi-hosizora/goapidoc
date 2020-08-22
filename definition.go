@@ -31,7 +31,7 @@ type Property struct {
 	desc     string
 
 	allowEmpty bool
-	defaultVal interface{}
+	def        interface{}
 	example    interface{}
 	enum       []interface{}
 	minLength  int
@@ -50,7 +50,7 @@ func (p *Property) AllowEmpty(allow bool) *Property {
 }
 
 func (p *Property) Default(def interface{}) *Property {
-	p.defaultVal = def
+	p.def = def
 	return p
 }
 

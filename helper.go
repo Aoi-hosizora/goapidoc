@@ -24,19 +24,19 @@ func saveFile(path string, data []byte) error {
 	return nil
 }
 
-type LinkedHashMap struct {
+type linkedHashMap struct {
 	m map[string]interface{}
 	i []string
 }
 
-func NewLinkedHashMap() *LinkedHashMap {
-	return &LinkedHashMap{
+func newLinkedHashMap() *linkedHashMap {
+	return &linkedHashMap{
 		m: make(map[string]interface{}),
 		i: make([]string, 0),
 	}
 }
 
-func (l *LinkedHashMap) Set(key string, value interface{}) {
+func (l *linkedHashMap) Set(key string, value interface{}) {
 	_, exist := l.m[key]
 	l.m[key] = value
 	if !exist {
@@ -44,24 +44,25 @@ func (l *LinkedHashMap) Set(key string, value interface{}) {
 	}
 }
 
-func (l *LinkedHashMap) MarshalJSON() ([]byte, error) {
+func (l *linkedHashMap) MarshalJSON() ([]byte, error) {
 	ov := make([]interface{}, len(l.i))
 	for idx, field := range l.i {
 		ov[idx] = l.m[field]
 	}
 
 	buf := &bytes.Buffer{}
-	buf.Write([]byte{'{'})
+	buf.WriteString("{")
 	for idx, field := range l.i {
 		b, err := json.Marshal(ov[idx])
 		if err != nil {
 			return []byte{}, err
 		}
-		buf.Write([]byte(fmt.Sprintf("  \"%s\": %s", field, string(b))))
+		buf.WriteString(fmt.Sprintf("  \"%s\": %s", field, string(b)))
 		if idx < len(l.i)-1 {
-			buf.Write([]byte(","))
+			buf.WriteString(",")
 		}
 	}
-	buf.Write([]byte{'}'})
-	return []byte(buf.String()), nil
+	buf.WriteString("}")
+
+	return buf.Bytes(), nil
 }

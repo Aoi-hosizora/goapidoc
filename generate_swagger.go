@@ -103,7 +103,7 @@ type swagDefinition struct {
 	Type        string         `yaml:"type"                  json:"type"`
 	Required    []string       `yaml:"required"              json:"required"`
 	Description string         `yaml:"description,omitempty" json:"description,omitempty"`
-	Properties  *LinkedHashMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
+	Properties  *linkedHashMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
 }
 
 // !!!!!!!!! (include schema and property)
@@ -175,7 +175,7 @@ func handleSwagObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (ori
 						required:   p.required,
 						desc:       p.desc,
 						allowEmpty: p.allowEmpty,
-						defaultVal: p.defaultVal,
+						def:        p.def,
 						enum:       p.enum,
 					}
 				}
@@ -374,7 +374,7 @@ func mapParams(doc *Document, swagDoc *swagDocument, params []*Param) []*swagPar
 			Type:            t,
 			Format:          f,
 			AllowEmptyValue: p.allowEmpty,
-			Default:         p.defaultVal,
+			Default:         p.def,
 			Enum:            p.enum,
 			Example:         p.example,
 			Maximum:         p.maximum,
@@ -429,7 +429,7 @@ func mapResponses(doc *Document, swagDoc *swagDocument, responses []*Response) m
 
 func mapDefinition(doc *Document, swagDoc *swagDocument, def *Definition) *swagDefinition {
 	required := make([]string, 0)
-	properties := NewLinkedHashMap() // make(map[string]*swagSchema)
+	properties := newLinkedHashMap() // make(map[string]*swagSchema)
 	for _, p := range def.properties {
 		if p.required {
 			required = append(required, p.name)
@@ -441,7 +441,7 @@ func mapDefinition(doc *Document, swagDoc *swagDocument, def *Definition) *swagD
 			Type:            t,
 			Format:          f,
 			AllowEmptyValue: p.allowEmpty,
-			Default:         p.defaultVal,
+			Default:         p.def,
 			Example:         p.example,
 			Enum:            p.enum,
 			Maximum:         p.maximum,

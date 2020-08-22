@@ -122,7 +122,7 @@ type Param struct {
 
 	// `in` != body
 	allowEmpty bool
-	defaultVal interface{}
+	def        interface{}
 	example    interface{}
 	enum       []interface{}
 	minLength  int
@@ -155,13 +155,13 @@ func NewHeaderParam(name string, typ string, req bool, desc string) *Param {
 	return NewParam(name, HEADER, typ, req, desc)
 }
 
-func (p *Param) AllowEmptyValue(allow bool) *Param {
+func (p *Param) AllowEmpty(allow bool) *Param {
 	p.allowEmpty = allow
 	return p
 }
 
 func (p *Param) Default(def interface{}) *Param {
-	p.defaultVal = def
+	p.def = def
 	return p
 }
 
