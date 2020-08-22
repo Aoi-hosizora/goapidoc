@@ -101,7 +101,7 @@ func defaultFormat(typ string) string {
 	return ""
 }
 
-// parse generic param before mapDefinition()
+// parse generic param
 func preHandleGeneric(def *Definition) {
 	for _, prop := range def.properties {
 		for _, gen := range def.generics { // T -> «T»

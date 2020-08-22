@@ -166,4 +166,7 @@ func TestGenerate(t *testing.T) {
 
 	doc, err = GenerateSwaggerJson("./docs/api.json")
 	log.Println(string(doc), err)
+
+	doc, err = GenerateApib("./docs/api.apib")
+	log.Println(string(doc), err)
 }

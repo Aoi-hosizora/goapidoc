@@ -142,7 +142,7 @@ type swagItems struct {
 
 // region handle-type
 
-func handleSwagObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (origin string, ref string) {
+func swagHandleObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (origin string, ref string) {
 	if obj == nil || obj.typ == "" {
 		return "", ""
 	}
@@ -156,7 +156,7 @@ func handleSwagObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (ori
 			} else if g.kind == apiArrayKind {
 				origin += g.name
 			} else if g.kind == apiObjectKind {
-				newOrigin, _ := handleSwagObject(doc, swagDoc, g.outObject)
+				newOrigin, _ := swagHandleObject(doc, swagDoc, g.outObject)
 				origin += newOrigin
 			}
 			origin += ","
@@ -202,14 +202,14 @@ func handleSwagObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (ori
 					}
 				}
 			}
-			swagDoc.Definitions[origin] = mapDefinition(doc, swagDoc, gdef)
+			swagDoc.Definitions[origin] = swagMapDefinition(doc, swagDoc, gdef)
 		}
 	}
 	ref = "#/definitions/" + origin
 	return origin, ref
 }
 
-func handleSwagArray(doc *Document, swagDoc *swagDocument, arr *apiArray) *swagItems {
+func swagHandleArray(doc *Document, swagDoc *swagDocument, arr *apiArray) *swagItems {
 	if arr == nil {
 		return nil
 	}
@@ -235,10 +235,10 @@ func handleSwagArray(doc *Document, swagDoc *swagDocument, arr *apiArray) *swagI
 	} else if arr.typ.kind == apiArrayKind {
 		return &swagItems{
 			Type:  ARRAY,
-			Items: handleSwagArray(doc, swagDoc, arr.typ.outArray),
+			Items: swagHandleArray(doc, swagDoc, arr.typ.outArray),
 		}
 	} else if arr.typ.kind == apiObjectKind {
-		origin, ref := handleSwagObject(doc, swagDoc, arr.typ.outObject)
+		origin, ref := swagHandleObject(doc, swagDoc, arr.typ.outObject)
 		if origin != "" {
 			return &swagItems{
 				OriginRef: origin,
@@ -249,7 +249,7 @@ func handleSwagArray(doc *Document, swagDoc *swagDocument, arr *apiArray) *swagI
 	return nil
 }
 
-func mapParameterSchema(doc *Document, swagDoc *swagDocument, typ string) (string, string, *swagSchema, *swagItems) {
+func swagMapParameterSchema(doc *Document, swagDoc *swagDocument, typ string) (string, string, *swagSchema, *swagItems) {
 	it := parseApiType(typ)
 	/*
 		{
@@ -276,9 +276,9 @@ func mapParameterSchema(doc *Document, swagDoc *swagDocument, typ string) (strin
 		formatStr = it.outPrime.format
 	} else if it.kind == apiArrayKind {
 		typeStr = ARRAY
-		items = handleSwagArray(doc, swagDoc, it.outArray)
+		items = swagHandleArray(doc, swagDoc, it.outArray)
 	} else if it.kind == apiObjectKind {
-		origin, ref := handleSwagObject(doc, swagDoc, it.outObject)
+		origin, ref := swagHandleObject(doc, swagDoc, it.outObject)
 		if origin != "" {
 			schema = &swagSchema{
 				OriginRef: origin,
@@ -289,7 +289,7 @@ func mapParameterSchema(doc *Document, swagDoc *swagDocument, typ string) (strin
 	return typeStr, formatStr, schema, items
 }
 
-func mapResponseSchema(doc *Document, swagDoc *swagDocument, typ string, req bool) *swagSchema {
+func swagMapResponseSchema(doc *Document, swagDoc *swagDocument, typ string, req bool) *swagSchema {
 	it := parseApiType(typ)
 	/*
 		"schema": {
@@ -312,13 +312,13 @@ func mapResponseSchema(doc *Document, swagDoc *swagDocument, typ string, req boo
 			Required: req,
 		}
 	} else if it.kind == apiArrayKind {
-		items := handleSwagArray(doc, swagDoc, it.outArray)
+		items := swagHandleArray(doc, swagDoc, it.outArray)
 		return &swagSchema{
 			Type:  ARRAY,
 			Items: items,
 		}
 	} else if it.kind == apiObjectKind {
-		origin, ref := handleSwagObject(doc, swagDoc, it.outObject)
+		origin, ref := swagHandleObject(doc, swagDoc, it.outObject)
 		if origin != "" {
 			return &swagSchema{
 				OriginRef: origin,
@@ -330,7 +330,7 @@ func mapResponseSchema(doc *Document, swagDoc *swagDocument, typ string, req boo
 	return nil
 }
 
-func mapPropertySchema(doc *Document, swagDoc *swagDocument, typ string) (outType string, outFmt string, origin string, ref string, items *swagItems) {
+func swagMapPropertySchema(doc *Document, swagDoc *swagDocument, typ string) (outType string, outFmt string, origin string, ref string, items *swagItems) {
 	it := parseApiType(typ)
 	/*
 		{
@@ -350,10 +350,10 @@ func mapPropertySchema(doc *Document, swagDoc *swagDocument, typ string) (outTyp
 		outFmt = it.outPrime.format
 	} else if it.kind == apiArrayKind {
 		outType = ARRAY
-		items = handleSwagArray(doc, swagDoc, it.outArray)
+		items = swagHandleArray(doc, swagDoc, it.outArray)
 	} else if it.kind == apiObjectKind {
 		outType = ""
-		origin, ref = handleSwagObject(doc, swagDoc, it.outObject)
+		origin, ref = swagHandleObject(doc, swagDoc, it.outObject)
 	}
 	return
 }
@@ -362,10 +362,10 @@ func mapPropertySchema(doc *Document, swagDoc *swagDocument, typ string) (outTyp
 
 // region map-func
 
-func mapParams(doc *Document, swagDoc *swagDocument, params []*Param) []*swagParam {
+func swagMapParams(doc *Document, swagDoc *swagDocument, params []*Param) []*swagParam {
 	out := make([]*swagParam, len(params))
 	for i, p := range params {
-		t, f, schema, items := mapParameterSchema(doc, swagDoc, p.typ)
+		t, f, schema, items := swagMapParameterSchema(doc, swagDoc, p.typ)
 		out[i] = &swagParam{
 			Name:            p.name,
 			In:              p.in,
@@ -406,7 +406,7 @@ func mapParams(doc *Document, swagDoc *swagDocument, params []*Param) []*swagPar
 	return out
 }
 
-func mapResponses(doc *Document, swagDoc *swagDocument, responses []*Response) map[string]*swagResponse {
+func swagMapResponses(doc *Document, swagDoc *swagDocument, responses []*Response) map[string]*swagResponse {
 	out := make(map[string]*swagResponse)
 	for _, r := range responses {
 		headers := map[string]*swagHeader{}
@@ -419,7 +419,7 @@ func mapResponses(doc *Document, swagDoc *swagDocument, responses []*Response) m
 
 		out[strconv.Itoa(r.code)] = &swagResponse{
 			Description: r.desc,
-			Schema:      mapResponseSchema(doc, swagDoc, r.typ, r.required),
+			Schema:      swagMapResponseSchema(doc, swagDoc, r.typ, r.required),
 			Examples:    r.examples,
 			Headers:     headers,
 		}
@@ -427,14 +427,14 @@ func mapResponses(doc *Document, swagDoc *swagDocument, responses []*Response) m
 	return out
 }
 
-func mapDefinition(doc *Document, swagDoc *swagDocument, def *Definition) *swagDefinition {
+func swagMapDefinition(doc *Document, swagDoc *swagDocument, def *Definition) *swagDefinition {
 	required := make([]string, 0)
 	properties := newLinkedHashMap() // make(map[string]*swagSchema)
 	for _, p := range def.properties {
 		if p.required {
 			required = append(required, p.name)
 		}
-		t, f, origin, ref, items := mapPropertySchema(doc, swagDoc, p.typ)
+		t, f, origin, ref, items := swagMapPropertySchema(doc, swagDoc, p.typ)
 		properties.Set(p.name, &swagSchema{
 			Required:        p.required,
 			Description:     p.desc,
@@ -464,7 +464,7 @@ func mapDefinition(doc *Document, swagDoc *swagDocument, def *Definition) *swagD
 
 // endregion
 
-func buildDocument(d *Document) *swagDocument {
+func buildSwaggerDocument(d *Document) *swagDocument {
 	out := &swagDocument{
 		Swagger:  "2.0",
 		Host:     d.host,
@@ -522,7 +522,7 @@ func buildDocument(d *Document) *swagDocument {
 			}
 		}
 		if ok {
-			out.Definitions[def.name] = mapDefinition(d, out, def)
+			out.Definitions[def.name] = swagMapDefinition(d, out, def)
 		}
 	}
 
@@ -550,8 +550,8 @@ func buildDocument(d *Document) *swagDocument {
 			Produces:    p.produces,
 			Securities:  securities,
 			Deprecated:  p.deprecated,
-			Parameters:  mapParams(d, out, p.params),
-			Responses:   mapResponses(d, out, p.responses),
+			Parameters:  swagMapParams(d, out, p.params),
+			Responses:   swagMapResponses(d, out, p.responses),
 		}
 	}
 
@@ -559,7 +559,7 @@ func buildDocument(d *Document) *swagDocument {
 }
 
 func (d *Document) GenerateSwaggerYaml(path string) ([]byte, error) {
-	out := buildDocument(d)
+	out := buildSwaggerDocument(d)
 	doc, err := yaml.Marshal(out)
 	if err != nil {
 		return nil, err
@@ -573,7 +573,7 @@ func (d *Document) GenerateSwaggerYaml(path string) ([]byte, error) {
 }
 
 func (d *Document) GenerateSwaggerJson(path string) ([]byte, error) {
-	out := buildDocument(d)
+	out := buildSwaggerDocument(d)
 	doc, err := jsonMarshal(out)
 	if err != nil {
 		return nil, err
