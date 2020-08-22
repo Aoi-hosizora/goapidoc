@@ -1,6 +1,6 @@
 # goapidoc
 
-+ A tool written in golang for generating rest api document
++ A tool written in golang for generating rest api document (swagger)
 
 ### Function
 
@@ -37,9 +37,9 @@ func main() {
     SetDocument(
         "localhost:10086", "/",
         NewInfo("test-api", "a demo description", "1.0").
-            WithTermsOfService("http://xxx.yyy.zzz").
-            WithLicense(NewLicense("MIT", "http://xxx.yyy.zzz")).
-            WithContact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
+            TermsOfService("http://xxx.yyy.zzz").
+            License(NewLicense("MIT", "http://xxx.yyy.zzz")).
+            Contact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
     )
     SetTags(
         NewTag("ping", "ping-controller"),
@@ -50,63 +50,63 @@ func main() {
     )
     
     AddPaths(
-        NewPath(GET, "/api/v1/ping", "ping").
-            WithDescription("ping the server").
-            WithTags("ping").
-            WithConsumes(JSON).
-            WithProduces(JSON).
-            WithResponses(
-                NewResponse(200).WithDescription("success").WithExamples(map[string]string{JSON: "{\n    \"ping\": \"pong\"\n}"}),
+        NewRoutePath(GET, "/api/v1/ping", "ping").
+            Desc("ping the server").
+            Tags("ping").
+            Consumes(JSON).
+            Produces(JSON).
+            Responses(
+                NewResponse(200).Desc("success").Examples(map[string]string{JSON: "{\n    \"ping\": \"pong\"\n}"}),
             ),
-        NewPath(GET, "/api/v1/user", "get users").
-            WithTags("user").
-            WithConsumes(JSON).
-            WithProduces(JSON).
-            WithSecurities("jwt").
-            WithParams(
-                NewQueryParam("page", INTEGER, false, "current page").WithDefault(1),
-                NewQueryParam("total", INTEGER, false, "page size").WithDefault(10),
-                NewQueryParam("order", STRING, false, "order string").WithDefault(""),
+        NewRoutePath(GET, "/api/v1/user", "get users").
+            Tags("user").
+            Consumes(JSON).
+            Produces(JSON).
+            Securities("jwt").
+            Params(
+                NewQueryParam("page", INTEGER, false, "current page").Default(1),
+                NewQueryParam("total", INTEGER, false, "page size").Default(10),
+                NewQueryParam("order", STRING, false, "order string").Default(""),
             ).
-            WithResponses(
-                NewResponse(200).WithType("_Result<_Page<User>>"),
+            Responses(
+                NewResponse(200).Type("_Result<_Page<User>>"),
             ),
-        NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
-            WithTags("user").
-            WithConsumes(JSON).
-            WithProduces(JSON).
-            WithSecurities("jwt").
-            WithParams(
+        NewRoutePath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
+            Tags("user").
+            Consumes(JSON).
+            Produces(JSON).
+            Securities("jwt").
+            Params(
                 NewPathParam("id", INTEGER, true, "user id"),
                 NewBodyParam("body", "User", true, "request body"),
             ).
-            WithResponses(
-                NewResponse(200).WithType("Result").WithDescription("success"),
-                NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Kind", STRING, "demo")),
-                NewResponse(400).WithType(STRING).WithDescription("bad request").WithExamples(map[string]string{JSON: "bad request"}),
+            Responses(
+                NewResponse(200).Type("Result").Desc("success"),
+                NewResponse(404).Desc("not found").Headers(NewHeader("Content-Kind", STRING, "demo")),
+                NewResponse(400).Type(STRING).Desc("bad request").Examples(map[string]string{JSON: "bad request"}),
             ),
     )
     
     AddDefinitions(
-        NewDefinition("Result", "global response").WithProperties(
+        NewDefinition("Result", "global response").Properties(
             NewProperty("code", INTEGER, true, "status code"),
             NewProperty("message", STRING, true, "status message"),
         ),
-        NewDefinition("User", "user response").WithProperties(
+        NewDefinition("User", "user response").Properties(
             NewProperty("id", INTEGER, true, "user id"),
             NewProperty("name", STRING, true, "user name"),
-            NewProperty("profile", STRING, false, "user profile").WithAllowEmptyValue(true),
-            NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female"),
+            NewProperty("profile", STRING, false, "user profile").AllowEmpty(true),
+            NewProperty("gender", STRING, true, "user gender").Enum("male", "female"),
             NewProperty("create_at", "string#date-time", true, "user register time"),
             NewProperty("birthday", "string#date", true, "user birthday"),
             NewProperty("scores", "number[]", true, "user scores"),
         ),
-        NewDefinition("_Result", "global response").WithGenerics("T").WithProperties(
+        NewDefinition("_Result", "global response").Generics("T").Properties(
             NewProperty("code", INTEGER, true, "status code"),
             NewProperty("message", STRING, true, "status message"),
             NewProperty("data", "T", true, "response data"),
         ),
-        NewDefinition("_Page", "global page response").WithGenerics("T").WithProperties(
+        NewDefinition("_Page", "global page response").Generics("T").Properties(
             NewProperty("page", INTEGER, true, "current page"),
             NewProperty("total", INTEGER, true, "data count"),
             NewProperty("limit", INTEGER, true, "page size"),
@@ -114,7 +114,7 @@ func main() {
         ),
     )
     
-    _, _ = GenerateYamlWithSwagger2("./docs/api.yaml")
+    _, _ = GenerateSwaggerYaml("./docs/api.yaml")
 }
 ```
 

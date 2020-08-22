@@ -161,9 +161,9 @@ func TestGenerate(t *testing.T) {
 		),
 	)
 
-	doc, err := GenerateYamlWithSwagger2("./docs/api.yaml")
+	doc, err := GenerateSwaggerYaml("./docs/api.yaml")
 	log.Println(err)
 
-	doc, err = GenerateJsonWithSwagger2("./docs/api.json")
+	doc, err = GenerateSwaggerJson("./docs/api.json")
 	log.Println(string(doc), err)
 }

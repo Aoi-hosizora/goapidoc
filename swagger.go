@@ -2,56 +2,56 @@ package goapidoc
 
 import (
 	"gopkg.in/yaml.v2"
-	"reflect"
 	"strconv"
 	"strings"
 )
 
-// region inner-type
+// region swag-type
 
-type innerDocument struct {
-	Host        string                           `yaml:"host"                          json:"host"`
-	BasePath    string                           `yaml:"basePath"                      json:"basePath"`
-	Info        *innerInfo                       `yaml:"info"                          json:"info"`
-	Tags        []*innerTag                      `yaml:"tags,omitempty"                json:"tags,omitempty"`
-	Securities  map[string]*innerSecurity        `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
-	Paths       map[string]map[string]*innerPath `yaml:"paths,omitempty"               json:"paths,omitempty"`
-	Definitions map[string]*innerDefinition      `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
+type swagDocument struct {
+	Swagger     string                          `yaml:"swagger"                       json:"swagger"`
+	Host        string                          `yaml:"host"                          json:"host"`
+	BasePath    string                          `yaml:"basePath"                      json:"basePath"`
+	Info        *swagInfo                       `yaml:"info"                          json:"info"`
+	Tags        []*swagTag                      `yaml:"tags,omitempty"                json:"tags,omitempty"`
+	Securities  map[string]*swagSecurity        `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
+	Paths       map[string]map[string]*swagPath `yaml:"paths,omitempty"               json:"paths,omitempty"`
+	Definitions map[string]*swagDefinition      `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
 }
 
-type innerTag struct {
+type swagTag struct {
 	Name        string `yaml:"name"                  json:"name"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 }
 
-type innerLicense struct {
+type swagLicense struct {
 	Name string `yaml:"name"          json:"name"`
 	Url  string `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
-type innerContact struct {
+type swagContact struct {
 	Name  string `yaml:"name"            json:"name"`
 	Url   string `yaml:"url,omitempty"   json:"url,omitempty"`
 	Email string `yaml:"email,omitempty" json:"email,omitempty"`
 }
 
-type innerInfo struct {
-	Title          string        `yaml:"title"                    json:"title"`
-	Description    string        `yaml:"description"              json:"description"`
-	Version        string        `yaml:"version"                  json:"version"`
-	TermsOfService string        `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
-	License        *innerLicense `yaml:"license,omitempty"        json:"license,omitempty"`
-	Contact        *innerContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
+type swagInfo struct {
+	Title          string       `yaml:"title"                    json:"title"`
+	Description    string       `yaml:"description"              json:"description"`
+	Version        string       `yaml:"version"                  json:"version"`
+	TermsOfService string       `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
+	License        *swagLicense `yaml:"license,omitempty"        json:"license,omitempty"`
+	Contact        *swagContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
 }
 
-type innerSecurity struct {
+type swagSecurity struct {
 	Type string `yaml:"type" json:"type"`
 	Name string `yaml:"name" json:"name"`
 	In   string `yaml:"in"   json:"in"`
 }
 
 // !!!
-type innerPath struct {
+type swagPath struct {
 	Summary     string                     `yaml:"summary"               json:"summary"`
 	OperationId string                     `yaml:"operationId"           json:"operationId"`
 	Description string                     `yaml:"description,omitempty" json:"description,omitempty"`
@@ -60,19 +60,18 @@ type innerPath struct {
 	Produces    []string                   `yaml:"produces,omitempty"    json:"produces,omitempty"`
 	Securities  []map[string][]interface{} `yaml:"security,omitempty"    json:"security,omitempty"`
 	Deprecated  bool                       `yaml:"deprecated,omitempty"  json:"deprecated,omitempty"`
-	Parameters  []*innerParam              `yaml:"parameters,omitempty"  json:"parameters,omitempty"`
-	Responses   map[string]*innerResponse  `yaml:"responses,omitempty"   json:"responses,omitempty"`
+	Parameters  []*swagParam               `yaml:"parameters,omitempty"  json:"parameters,omitempty"`
+	Responses   map[string]*swagResponse   `yaml:"responses,omitempty"   json:"responses,omitempty"`
 }
 
-// !!!
-type innerResponse struct {
-	Description string                  `yaml:"description,omitempty" json:"description,omitempty"`
-	Headers     map[string]*innerHeader `yaml:"headers,omitempty"     json:"headers,omitempty"`
-	Examples    map[string]string       `yaml:"examples,omitempty"    json:"examples,omitempty"`
-	Schema      *innerSchema            `yaml:"schema,omitempty"      json:"schema,omitempty"`
+type swagResponse struct {
+	Description string                 `yaml:"description,omitempty" json:"description,omitempty"`
+	Headers     map[string]*swagHeader `yaml:"headers,omitempty"     json:"headers,omitempty"`
+	Examples    map[string]string      `yaml:"examples,omitempty"    json:"examples,omitempty"`
+	Schema      *swagSchema            `yaml:"schema,omitempty"      json:"schema,omitempty"`
 }
 
-type innerHeader struct {
+type swagHeader struct {
 	Type        string      `yaml:"type,omitempty"        json:"type,omitempty"`
 	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
 	Format      string      `yaml:"format,omitempty"      json:"format,omitempty"`
@@ -80,7 +79,7 @@ type innerHeader struct {
 }
 
 // !!!
-type innerParam struct {
+type swagParam struct {
 	Name            string        `yaml:"name"                      json:"name"`
 	In              string        `yaml:"in"                        json:"in"`
 	Required        bool          `yaml:"required"                  json:"required"`
@@ -95,20 +94,20 @@ type innerParam struct {
 	Minimum         int           `yaml:"minimum,omitempty"         json:"minimum,omitempty"`
 	MaxLength       int           `yaml:"maxLength,omitempty"       json:"maxLength,omitempty"`
 	MinLength       int           `yaml:"minLength,omitempty"       json:"minLength,omitempty"`
-	Schema          *innerSchema  `yaml:"schema,omitempty"          json:"schema,omitempty"`
-	Items           *innerItems   `yaml:"items,omitempty"           json:"items,omitempty"`
+	Schema          *swagSchema   `yaml:"schema,omitempty"          json:"schema,omitempty"`
+	Items           *swagItems    `yaml:"items,omitempty"           json:"items,omitempty"`
 }
 
 // !!!
-type innerDefinition struct {
+type swagDefinition struct {
 	Type        string         `yaml:"type"                  json:"type"`
 	Required    []string       `yaml:"required"              json:"required"`
 	Description string         `yaml:"description,omitempty" json:"description,omitempty"`
-	Properties  *LinkedHashMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*innerSchema
+	Properties  *LinkedHashMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
 }
 
-// !!! (include Schema and Property)
-type innerSchema struct {
+// !!!!!!!!! (include schema and property)
+type swagSchema struct {
 	Type            string        `yaml:"type,omitempty"            json:"type,omitempty"`
 	Required        bool          `yaml:"required,omitempty"        json:"required,omitempty"`
 	Description     string        `yaml:"description,omitempty"     json:"description,omitempty"`
@@ -122,28 +121,28 @@ type innerSchema struct {
 	MaxLength       int           `yaml:"maxLength,omitempty"       json:"maxLength,omitempty"`
 	MinLength       int           `yaml:"minLength,omitempty"       json:"minLength,omitempty"`
 
-	OriginRef string      `yaml:"originRef,omitempty" json:"originRef,omitempty"`
-	Ref       string      `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
-	Items     *innerItems `yaml:"items,omitempty"     json:"items,omitempty"`
+	OriginRef string     `yaml:"originRef,omitempty" json:"originRef,omitempty"`
+	Ref       string     `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
+	Items     *swagItems `yaml:"items,omitempty"     json:"items,omitempty"`
 }
 
-// !!!
-type innerItems struct {
+// !!!!!!!!!
+type swagItems struct {
 	Type    string        `yaml:"type,omitempty"    json:"type,omitempty"`
 	Format  string        `yaml:"format,omitempty"  json:"format,omitempty"`
 	Default interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
 	Enum    []interface{} `yaml:"enum,omitempty"    json:"enum,omitempty"`
 
-	OriginRef string      `yaml:"originRef,omitempty" json:"originRef,omitempty"`
-	Ref       string      `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
-	Items     *innerItems `yaml:"items,omitempty"     json:"items,omitempty"`
+	OriginRef string     `yaml:"originRef,omitempty" json:"originRef,omitempty"`
+	Ref       string     `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
+	Items     *swagItems `yaml:"items,omitempty"     json:"items,omitempty"`
 }
 
 // endregion
 
 // region handle-type
 
-func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *apiObject) (origin string, ref string) {
+func handleSwagObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (origin string, ref string) {
 	if obj == nil || obj.typ == "" {
 		return "", ""
 	}
@@ -157,7 +156,7 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *apiObject) (
 			} else if g.kind == apiArrayKind {
 				origin += g.name
 			} else if g.kind == apiObjectKind {
-				newOrigin, _ := handleInnerObject(doc, innerDoc, g.outObject)
+				newOrigin, _ := handleSwagObject(doc, swagDoc, g.outObject)
 				origin += newOrigin
 			}
 			origin += ","
@@ -203,14 +202,14 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *apiObject) (
 					}
 				}
 			}
-			innerDoc.Definitions[origin] = mapDefinition(doc, innerDoc, gdef)
+			swagDoc.Definitions[origin] = mapDefinition(doc, swagDoc, gdef)
 		}
 	}
 	ref = "#/definitions/" + origin
 	return origin, ref
 }
 
-func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *apiArray) *innerItems {
+func handleSwagArray(doc *Document, swagDoc *swagDocument, arr *apiArray) *swagItems {
 	if arr == nil {
 		return nil
 	}
@@ -229,19 +228,19 @@ func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *apiArray) *in
 		}
 	*/
 	if arr.typ.kind == apiPrimeKind {
-		return &innerItems{
+		return &swagItems{
 			Type:   arr.typ.outPrime.typ,
 			Format: arr.typ.outPrime.format,
 		}
 	} else if arr.typ.kind == apiArrayKind {
-		return &innerItems{
+		return &swagItems{
 			Type:  ARRAY,
-			Items: handleInnerArray(doc, innerDoc, arr.typ.outArray),
+			Items: handleSwagArray(doc, swagDoc, arr.typ.outArray),
 		}
 	} else if arr.typ.kind == apiObjectKind {
-		origin, ref := handleInnerObject(doc, innerDoc, arr.typ.outObject)
+		origin, ref := handleSwagObject(doc, swagDoc, arr.typ.outObject)
 		if origin != "" {
-			return &innerItems{
+			return &swagItems{
 				OriginRef: origin,
 				Ref:       ref,
 			}
@@ -250,7 +249,7 @@ func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *apiArray) *in
 	return nil
 }
 
-func mapParameterSchema(doc *Document, innerDoc *innerDocument, typ string) (string, string, *innerSchema, *innerItems) {
+func mapParameterSchema(doc *Document, swagDoc *swagDocument, typ string) (string, string, *swagSchema, *swagItems) {
 	it := parseApiType(typ)
 	/*
 		{
@@ -269,19 +268,19 @@ func mapParameterSchema(doc *Document, innerDoc *innerDocument, typ string) (str
 	*/
 	typeStr := ""
 	formatStr := ""
-	var items *innerItems
-	var schema *innerSchema
+	var items *swagItems
+	var schema *swagSchema
 
 	if it.kind == apiPrimeKind {
 		typeStr = it.outPrime.typ
 		formatStr = it.outPrime.format
 	} else if it.kind == apiArrayKind {
 		typeStr = ARRAY
-		items = handleInnerArray(doc, innerDoc, it.outArray)
+		items = handleSwagArray(doc, swagDoc, it.outArray)
 	} else if it.kind == apiObjectKind {
-		origin, ref := handleInnerObject(doc, innerDoc, it.outObject)
+		origin, ref := handleSwagObject(doc, swagDoc, it.outObject)
 		if origin != "" {
-			schema = &innerSchema{
+			schema = &swagSchema{
 				OriginRef: origin,
 				Ref:       ref,
 			}
@@ -290,7 +289,7 @@ func mapParameterSchema(doc *Document, innerDoc *innerDocument, typ string) (str
 	return typeStr, formatStr, schema, items
 }
 
-func mapResponseSchema(doc *Document, innerDoc *innerDocument, typ string, req bool) *innerSchema {
+func mapResponseSchema(doc *Document, swagDoc *swagDocument, typ string, req bool) *swagSchema {
 	it := parseApiType(typ)
 	/*
 		"schema": {
@@ -307,21 +306,21 @@ func mapResponseSchema(doc *Document, innerDoc *innerDocument, typ string, req b
 		}
 	*/
 	if it.kind == apiPrimeKind {
-		return &innerSchema{
+		return &swagSchema{
 			Type:     it.outPrime.typ,
 			Format:   it.outPrime.format,
 			Required: req,
 		}
 	} else if it.kind == apiArrayKind {
-		items := handleInnerArray(doc, innerDoc, it.outArray)
-		return &innerSchema{
+		items := handleSwagArray(doc, swagDoc, it.outArray)
+		return &swagSchema{
 			Type:  ARRAY,
 			Items: items,
 		}
 	} else if it.kind == apiObjectKind {
-		origin, ref := handleInnerObject(doc, innerDoc, it.outObject)
+		origin, ref := handleSwagObject(doc, swagDoc, it.outObject)
 		if origin != "" {
-			return &innerSchema{
+			return &swagSchema{
 				OriginRef: origin,
 				Ref:       ref,
 			}
@@ -331,7 +330,7 @@ func mapResponseSchema(doc *Document, innerDoc *innerDocument, typ string, req b
 	return nil
 }
 
-func mapPropertySchema(doc *Document, innerDoc *innerDocument, typ string) (outType string, outFmt string, origin string, ref string, items *innerItems) {
+func mapPropertySchema(doc *Document, swagDoc *swagDocument, typ string) (outType string, outFmt string, origin string, ref string, items *swagItems) {
 	it := parseApiType(typ)
 	/*
 		{
@@ -351,10 +350,10 @@ func mapPropertySchema(doc *Document, innerDoc *innerDocument, typ string) (outT
 		outFmt = it.outPrime.format
 	} else if it.kind == apiArrayKind {
 		outType = ARRAY
-		items = handleInnerArray(doc, innerDoc, it.outArray)
+		items = handleSwagArray(doc, swagDoc, it.outArray)
 	} else if it.kind == apiObjectKind {
 		outType = ""
-		origin, ref = handleInnerObject(doc, innerDoc, it.outObject)
+		origin, ref = handleSwagObject(doc, swagDoc, it.outObject)
 	}
 	return
 }
@@ -363,11 +362,11 @@ func mapPropertySchema(doc *Document, innerDoc *innerDocument, typ string) (outT
 
 // region map-func
 
-func mapParams(doc *Document, innerDoc *innerDocument, params []*Param) []*innerParam {
-	out := make([]*innerParam, len(params))
+func mapParams(doc *Document, swagDoc *swagDocument, params []*Param) []*swagParam {
+	out := make([]*swagParam, len(params))
 	for i, p := range params {
-		t, f, schema, items := mapParameterSchema(doc, innerDoc, p.typ)
-		out[i] = &innerParam{
+		t, f, schema, items := mapParameterSchema(doc, swagDoc, p.typ)
+		out[i] = &swagParam{
 			Name:            p.name,
 			In:              p.in,
 			Required:        p.required,
@@ -392,7 +391,7 @@ func mapParams(doc *Document, innerDoc *innerDocument, params []*Param) []*inner
 				origin = out[i].Schema.OriginRef
 				ref = out[i].Schema.Ref
 			}
-			out[i].Schema = &innerSchema{
+			out[i].Schema = &swagSchema{
 				Type:      out[i].Type,
 				Format:    out[i].Format,
 				OriginRef: origin,
@@ -407,20 +406,20 @@ func mapParams(doc *Document, innerDoc *innerDocument, params []*Param) []*inner
 	return out
 }
 
-func mapResponses(doc *Document, innerDoc *innerDocument, responses []*Response) map[string]*innerResponse {
-	out := make(map[string]*innerResponse)
+func mapResponses(doc *Document, swagDoc *swagDocument, responses []*Response) map[string]*swagResponse {
+	out := make(map[string]*swagResponse)
 	for _, r := range responses {
-		headers := map[string]*innerHeader{}
+		headers := map[string]*swagHeader{}
 		for _, h := range r.headers {
-			headers[h.name] = &innerHeader{
+			headers[h.name] = &swagHeader{
 				Type:        h.typ,
 				Description: h.desc,
 			}
 		}
 
-		out[strconv.Itoa(r.code)] = &innerResponse{
+		out[strconv.Itoa(r.code)] = &swagResponse{
 			Description: r.desc,
-			Schema:      mapResponseSchema(doc, innerDoc, r.typ, r.required),
+			Schema:      mapResponseSchema(doc, swagDoc, r.typ, r.required),
 			Examples:    r.examples,
 			Headers:     headers,
 		}
@@ -428,15 +427,15 @@ func mapResponses(doc *Document, innerDoc *innerDocument, responses []*Response)
 	return out
 }
 
-func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *innerDefinition {
+func mapDefinition(doc *Document, swagDoc *swagDocument, def *Definition) *swagDefinition {
 	required := make([]string, 0)
-	properties := NewLinkedHashMap() // make(map[string]*innerSchema)
+	properties := NewLinkedHashMap() // make(map[string]*swagSchema)
 	for _, p := range def.properties {
 		if p.required {
 			required = append(required, p.name)
 		}
-		t, f, origin, ref, items := mapPropertySchema(doc, innerDoc, p.typ)
-		properties.Set(p.name, &innerSchema{
+		t, f, origin, ref, items := mapPropertySchema(doc, swagDoc, p.typ)
+		properties.Set(p.name, &swagSchema{
 			Required:        p.required,
 			Description:     p.desc,
 			Type:            t,
@@ -455,7 +454,7 @@ func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *inn
 		})
 	}
 
-	return &innerDefinition{
+	return &swagDefinition{
 		Type:        "object",
 		Description: def.desc,
 		Required:    required,
@@ -465,35 +464,36 @@ func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *inn
 
 // endregion
 
-func buildDocument(d *Document) *innerDocument {
-	out := &innerDocument{
+func buildDocument(d *Document) *swagDocument {
+	out := &swagDocument{
+		Swagger:  "2.0",
 		Host:     d.host,
 		BasePath: d.basePath,
-		Info: &innerInfo{
+		Info: &swagInfo{
 			Title:          d.info.title,
 			Description:    d.info.desc,
 			Version:        d.info.version,
 			TermsOfService: d.info.termsOfService,
 		},
-		Tags:        []*innerTag{},
-		Securities:  map[string]*innerSecurity{},
-		Paths:       map[string]map[string]*innerPath{},
-		Definitions: map[string]*innerDefinition{},
+		Tags:        []*swagTag{},
+		Securities:  map[string]*swagSecurity{},
+		Paths:       map[string]map[string]*swagPath{},
+		Definitions: map[string]*swagDefinition{},
 	}
 	if d.info.license != nil {
-		out.Info.License = &innerLicense{Name: d.info.license.name, Url: d.info.license.url}
+		out.Info.License = &swagLicense{Name: d.info.license.name, Url: d.info.license.url}
 	}
 	if d.info.contact != nil {
-		out.Info.Contact = &innerContact{Name: d.info.contact.name, Url: d.info.contact.url, Email: d.info.contact.email}
+		out.Info.Contact = &swagContact{Name: d.info.contact.name, Url: d.info.contact.url, Email: d.info.contact.email}
 	}
 	for _, t := range d.tags {
-		out.Tags = append(out.Tags, &innerTag{
+		out.Tags = append(out.Tags, &swagTag{
 			Name:        t.name,
 			Description: t.desc,
 		})
 	}
 	for _, s := range d.securities {
-		out.Securities[s.title] = &innerSecurity{
+		out.Securities[s.title] = &swagSecurity{
 			Type: s.typ,
 			Name: s.name,
 			In:   s.in,
@@ -530,7 +530,7 @@ func buildDocument(d *Document) *innerDocument {
 	for _, p := range d.paths {
 		_, ok := out.Paths[p.route]
 		if !ok {
-			out.Paths[p.route] = map[string]*innerPath{}
+			out.Paths[p.route] = map[string]*swagPath{}
 		}
 		p.method = strings.ToLower(p.method)
 		id := strings.ReplaceAll(p.route, "/", "-")
@@ -541,7 +541,7 @@ func buildDocument(d *Document) *innerDocument {
 			securities[i] = map[string][]interface{}{s: {}}
 		}
 
-		out.Paths[p.route][p.method] = &innerPath{
+		out.Paths[p.route][p.method] = &swagPath{
 			Summary:     p.summary,
 			Description: p.desc,
 			OperationId: id,
@@ -558,41 +558,8 @@ func buildDocument(d *Document) *innerDocument {
 	return out
 }
 
-func appendKvs(d *innerDocument, kvs map[string]interface{}) map[string]interface{} {
-	out := make(map[string]interface{})
-	if kvs != nil {
-		for k, v := range kvs {
-			out[k] = v
-		}
-	}
-
-	innerValue := reflect.ValueOf(d).Elem()
-	innerType := innerValue.Type()
-	for i := 0; i < innerType.NumField(); i++ {
-		field := innerType.Field(i)
-
-		tag := field.Tag.Get("yaml")
-		omitempty := false
-		if tag == "" {
-			tag = field.Name
-		} else if strings.Index(tag, ",omitempty") != -1 {
-			omitempty = true
-		}
-
-		name := strings.TrimSpace(strings.Split(tag, ",")[0])
-		if name != "-" && name != "" {
-			value := innerValue.Field(i).Interface()
-			if !omitempty || (value != nil && value != "") {
-				out[name] = value
-			}
-		}
-	}
-
-	return out
-}
-
-func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) ([]byte, error) {
-	out := appendKvs(buildDocument(d), kvs)
+func (d *Document) GenerateSwaggerYaml(path string) ([]byte, error) {
+	out := buildDocument(d)
 	doc, err := yaml.Marshal(out)
 	if err != nil {
 		return nil, err
@@ -605,8 +572,8 @@ func (d *Document) GenerateYaml(path string, kvs map[string]interface{}) ([]byte
 	return doc, nil
 }
 
-func (d *Document) GenerateJson(path string, kvs map[string]interface{}) ([]byte, error) {
-	out := appendKvs(buildDocument(d), kvs)
+func (d *Document) GenerateSwaggerJson(path string) ([]byte, error) {
+	out := buildDocument(d)
 	doc, err := jsonMarshal(out)
 	if err != nil {
 		return nil, err
@@ -619,26 +586,10 @@ func (d *Document) GenerateJson(path string, kvs map[string]interface{}) ([]byte
 	return doc, nil
 }
 
-func (d *Document) GenerateYamlWithSwagger2(path string) ([]byte, error) {
-	return d.GenerateYaml(path, map[string]interface{}{"swagger": "2.0"})
+func GenerateSwaggerYaml(path string) ([]byte, error) {
+	return _document.GenerateSwaggerYaml(path)
 }
 
-func (d *Document) GenerateJsonWithSwagger2(path string) ([]byte, error) {
-	return d.GenerateJson(path, map[string]interface{}{"swagger": "2.0"})
-}
-
-func GenerateYaml(path string, kvs map[string]interface{}) ([]byte, error) {
-	return _document.GenerateYaml(path, kvs)
-}
-
-func GenerateJson(path string, kvs map[string]interface{}) ([]byte, error) {
-	return _document.GenerateJson(path, kvs)
-}
-
-func GenerateYamlWithSwagger2(path string) ([]byte, error) {
-	return _document.GenerateJsonWithSwagger2(path)
-}
-
-func GenerateJsonWithSwagger2(path string) ([]byte, error) {
-	return _document.GenerateJsonWithSwagger2(path)
+func GenerateSwaggerJson(path string) ([]byte, error) {
+	return _document.GenerateSwaggerJson(path)
 }
