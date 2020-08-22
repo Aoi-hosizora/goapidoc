@@ -1,131 +1,131 @@
 package goapidoc
 
-// Global document
-var _document = &Document{}
-
-func SetDocument(host string, basePath string, info *Info) {
-	_document.Host = host
-	_document.BasePath = basePath
-	_document.Info = info
-}
-
-func SetTags(tags ...*Tag) {
-	_document.WithTags(tags...)
-}
-
-func SetSecurities(securities ...*Security) {
-	_document.WithSecurities(securities...)
-}
-
-func AddPaths(paths ...*Path) {
-	_document.AddPaths(paths...)
-}
-
-func AddDefinitions(definitions ...*Definition) {
-	_document.AddDefinitions(definitions...)
-}
-
 // Api document
 type Document struct {
-	Host     string
-	BasePath string
-	Info     *Info
+	host     string
+	basePath string
+	info     *Info
 
-	Tags        []*Tag
-	Securities  []*Security
-	Paths       []*Path
-	Definitions []*Definition
+	tags        []*Tag
+	securities  []*Security
+	paths       []*RoutePath
+	definitions []*Definition
 }
 
-func (d *Document) WithTags(tags ...*Tag) *Document {
-	d.Tags = tags
+func (d *Document) Tags(tags ...*Tag) *Document {
+	d.tags = tags
 	return d
 }
 
-func (d *Document) WithSecurities(security ...*Security) *Document {
-	d.Securities = security
+func (d *Document) Securities(security ...*Security) *Document {
+	d.securities = security
 	return d
 }
 
-func (d *Document) AddPaths(path ...*Path) *Document {
-	d.Paths = append(d.Paths, path...)
+func (d *Document) AddPaths(path ...*RoutePath) *Document {
+	d.paths = append(d.paths, path...)
 	return d
 }
 
 func (d *Document) AddDefinitions(models ...*Definition) *Document {
-	d.Definitions = append(d.Definitions, models...)
+	d.definitions = append(d.definitions, models...)
 	return d
 }
 
 // Base information
 type Info struct {
-	Title       string
-	Description string
-	Version     string
+	title   string
+	desc    string
+	version string
 
-	TermsOfService string
-	License        *License
-	Contact        *Contact
+	termsOfService string
+	license        *License
+	contact        *Contact
 }
 
 func NewInfo(title string, desc string, version string) *Info {
-	return &Info{Title: title, Description: desc, Version: version}
+	return &Info{title: title, desc: desc, version: version}
 }
 
-func (i *Info) WithTermsOfService(service string) *Info {
-	i.TermsOfService = service
+func (i *Info) TermsOfService(service string) *Info {
+	i.termsOfService = service
 	return i
 }
 
-func (i *Info) WithLicense(license *License) *Info {
-	i.License = license
+func (i *Info) License(license *License) *Info {
+	i.license = license
 	return i
 }
 
-func (i *Info) WithContact(contact *Contact) *Info {
-	i.Contact = contact
+func (i *Info) Contact(contact *Contact) *Info {
+	i.contact = contact
 	return i
 }
 
 // License information
 type License struct {
-	Name string
-	Url  string
+	name string
+	url  string
 }
 
 func NewLicense(name string, url string) *License {
-	return &License{Name: name, Url: url}
+	return &License{name: name, url: url}
 }
 
 // Contact information
 type Contact struct {
-	Name  string
-	Url   string
-	Email string
+	name  string
+	url   string
+	email string
 }
 
 func NewContact(name string, url string, email string) *Contact {
-	return &Contact{Name: name, Url: url, Email: email}
+	return &Contact{name: name, url: url, email: email}
 }
 
 // Security information
 type Security struct {
-	Title string
-	Type  string // only support for apiKey
-	In    string
-	Name  string
+	title string
+	typ   string // only support for apiKey
+	in    string
+	name  string
 }
 
 func NewSecurity(title string, in string, name string) *Security {
-	return &Security{Title: title, Type: "apiKey", In: in, Name: name}
+	return &Security{title: title, typ: "apiKey", in: in, name: name}
 }
 
 // Tag information
 type Tag struct {
-	Name        string
-	Description string
+	name string
+	desc string
 }
 
 func NewTag(name string, desc string) *Tag {
-	return &Tag{Name: name, Description: desc}
+	return &Tag{name: name, desc: desc}
+}
+
+// Global document
+var _document = &Document{}
+
+func SetDocument(host string, basePath string, info *Info) {
+	_document.host = host
+	_document.basePath = basePath
+	_document.info = info
+}
+
+func SetTags(tags ...*Tag) {
+	_document.Tags(tags...)
+}
+
+func SetSecurities(securities ...*Security) {
+	_document.Securities(securities...)
+}
+
+func AddPaths(paths ...*RoutePath) {
+	_document.AddPaths(paths...)
+}
+
+func AddDefinitions(definitions ...*Definition) {
+	_document.AddDefinitions(definitions...)
 }

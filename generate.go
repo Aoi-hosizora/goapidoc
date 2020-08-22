@@ -166,25 +166,25 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *apiObject) (
 		origin += ">"
 
 		var gdef *Definition
-		for _, def := range doc.Definitions {
-			if def.Name == obj.typ && len(def.Generics) == len(obj.generic) {
-				props := make([]*Property, len(def.Properties))
-				for idx, p := range def.Properties {
+		for _, def := range doc.definitions {
+			if def.name == obj.typ && len(def.generics) == len(obj.generic) {
+				props := make([]*Property, len(def.properties))
+				for idx, p := range def.properties {
 					props[idx] = &Property{
-						Name:            p.Name,
-						Type:            p.Type,
-						Required:        p.Required,
-						Description:     p.Description,
-						AllowEmptyValue: p.AllowEmptyValue,
-						Default:         p.Default,
-						Enum:            p.Enum,
+						name:       p.name,
+						typ:        p.typ,
+						required:   p.required,
+						desc:       p.desc,
+						allowEmpty: p.allowEmpty,
+						defaultVal: p.defaultVal,
+						enum:       p.enum,
 					}
 				}
 				gdef = &Definition{
-					Name:        def.Name,
-					Description: def.Description,
-					Generics:    def.Generics,
-					Properties:  props,
+					name:       def.name,
+					desc:       def.desc,
+					generics:   def.generics,
+					properties: props,
 				}
 				break
 			}
@@ -192,14 +192,14 @@ func handleInnerObject(doc *Document, innerDoc *innerDocument, obj *apiObject) (
 		if gdef != nil {
 			for idx, g := range obj.generic {
 				gActual := g.name
-				gtype := gdef.Generics[idx]
-				for _, prop := range gdef.Properties {
-					if prop.Type == gtype { // T -> Type
-						prop.Type = gActual
-					} else if strings.Contains(prop.Type, gtype+"[]") { // T[] -> Type[]
-						prop.Type = strings.ReplaceAll(prop.Type, gtype+"[]", gActual+"[]")
-					} else if strings.Contains(prop.Type, "<"+gtype+">") { // <T> -> <Type>
-						prop.Type = strings.ReplaceAll(prop.Type, "<"+gtype+">", "<"+gActual+">")
+				gtype := gdef.generics[idx]
+				for _, prop := range gdef.properties {
+					if prop.typ == gtype { // T -> Type
+						prop.typ = gActual
+					} else if strings.Contains(prop.typ, gtype+"[]") { // T[] -> Type[]
+						prop.typ = strings.ReplaceAll(prop.typ, gtype+"[]", gActual+"[]")
+					} else if strings.Contains(prop.typ, "<"+gtype+">") { // <T> -> <Type>
+						prop.typ = strings.ReplaceAll(prop.typ, "<"+gtype+">", "<"+gActual+">")
 					}
 				}
 			}
@@ -250,8 +250,8 @@ func handleInnerArray(doc *Document, innerDoc *innerDocument, arr *apiArray) *in
 	return nil
 }
 
-func mapParameterSchema(doc *Document, innerDoc *innerDocument, t string) (string, string, *innerSchema, *innerItems) {
-	it := parseApiType(t)
+func mapParameterSchema(doc *Document, innerDoc *innerDocument, typ string) (string, string, *innerSchema, *innerItems) {
+	it := parseApiType(typ)
 	/*
 		{
 		  "type": "string"
@@ -290,8 +290,8 @@ func mapParameterSchema(doc *Document, innerDoc *innerDocument, t string) (strin
 	return typeStr, formatStr, schema, items
 }
 
-func mapResponseSchema(doc *Document, innerDoc *innerDocument, t string, req bool) *innerSchema {
-	it := parseApiType(t)
+func mapResponseSchema(doc *Document, innerDoc *innerDocument, typ string, req bool) *innerSchema {
+	it := parseApiType(typ)
 	/*
 		"schema": {
 		  "type": "string",
@@ -331,8 +331,8 @@ func mapResponseSchema(doc *Document, innerDoc *innerDocument, t string, req boo
 	return nil
 }
 
-func mapPropertySchema(doc *Document, innerDoc *innerDocument, t string) (outType string, outFmt string, origin string, ref string, items *innerItems) {
-	it := parseApiType(t)
+func mapPropertySchema(doc *Document, innerDoc *innerDocument, typ string) (outType string, outFmt string, origin string, ref string, items *innerItems) {
+	it := parseApiType(typ)
 	/*
 		{
 		  "type": "integer"
@@ -366,26 +366,26 @@ func mapPropertySchema(doc *Document, innerDoc *innerDocument, t string) (outTyp
 func mapParams(doc *Document, innerDoc *innerDocument, params []*Param) []*innerParam {
 	out := make([]*innerParam, len(params))
 	for i, p := range params {
-		t, f, schema, items := mapParameterSchema(doc, innerDoc, p.Type)
+		t, f, schema, items := mapParameterSchema(doc, innerDoc, p.typ)
 		out[i] = &innerParam{
-			Name:            p.Name,
-			In:              p.In,
-			Required:        p.Required,
-			Description:     p.Description,
+			Name:            p.name,
+			In:              p.in,
+			Required:        p.required,
+			Description:     p.desc,
 			Type:            t,
 			Format:          f,
-			AllowEmptyValue: p.AllowEmptyValue,
-			Default:         p.Default,
-			Enum:            p.Enum,
-			Example:         p.Example,
-			Maximum:         p.Maximum,
-			Minimum:         p.Minimum,
-			MaxLength:       p.MaxLength,
-			MinLength:       p.MinLength,
+			AllowEmptyValue: p.allowEmpty,
+			Default:         p.defaultVal,
+			Enum:            p.enum,
+			Example:         p.example,
+			Maximum:         p.maximum,
+			Minimum:         p.minimum,
+			MaxLength:       p.maxLength,
+			MinLength:       p.minLength,
 			Schema:          schema,
 			Items:           items,
 		}
-		if p.In == BODY { // must put in schema
+		if p.in == BODY { // must put in schema
 			origin := ""
 			ref := ""
 			if out[i].Schema != nil {
@@ -411,17 +411,17 @@ func mapResponses(doc *Document, innerDoc *innerDocument, responses []*Response)
 	out := make(map[string]*innerResponse)
 	for _, r := range responses {
 		headers := map[string]*innerHeader{}
-		for _, h := range r.Headers {
-			headers[h.Name] = &innerHeader{
-				Type:        h.Type,
-				Description: h.Description,
+		for _, h := range r.headers {
+			headers[h.name] = &innerHeader{
+				Type:        h.typ,
+				Description: h.desc,
 			}
 		}
 
-		out[strconv.Itoa(r.Code)] = &innerResponse{
-			Description: r.Description,
-			Schema:      mapResponseSchema(doc, innerDoc, r.Type, r.Required),
-			Examples:    r.Examples,
+		out[strconv.Itoa(r.code)] = &innerResponse{
+			Description: r.desc,
+			Schema:      mapResponseSchema(doc, innerDoc, r.typ, r.required),
+			Examples:    r.examples,
 			Headers:     headers,
 		}
 	}
@@ -431,24 +431,24 @@ func mapResponses(doc *Document, innerDoc *innerDocument, responses []*Response)
 func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *innerDefinition {
 	required := make([]string, 0)
 	properties := NewLinkedHashMap() // make(map[string]*innerSchema)
-	for _, p := range def.Properties {
-		if p.Required {
-			required = append(required, p.Name)
+	for _, p := range def.properties {
+		if p.required {
+			required = append(required, p.name)
 		}
-		t, f, origin, ref, items := mapPropertySchema(doc, innerDoc, p.Type)
-		properties.Set(p.Name, &innerSchema{
-			Required:        p.Required,
-			Description:     p.Description,
+		t, f, origin, ref, items := mapPropertySchema(doc, innerDoc, p.typ)
+		properties.Set(p.name, &innerSchema{
+			Required:        p.required,
+			Description:     p.desc,
 			Type:            t,
 			Format:          f,
-			AllowEmptyValue: p.AllowEmptyValue,
-			Default:         p.Default,
-			Example:         p.Example,
-			Enum:            p.Enum,
-			Maximum:         p.Maximum,
-			Minimum:         p.Minimum,
-			MaxLength:       p.MaxLength,
-			MinLength:       p.MinLength,
+			AllowEmptyValue: p.allowEmpty,
+			Default:         p.defaultVal,
+			Example:         p.example,
+			Enum:            p.enum,
+			Maximum:         p.maximum,
+			Minimum:         p.minimum,
+			MaxLength:       p.maxLength,
+			MinLength:       p.minLength,
 			OriginRef:       origin,
 			Ref:             ref,
 			Items:           items,
@@ -457,7 +457,7 @@ func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *inn
 
 	return &innerDefinition{
 		Type:        "object",
-		Description: def.Description,
+		Description: def.desc,
 		Required:    required,
 		Properties:  properties,
 	}
@@ -467,36 +467,36 @@ func mapDefinition(doc *Document, innerDoc *innerDocument, def *Definition) *inn
 
 func buildDocument(d *Document) *innerDocument {
 	out := &innerDocument{
-		Host:     d.Host,
-		BasePath: d.BasePath,
+		Host:     d.host,
+		BasePath: d.basePath,
 		Info: &innerInfo{
-			Title:          d.Info.Title,
-			Description:    d.Info.Description,
-			Version:        d.Info.Version,
-			TermsOfService: d.Info.TermsOfService,
+			Title:          d.info.title,
+			Description:    d.info.desc,
+			Version:        d.info.version,
+			TermsOfService: d.info.termsOfService,
 		},
 		Tags:        []*innerTag{},
 		Securities:  map[string]*innerSecurity{},
 		Paths:       map[string]map[string]*innerPath{},
 		Definitions: map[string]*innerDefinition{},
 	}
-	if d.Info.License != nil {
-		out.Info.License = &innerLicense{Name: d.Info.License.Name, Url: d.Info.License.Url}
+	if d.info.license != nil {
+		out.Info.License = &innerLicense{Name: d.info.license.name, Url: d.info.license.url}
 	}
-	if d.Info.Contact != nil {
-		out.Info.Contact = &innerContact{Name: d.Info.Contact.Name, Url: d.Info.Contact.Url, Email: d.Info.Contact.Email}
+	if d.info.contact != nil {
+		out.Info.Contact = &innerContact{Name: d.info.contact.name, Url: d.info.contact.url, Email: d.info.contact.email}
 	}
-	for _, t := range d.Tags {
+	for _, t := range d.tags {
 		out.Tags = append(out.Tags, &innerTag{
-			Name:        t.Name,
-			Description: t.Description,
+			Name:        t.name,
+			Description: t.desc,
 		})
 	}
-	for _, s := range d.Securities {
-		out.Securities[s.Title] = &innerSecurity{
-			Type: s.Type,
-			Name: s.Name,
-			In:   s.In,
+	for _, s := range d.securities {
+		out.Securities[s.title] = &innerSecurity{
+			Type: s.typ,
+			Name: s.name,
+			In:   s.in,
 		}
 	}
 	if len(out.Securities) == 0 {
@@ -504,15 +504,15 @@ func buildDocument(d *Document) *innerDocument {
 	}
 
 	// models
-	for _, def := range d.Definitions {
+	for _, def := range d.definitions {
 		preHandleGeneric(def)
 	}
-	for idx := 0; idx < len(d.Definitions); idx++ {
-		def := d.Definitions[idx]
+	for idx := 0; idx < len(d.definitions); idx++ {
+		def := d.definitions[idx]
 		ok := true // contain generic
-		for _, prop := range def.Properties {
-			for _, g := range def.Generics {
-				if prop.Type == g || strings.Contains(prop.Type, g+"[]") || strings.Contains(prop.Type, "<"+g+">") {
+		for _, prop := range def.properties {
+			for _, g := range def.generics {
+				if prop.typ == g || strings.Contains(prop.typ, g+"[]") || strings.Contains(prop.typ, "<"+g+">") {
 					ok = false
 					break
 				}
@@ -522,36 +522,36 @@ func buildDocument(d *Document) *innerDocument {
 			}
 		}
 		if ok {
-			out.Definitions[def.Name] = mapDefinition(d, out, def)
+			out.Definitions[def.name] = mapDefinition(d, out, def)
 		}
 	}
 
 	// paths
-	for _, p := range d.Paths {
-		_, ok := out.Paths[p.Route]
+	for _, p := range d.paths {
+		_, ok := out.Paths[p.route]
 		if !ok {
-			out.Paths[p.Route] = map[string]*innerPath{}
+			out.Paths[p.route] = map[string]*innerPath{}
 		}
-		p.Method = strings.ToLower(p.Method)
-		id := strings.ReplaceAll(p.Route, "/", "-")
+		p.method = strings.ToLower(p.method)
+		id := strings.ReplaceAll(p.route, "/", "-")
 		id = strings.ReplaceAll(strings.ReplaceAll(id, "{", ""), "}", "")
-		id += "-" + p.Method
-		securities := make([]map[string][]interface{}, len(p.Securities))
-		for i, s := range p.Securities {
+		id += "-" + p.method
+		securities := make([]map[string][]interface{}, len(p.securities))
+		for i, s := range p.securities {
 			securities[i] = map[string][]interface{}{s: {}}
 		}
 
-		out.Paths[p.Route][p.Method] = &innerPath{
-			Summary:     p.Summary,
-			Description: p.Description,
+		out.Paths[p.route][p.method] = &innerPath{
+			Summary:     p.summary,
+			Description: p.desc,
 			OperationId: id,
-			Tags:        p.Tags,
-			Consumes:    p.Consumes,
-			Produces:    p.Produces,
+			Tags:        p.tags,
+			Consumes:    p.consumes,
+			Produces:    p.produces,
 			Securities:  securities,
-			Deprecated:  p.Deprecated,
-			Parameters:  mapParams(d, out, p.Params),
-			Responses:   mapResponses(d, out, p.Responses),
+			Deprecated:  p.deprecated,
+			Parameters:  mapParams(d, out, p.params),
+			Responses:   mapResponses(d, out, p.responses),
 		}
 	}
 
