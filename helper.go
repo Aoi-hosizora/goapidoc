@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 func jsonMarshal(t interface{}) ([]byte, error) {
@@ -17,7 +19,16 @@ func jsonMarshal(t interface{}) ([]byte, error) {
 }
 
 func saveFile(path string, data []byte) error {
-	err := ioutil.WriteFile(path, data, 0644)
+	dir := filepath.Dir(path)
+	_, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		err := os.MkdirAll(dir, 0644)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = ioutil.WriteFile(path, data, 0644)
 	if err != nil {
 		return err
 	}

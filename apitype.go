@@ -111,7 +111,7 @@ func parseApiType(typ string) *apiType {
 		typ:      typ,
 		generics: []*apiType{},
 	}
-	if typ[l-2:l] == "<>" {
+	if l >= 2 && typ[l-2:l] == "<>" {
 		object.typ = typ[:l-2]
 	}
 	return &apiType{
