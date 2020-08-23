@@ -17,7 +17,7 @@ func jsonMarshal(t interface{}) ([]byte, error) {
 }
 
 func saveFile(path string, data []byte) error {
-	err := ioutil.WriteFile(path, data, 0777)
+	err := ioutil.WriteFile(path, data, 0644)
 	if err != nil {
 		return err
 	}

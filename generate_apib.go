@@ -24,25 +24,27 @@ func buildApibDocument(d *Document) []byte {
 	template := fmt.Sprintf(apibTemplate, d.host, d.basePath, d.info.title, d.info.version, d.info.desc, "%s", "%s", "%s")
 	infoArray := make([]string, 0)
 	if d.info.termsOfService != "" {
-		infoArray = append(infoArray, fmt.Sprintf("> [Terms of service](%s)", d.info.termsOfService))
+		infoArray = append(infoArray, fmt.Sprintf("[Terms of service](%s)", d.info.termsOfService))
 	}
 	if license := d.info.license; license != nil {
-		infoArray = append(infoArray, fmt.Sprintf("> [License: %s](%s)", license.name, license.url))
+		infoArray = append(infoArray, fmt.Sprintf("[License: %s](%s)", license.name, license.url))
 	}
 	if contact := d.info.contact; contact != nil {
-		infoArray = append(infoArray, fmt.Sprintf("> [%s - Website](%s)", contact.name, contact.url))
+		infoArray = append(infoArray, fmt.Sprintf("[%s - Website](%s)", contact.name, contact.url))
 		if contact.email != "" {
-			infoArray = append(infoArray, fmt.Sprintf("> [Send email to %s](mailto:%s)", contact.name, contact.email))
+			infoArray = append(infoArray, fmt.Sprintf("[Send email to %s](mailto:%s)", contact.name, contact.email))
 		}
 	}
-	info := strings.Join(infoArray, "\n>\n")
-	template = fmt.Sprintf(template, info, "%s", "%s")
+	infoString := strings.Join(infoArray, "\n\n")
+	template = fmt.Sprintf(template, infoString, "%s", "%s")
 
 	// route path
-	template = fmt.Sprintf(template, "<!-- ROUTE PATH -->", "%s")
+	routePathString := "<!-- ROUTE PATH -->"
+	template = fmt.Sprintf(template, routePathString, "%s")
 
 	// definition
-	template = fmt.Sprintf(template, "<!-- DEFINITION -->")
+	definitionString := "<!-- DEFINITION -->"
+	template = fmt.Sprintf(template, definitionString)
 
 	return []byte(template)
 }

@@ -18,9 +18,9 @@ type apiType struct {
 	name string
 	kind apiTypeKind
 
-	outPrime  *apiPrime  // prime
-	outObject *apiObject // object
-	outArray  *apiArray  // array
+	prime  *apiPrime
+	object *apiObject
+	array  *apiArray
 }
 
 // integer#int64
@@ -31,64 +31,94 @@ type apiPrime struct {
 
 // xxx<yyy,...>
 type apiObject struct {
-	generic []*apiType // yyy,...
-	typ     string     // xxx
+	generics []*apiType // yyy,...
+	typ      string     // xxx
 }
 
 // xxx[][]
 type apiArray struct {
-	typ *apiType // xxx[]
+	item *apiType // xxx[]
 }
 
 func parseApiType(typ string) *apiType {
 	typ = strings.TrimSpace(typ)
+	l := len(typ)
 
-	// array
-	if len(typ) >= 3 && typ[len(typ)-2:] == "[]" {
+	// array: X[][]
+	if l >= 3 && typ[l-2:] == "[]" {
+		item := parseApiType(typ[:l-2]) // X[]
 		return &apiType{
-			name: typ, kind: apiArrayKind,
-			outArray: &apiArray{typ: parseApiType(typ[:len(typ)-2])},
+			name: typ,
+			kind: apiArrayKind,
+			array: &apiArray{
+				item: item,
+			},
 		}
 	}
 
-	// base
-	for _, tp := range []string{INTEGER, NUMBER, STRING, BOOLEAN, FILE, ARRAY, OBJECT} {
-		if typ == tp || (len(typ) > len(tp)+1 && strings.HasPrefix(typ, tp) && typ[len(tp)] == '#') {
-			format := defaultFormat(tp)
-			if typ != tp {
-				format = typ[len(tp)+1:]
+	// base: X#Y
+	for _, prime := range []string{INTEGER, NUMBER, STRING, BOOLEAN, FILE, ARRAY, OBJECT} {
+		primeLen := len(prime)
+		if typ == prime || (l > primeLen+1 && strings.HasPrefix(typ, prime) && typ[primeLen] == '#') {
+			format := defaultFormat(prime)
+			if typ != prime {
+				format = typ[primeLen+1:] // Y
 			}
-			out := &apiPrime{typ: tp, format: format}
-			return &apiType{name: typ, kind: apiPrimeKind, outPrime: out}
+			return &apiType{
+				name: typ,
+				kind: apiPrimeKind,
+				prime: &apiPrime{
+					typ:    prime,
+					format: format,
+				},
+			}
 		}
 	}
 
-	// object with generic
+	// object with generic: X<Y,Z<A,B<C>>>
 	start := strings.Index(typ, "<")
-	if len(typ) >= 3 && start != -1 && typ[len(typ)-1] == '>' {
-		param := typ[start+1 : len(typ)-1]
-		temp := strings.Split(param, ",")
+	if l > 3 && start >= 0 && typ[l-1] == '>' && typ[l-2:l] != "<>" {
+		paramStr := typ[start+1 : l-1]         // Y,Z<A,B<C>>
+		params := strings.Split(paramStr, ",") // Y | Z<A | B<C>>
 		generics := make([]string, 0)
-		for idx := 0; idx < len(temp); idx++ {
-			if strings.Contains(temp[idx], "<") && !strings.Contains(temp[idx], ">") {
-				if idx+1 < len(temp) {
-					temp[idx+1] = temp[idx] + "," + temp[idx+1]
+		for idx, param := range params {
+			if strings.Count(param, "<") != strings.Count(param, ">") { // Z<A
+				if len(params) > idx+1 {
+					params[idx+1] = params[idx] + "," + params[idx+1] // Z<A,B<C>>
 				} else {
-					panic("Failed to parse type of " + param)
+					panic("Failed to parse type of: `" + paramStr + "`")
 				}
 			} else {
-				generics = append(generics, temp[idx])
+				generics = append(generics, param)
 			}
 		}
-		out := &apiObject{typ: typ[:start]}
-		for _, generic := range generics {
-			out.generic = append(out.generic, parseApiType(generic))
+		out := &apiObject{
+			typ:      typ[:start],
+			generics: []*apiType{},
 		}
-		return &apiType{name: typ, kind: apiObjectKind, outObject: out}
+		for _, generic := range generics {
+			out.generics = append(out.generics, parseApiType(generic))
+		}
+		return &apiType{
+			name:   typ,
+			kind:   apiObjectKind,
+			object: out,
+		}
 	}
 
-	// object without generic
-	return &apiType{name: typ, kind: apiObjectKind, outObject: &apiObject{typ: typ}}
+	// object without generic: X | X<>
+	object := &apiObject{
+		typ:      typ,
+		generics: []*apiType{},
+	}
+	if typ[l-2:l] == "<>" {
+		object.typ = typ[:l-2]
+	}
+	return &apiType{
+		name:   typ,
+		kind:   apiObjectKind,
+		object: object,
+	}
 }
 
 // get default format from type
@@ -102,19 +132,21 @@ func defaultFormat(typ string) string {
 }
 
 // parse generic param
-func preHandleGeneric(def *Definition) {
+func preHandleGenerics(def *Definition) {
 	for _, prop := range def.properties {
 		for _, gen := range def.generics { // T -> «T»
 			newGen := "«" + gen + "»"
-			re, err := regexp.Compile("(^|[, <])" + gen + "([, >\\[]|$)") // (^|[, <])x([, >]|$)
+			re, err := regexp.Compile(`(^|[, <])` + gen + `([, <>\[]|$)`) // {, <} {, <>[]}
 			if err != nil {
-				panic("failed to compile generic parameter: " + err.Error())
+				panic("Failed to parse type of: `" + gen + "`")
 			}
+
 			prop.typ = strings.ReplaceAll(prop.typ, " ", "")
 			prop.typ = re.ReplaceAllString(prop.typ, "$1"+newGen+"$2")
 			prop.typ = strings.ReplaceAll(prop.typ, ",", ", ")
 		}
 	}
+
 	for idx := range def.generics {
 		def.generics[idx] = "«" + def.generics[idx] + "»"
 	}

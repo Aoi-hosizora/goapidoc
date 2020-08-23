@@ -148,15 +148,15 @@ func swagHandleObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (ori
 	}
 
 	origin = obj.typ
-	if len(obj.generic) != 0 {
+	if len(obj.generics) != 0 {
 		origin += "<"
-		for _, g := range obj.generic {
+		for _, g := range obj.generics {
 			if g.kind == apiPrimeKind {
-				origin += g.outPrime.typ
+				origin += g.prime.typ
 			} else if g.kind == apiArrayKind {
 				origin += g.name
 			} else if g.kind == apiObjectKind {
-				newOrigin, _ := swagHandleObject(doc, swagDoc, g.outObject)
+				newOrigin, _ := swagHandleObject(doc, swagDoc, g.object)
 				origin += newOrigin
 			}
 			origin += ","
@@ -166,7 +166,7 @@ func swagHandleObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (ori
 
 		var gdef *Definition
 		for _, def := range doc.definitions {
-			if def.name == obj.typ && len(def.generics) == len(obj.generic) {
+			if def.name == obj.typ && len(def.generics) == len(obj.generics) {
 				props := make([]*Property, len(def.properties))
 				for idx, p := range def.properties {
 					props[idx] = &Property{
@@ -189,7 +189,7 @@ func swagHandleObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (ori
 			}
 		}
 		if gdef != nil {
-			for idx, g := range obj.generic {
+			for idx, g := range obj.generics {
 				gActual := g.name
 				gtype := gdef.generics[idx]
 				for _, prop := range gdef.properties {
@@ -227,18 +227,18 @@ func swagHandleArray(doc *Document, swagDoc *swagDocument, arr *apiArray) *swagI
 		  "$ref": "#/definitions/User"
 		}
 	*/
-	if arr.typ.kind == apiPrimeKind {
+	if arr.item.kind == apiPrimeKind {
 		return &swagItems{
-			Type:   arr.typ.outPrime.typ,
-			Format: arr.typ.outPrime.format,
+			Type:   arr.item.prime.typ,
+			Format: arr.item.prime.format,
 		}
-	} else if arr.typ.kind == apiArrayKind {
+	} else if arr.item.kind == apiArrayKind {
 		return &swagItems{
 			Type:  ARRAY,
-			Items: swagHandleArray(doc, swagDoc, arr.typ.outArray),
+			Items: swagHandleArray(doc, swagDoc, arr.item.array),
 		}
-	} else if arr.typ.kind == apiObjectKind {
-		origin, ref := swagHandleObject(doc, swagDoc, arr.typ.outObject)
+	} else if arr.item.kind == apiObjectKind {
+		origin, ref := swagHandleObject(doc, swagDoc, arr.item.object)
 		if origin != "" {
 			return &swagItems{
 				OriginRef: origin,
@@ -272,13 +272,13 @@ func swagMapParameterSchema(doc *Document, swagDoc *swagDocument, typ string) (s
 	var schema *swagSchema
 
 	if it.kind == apiPrimeKind {
-		typeStr = it.outPrime.typ
-		formatStr = it.outPrime.format
+		typeStr = it.prime.typ
+		formatStr = it.prime.format
 	} else if it.kind == apiArrayKind {
 		typeStr = ARRAY
-		items = swagHandleArray(doc, swagDoc, it.outArray)
+		items = swagHandleArray(doc, swagDoc, it.array)
 	} else if it.kind == apiObjectKind {
-		origin, ref := swagHandleObject(doc, swagDoc, it.outObject)
+		origin, ref := swagHandleObject(doc, swagDoc, it.object)
 		if origin != "" {
 			schema = &swagSchema{
 				OriginRef: origin,
@@ -307,18 +307,18 @@ func swagMapResponseSchema(doc *Document, swagDoc *swagDocument, typ string, req
 	*/
 	if it.kind == apiPrimeKind {
 		return &swagSchema{
-			Type:     it.outPrime.typ,
-			Format:   it.outPrime.format,
+			Type:     it.prime.typ,
+			Format:   it.prime.format,
 			Required: req,
 		}
 	} else if it.kind == apiArrayKind {
-		items := swagHandleArray(doc, swagDoc, it.outArray)
+		items := swagHandleArray(doc, swagDoc, it.array)
 		return &swagSchema{
 			Type:  ARRAY,
 			Items: items,
 		}
 	} else if it.kind == apiObjectKind {
-		origin, ref := swagHandleObject(doc, swagDoc, it.outObject)
+		origin, ref := swagHandleObject(doc, swagDoc, it.object)
 		if origin != "" {
 			return &swagSchema{
 				OriginRef: origin,
@@ -346,14 +346,14 @@ func swagMapPropertySchema(doc *Document, swagDoc *swagDocument, typ string) (ou
 		}
 	*/
 	if it.kind == apiPrimeKind {
-		outType = it.outPrime.typ
-		outFmt = it.outPrime.format
+		outType = it.prime.typ
+		outFmt = it.prime.format
 	} else if it.kind == apiArrayKind {
 		outType = ARRAY
-		items = swagHandleArray(doc, swagDoc, it.outArray)
+		items = swagHandleArray(doc, swagDoc, it.array)
 	} else if it.kind == apiObjectKind {
 		outType = ""
-		origin, ref = swagHandleObject(doc, swagDoc, it.outObject)
+		origin, ref = swagHandleObject(doc, swagDoc, it.object)
 	}
 	return
 }
@@ -505,7 +505,7 @@ func buildSwaggerDocument(d *Document) *swagDocument {
 
 	// models
 	for _, def := range d.definitions {
-		preHandleGeneric(def)
+		preHandleGenerics(def)
 	}
 	for idx := 0; idx < len(d.definitions); idx++ {
 		def := d.definitions[idx]
