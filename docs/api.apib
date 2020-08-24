@@ -1,0 +1,232 @@
+FORMAT: 1A
+HOST: localhost:10086/
+
+# test-api (1.0)
+
+a demo description
+
+[Terms of service](http://xxx.yyy.zzz)
+
+[License: MIT](http://xxx.yyy.zzz)
+
+[author - Website](http://xxx.yyy.zzz)
+
+[Send email to author](mailto:xxx@yyy.zzz)
+
+<!-- GROUPS -->
+
+# Group ping
+
+ping-controller
+
+## ping [/api/v1/ping]
+
+### ping [GET]
+
+`GET /api/v1/ping`
+
+ping the server
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    success
+
+    + Attributes
+
+    + Headers
+
+    + Body
+
+            {
+                "ping": "pong"
+            }
+
+# Group user
+
+user-controller
+
+## get users [/api/v1/user{?page,total,order}]
+
+### get users [GET]
+
+`GET /api/v1/user`
+
++ Parameters
+
+    + page (integer, optional) - current page
+        (val in \[1, 50\])
+        + Default: `1`
+    + total: `20` (integer, optional) - page size
+        + Default: `10`
+    + order (string, optional) - order string
+        (len in \[1, 50\])
+        + Default: ``
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result«_Page«User»»)
+
+    + Headers
+
+    + Body
+
+## get a user, ugly update user [/api/v1/user/{id}]
+
+### get a user [GET]
+
+`GET /api/v1/user/{id}`
+
++ Parameters
+
+    + id (integer, required) - user id
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result«User»)
+
+    + Headers
+
+    + Body
+
+### ugly update user [PUT]
+
+`PUT /api/v1/user/{id}`
+
+Attention: This api is deprecated.
+
++ Parameters
+
+    + id (integer, required) - user id
+
++ Request (application/json)
+
+    + Attributes (User)
+
+    + Headers
+
+            Authorization: jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    success
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
++ Response 404 (application/json)
+
+    not found
+
+    + Attributes
+
+    + Headers
+
+            Content-Kind: demo (string)
+
+    + Body
+
++ Response 400 (application/json)
+
+    bad request
+
+    + Attributes (string)
+
+    + Headers
+
+    + Body
+
+            bad request
+
+# Group Default
+
+## test path [/api/v1/test{?arr,ref,enum,option1,option2}]
+
+### test path [HEAD]
+
+`HEAD /api/v1/test`
+
++ Parameters
+
+    + arr (array[integer#int64], required) - test
+    + ref (array[User], required) - test
+    + enum (enum[string], required) - test
+        + Members
+            + `male`
+            + `female`
+    + option1 (array[_Result«string»], required) - test
+    + option2 (array[_Result«string[]»], required) - test
+
++ Request (application/json)
+
+    + Attributes (integer)
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (TestGeneric«integer, User, string»)
+
+    + Headers
+
+    + Body
+
+<!-- DEFINITIONS -->
+
+# Data Structures
+
+## Result (object)
+
+global response
+
++ code (integer, required) - status code
++ message (string, required) - status message
+
+## User (object)
+
+user response
+
++ id (integer, required) - user id
+    (len >= 1, val >= 1)
++ name (string, required) - user name
++ profile (string, optional) - user profile
+    (allow empty, len <= 255, val <= 255)
++ gender: `female` (string, required) - user gender
+    + Members
+        + `male`
+        + `female`
++ create_at (string#date-time, required) - user register time
++ birthday (string#date, required) - user birthday
++ scores (array[number], required) - user scores

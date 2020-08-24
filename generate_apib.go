@@ -8,8 +8,11 @@ import (
 func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
 	typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
-	typ = strings.ReplaceAll(typ, "[]", "||")
-	return typ, at
+	if at.kind != apiArrayKind {
+		return typ, at
+	}
+	item, _ := buildApibType(at.array.item.name)
+	return fmt.Sprintf("array[%s]", item), at
 }
 
 func buildApibParam(param *Param) string {
@@ -271,25 +274,46 @@ func buildApibGroups(d *Document) string {
 		groupStrings = append(groupStrings, groupStr)
 	}
 
-	return fmt.Sprintf("<!-- GROUPS -->\n\n%s", strings.Join(groupStrings, "\n\n"))
+	return strings.Join(groupStrings, "\n\n")
+}
+
+func buildApibDefinition(d *Definition, in map[string]*Definition, out map[string]string) {
+	if len(d.generics) != 0 || len(d.properties) == 0 {
+		return
+	}
+
+	definitionStr := fmt.Sprintf("## %s (object)\n\n%s", d.name, d.desc)
+
+	propertyStrings := make([]string, 0)
+	for _, property := range d.properties {
+		_, at := buildApibType(property.typ)
+		if at.kind == apiObjectKind && len(at.object.generics) != 0 {
+			// TODO
+		}
+
+		propertyStr := buildApibProperty(property)
+		propertyStrings = append(propertyStrings, propertyStr)
+	}
+	definitionStr += fmt.Sprintf("\n\n%s", strings.Join(propertyStrings, "\n"))
+	out[d.name] = definitionStr
 }
 
 func buildApibDefinitions(d *Document) string {
-	definitionStrings := make([]string, 0)
+	sourceDefinitions := make(map[string]*Definition)
 	for _, definition := range d.definitions {
-		definitionStr := fmt.Sprintf("## %s (object)\n\n%s", definition.name, definition.desc)
-		if len(definition.properties) != 0 {
-			propertyStrings := make([]string, 0)
-			for _, property := range definition.properties {
-				propertyStr := buildApibProperty(property)
-				propertyStrings = append(propertyStrings, propertyStr)
-			}
-			definitionStr += fmt.Sprintf("\n\n%s", strings.Join(propertyStrings, "\n"))
-		}
-		definitionStrings = append(definitionStrings, definitionStr)
+		sourceDefinitions[definition.name] = definition
+	}
+	resultDefinitions := make(map[string]string)
+
+	for _, definition := range sourceDefinitions {
+		buildApibDefinition(definition, sourceDefinitions, resultDefinitions)
+	}
+	definitionStrings := make([]string, 0)
+	for _, v := range resultDefinitions {
+		definitionStrings = append(definitionStrings, v)
 	}
 
-	return fmt.Sprintf("<!-- DEFINITIONS -->\n\n# Data Structures\n\n%s", strings.Join(definitionStrings, "\n\n"))
+	return "# Data Structures\n\n" + strings.Join(definitionStrings, "\n\n")
 }
 
 var apibTemplate = `FORMAT: 1A
@@ -301,7 +325,11 @@ HOST: %s%s
 
 %s
 
+<!-- GROUPS -->
+
 %s
+
+<!-- DEFINITIONS -->
 
 %s
 `
