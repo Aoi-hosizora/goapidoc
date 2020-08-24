@@ -112,7 +112,7 @@ func TestPreHandleGenerics(t *testing.T) {
 			{typ: "TtT<T,tT[],T[][]>[]"},
 		},
 	}
-	preHandleGenerics(def)
+	preHandleDefinitionForGeneric(def)
 
 	if def.generics[0] != "«T»" {
 		t.Fatal("def.generics[0]")
@@ -192,7 +192,8 @@ func TestGenerate(t *testing.T) {
 			Responses(
 				NewResponse(200).Type("_Result<User>"),
 			),
-		NewRoutePath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
+		NewRoutePath(PUT, "/api/v1/user/{id}", "ugly update user").
+			Deprecated(true).
 			Tags("user").
 			Consumes(JSON).
 			Produces(JSON).
@@ -261,12 +262,12 @@ func TestGenerate(t *testing.T) {
 		),
 	)
 
-	doc, err := GenerateSwaggerYaml("./docs/api.yaml")
+	_, err := GenerateSwaggerYaml("./docs/api.yaml")
 	log.Println(err)
 
-	doc, err = GenerateSwaggerJson("./docs/api.json")
-	log.Println(string(doc), err)
+	_, err = GenerateSwaggerJson("./docs/api.json")
+	log.Println(err)
 
-	doc, err = GenerateApib("./docs/api.apib")
-	log.Println(string(doc), err)
+	_, err = GenerateApib("./docs/api.apib")
+	log.Println(err)
 }

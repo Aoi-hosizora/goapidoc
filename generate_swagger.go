@@ -505,7 +505,7 @@ func buildSwaggerDocument(d *Document) *swagDocument {
 
 	// models
 	for _, def := range d.definitions {
-		preHandleGenerics(def)
+		preHandleDefinitionForGeneric(def)
 	}
 	for idx := 0; idx < len(d.definitions); idx++ {
 		def := d.definitions[idx]

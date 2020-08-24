@@ -1,6 +1,6 @@
 # goapidoc
 
-+ A tool written in golang for generating rest api document (swagger)
++ A tool written in golang for generating rest api document (swagger & apib)
 
 ### Function
 
@@ -121,3 +121,4 @@ func main() {
 ### References
 
 + [OpenAPI Specification 2.0](https://swagger.io/specification/v2/)
++ [API Blueprint Specification](https://apiblueprint.org/documentation/specification.html)

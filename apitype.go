@@ -132,9 +132,12 @@ func defaultFormat(typ string) string {
 }
 
 // parse generic param
-func preHandleGenerics(def *Definition) {
+func preHandleDefinitionForGeneric(def *Definition) {
 	for _, prop := range def.properties {
 		for _, gen := range def.generics { // T -> «T»
+			if strings.HasPrefix(gen, "«") && strings.HasSuffix(gen, "»") {
+				continue
+			}
 			newGen := "«" + gen + "»"
 			re, err := regexp.Compile(`(^|[, <])` + gen + `([, <>\[]|$)`) // {, <} {, <>[]}
 			if err != nil {

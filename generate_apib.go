@@ -5,14 +5,19 @@ import (
 	"strings"
 )
 
+func buildApibType(typ string) (string, *apiType) {
+	at := parseApiType(typ)
+	typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
+	typ = strings.ReplaceAll(typ, "[]", "||")
+	return typ, at
+}
+
 func buildApibParam(param *Param) string {
 	req := "required"
 	if !param.required {
 		req = "optional"
 	}
-	typ := param.typ
-	typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
-	typ = strings.ReplaceAll(typ, "[]", "||")
+	typ, _ := buildApibType(param.typ)
 	if len(param.enum) != 0 {
 		typ = "enum[" + typ + "]"
 	}
@@ -31,84 +36,156 @@ func buildApibParam(param *Param) string {
 		options = append(options, fmt.Sprintf("len in \\[%d, %d\\]", param.minLength, param.maxLength))
 	} else if param.minLength != 0 {
 		options = append(options, fmt.Sprintf("len >= %d", param.minLength))
-	} else {
+	} else if param.maxLength != 0 {
 		options = append(options, fmt.Sprintf("len <= %d", param.maxLength))
 	}
 	if param.maximum != 0 && param.minimum != 0 {
 		options = append(options, fmt.Sprintf("val in \\[%d, %d\\]", param.minimum, param.maximum))
-	} else if param.minLength != 0 {
+	} else if param.minimum != 0 {
 		options = append(options, fmt.Sprintf("val >= %d", param.minimum))
-	} else {
+	} else if param.maximum != 0 {
 		options = append(options, fmt.Sprintf("val <= %d", param.maximum))
 	}
 
 	if len(options) != 0 {
-		paramStr += fmt.Sprintf("\n\n        (%s)", strings.Join(options, ", "))
+		paramStr += fmt.Sprintf("\n    (%s)", strings.Join(options, ", "))
 	}
 
 	if param.def != nil {
-		paramStr += fmt.Sprintf("\n\n        Default: `%v`", param.def)
+		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.def)
 	}
 
 	if len(param.enum) != 0 {
-		paramStr += "\n\n        + Members"
+		paramStr += "\n    + Members"
 		for _, enum := range param.enum {
-			paramStr += fmt.Sprintf("\n            + `%v`", enum)
+			paramStr += fmt.Sprintf("\n        + `%v`", enum)
 		}
 	}
 
 	return paramStr
 }
 
-func buildApibPath(path *RoutePath) string {
-	// request
-	parameterStrings := make([]string, 0)
-	attributeStrings := make([]string, 0)
-	for _, param := range path.params {
-		paramStr := buildApibParam(param)
-		if param.in == "path" || param.in == "query" {
-			parameterStrings = append(parameterStrings, "    "+paramStr)
-		} else { // body || formData
-			paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
-			attributeStrings = append(attributeStrings, "        "+paramStr)
-		}
+func buildApibProperty(prop *Property) string {
+	return buildApibParam(&Param{
+		name:       prop.name,
+		typ:        prop.typ,
+		required:   prop.required,
+		desc:       prop.desc,
+		allowEmpty: prop.allowEmpty,
+		def:        prop.def,
+		example:    prop.example,
+		enum:       prop.enum,
+		minLength:  prop.minimum,
+		maxLength:  prop.maxLength,
+		minimum:    prop.minimum,
+		maximum:    prop.maxLength,
+	})
+}
+
+func buildApibPath(securities map[string]*Security, path *RoutePath) string {
+	// meta
+	method := strings.ToUpper(path.method)
+	metaStr := fmt.Sprintf("### %s [%s]\n\n`%s %s`", path.summary, method, method, path.route)
+	if path.desc != "" {
+		metaStr += "\n\n" + path.desc
 	}
+	if path.deprecated {
+		metaStr += "\n\nAttention: This api is deprecated."
+	}
+
+	// request
 	consume := "application/json"
 	if len(path.consumes) >= 1 {
 		consume = path.consumes[0]
 	}
+	params := path.params
+	bodyParamString := ""
+	if len(path.securities) >= 1 {
+		securityString := path.securities[0]
+		if security, ok := securities[securityString]; ok {
+			params = append(params, &Param{name: security.name, in: security.in, typ: "string", desc: securityString + " " + security.typ})
+		}
+	}
+	parameterStrings := make([]string, 0)
+	attributeStrings := make([]string, 0)
+	headerStrings := make([]string, 0)
+	for _, param := range params {
+		paramStr := buildApibParam(param)
+		paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
+		if param.in == "path" || param.in == "query" {
+			parameterStrings = append(parameterStrings, "    "+paramStr)
+		} else if param.in == "formData" {
+			paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
+			attributeStrings = append(attributeStrings, "        "+paramStr)
+		} else if param.in == "body" {
+			bodyParamString = param.typ // allow one
+		} else if param.in == "header" {
+			req := "required"
+			if !param.required {
+				req = "optional"
+			}
+			headerStr := fmt.Sprintf("            %s: %s (%s, %s)", param.name, param.desc, param.typ, req)
+			headerStrings = append(headerStrings, headerStr)
+		}
+	}
 
-	requestStr := fmt.Sprintf("+ Request (%s)", consume) // center
+	// + Request <----------------- center
+	requestStr := fmt.Sprintf("+ Request (%s)", consume)
+	// + Parameters
 	if len(parameterStrings) != 0 {
-		parameterStrings := strings.Join(parameterStrings, "\n\n")
-		requestStr = fmt.Sprintf("+ Parameter\n\n%s\n\n%s", parameterStrings, requestStr)
+		parameterStr := strings.Join(parameterStrings, "\n")
+		requestStr = fmt.Sprintf("+ Parameters\n\n%s\n\n%s", parameterStr, requestStr)
 	}
-	if len(attributeStrings) != 0 {
-		attributeStrings := strings.Join(attributeStrings, "\n\n")
-		requestStr += fmt.Sprintf("\n\n    + Attributes\n\n%s", attributeStrings)
+	// + Attributes (req)
+	requestStr += "\n\n    + Attributes"
+	if bodyParamString != "" && len(attributeStrings) != 0 {
+		attributeStr := strings.Join(attributeStrings, "\n")
+		requestStr += fmt.Sprintf(" (%s)\n\n%s", bodyParamString, attributeStr)
+	} else if len(attributeStrings) != 0 {
+		attributeStr := strings.Join(attributeStrings, "\n")
+		requestStr += fmt.Sprintf("\n\n%s", attributeStr)
+	} else if bodyParamString != "" {
+		requestStr += fmt.Sprintf(" (%s)", bodyParamString)
 	}
+	// + Headers (req)
+	requestStr += "\n\n    + Headers"
+	if len(headerStrings) != 0 {
+		headerStr := strings.Join(headerStrings, "\n")
+		requestStr += fmt.Sprintf("\n\n%s", headerStr)
+	}
+	// + Body (req)
 	requestStr += "\n\n    + Body"
 
 	// response
-	responseStrings := make([]string, 0)
 	produce := "application/json"
 	if len(path.produces) >= 1 {
 		consume = path.produces[0]
 	}
-
+	responseStrings := make([]string, 0)
 	for _, response := range path.responses {
-		responseStr := fmt.Sprintf("+ Response %d (%s)", response.code, produce) // center
+		// + Response <----------------- center
+		responseStr := fmt.Sprintf("+ Response %d (%s)", response.code, produce)
 		if response.desc != "" {
 			responseStr += fmt.Sprintf("\n\n    %s", response.desc)
 		}
+		// + Attributes (resp)
+		responseStr += "\n\n    + Attributes"
+		if response.typ != "" {
+			typ, _ := buildApibType(response.typ)
+			responseStr += fmt.Sprintf(" (%s)", typ)
+		}
+		// + Headers (resp)
+		responseStr += "\n\n    + Headers"
 		headerStrings := make([]string, 0)
 		for _, header := range response.headers {
 			headerStr := fmt.Sprintf("            %s: %s (%s)", header.name, header.desc, header.typ)
 			headerStrings = append(headerStrings, headerStr)
 		}
 		if len(headerStrings) != 0 {
-			responseStr += fmt.Sprintf("\n\n    + Headers\n\n%s", strings.Join(headerStrings, "\n"))
+			headerStr := strings.Join(headerStrings, "\n")
+			responseStr += fmt.Sprintf("\n\n%s", headerStr)
 		}
+		// + Body (resp)
 		responseStr += "\n\n    + Body"
 		if ex, ok := response.examples[produce]; ok {
 			ex = "\n" + ex
@@ -118,7 +195,8 @@ func buildApibPath(path *RoutePath) string {
 		responseStrings = append(responseStrings, responseStr)
 	}
 
-	return requestStr + "\n\n" + strings.Join(responseStrings, "\n\n")
+	responseStr := strings.Join(responseStrings, "\n\n")
+	return fmt.Sprintf("%s\n\n%s\n\n%s", metaStr, requestStr, responseStr)
 }
 
 func buildApibGroups(d *Document) string {
@@ -131,7 +209,7 @@ func buildApibGroups(d *Document) string {
 		if len(tags) == 0 {
 			tags = []string{"Default"}
 		}
-		tag := tags[0]
+		tag := tags[0] // use first tag
 		if _, ok := groups[tag]; !ok {
 			groups[tag] = make([]*RoutePath, 0)
 		}
@@ -141,6 +219,10 @@ func buildApibGroups(d *Document) string {
 	for _, tag := range d.tags {
 		tags[tag.name] = tag.desc
 	}
+	securities := make(map[string]*Security)
+	for _, security := range d.securities {
+		securities[security.title] = security
+	}
 
 	for tag, group := range groups {
 		// [##, ##]
@@ -148,10 +230,20 @@ func buildApibGroups(d *Document) string {
 
 		paths := map[string]map[string]*RoutePath{}
 		for _, path := range group {
-			if _, ok := paths[path.route]; !ok {
-				paths[path.route] = map[string]*RoutePath{}
+			route := path.route
+			query := make([]string, 0)
+			for _, param := range path.params {
+				if param.in == "query" {
+					query = append(query, param.name)
+				}
 			}
-			paths[path.route][path.method] = path
+			if len(query) != 0 {
+				route += fmt.Sprintf("{?%s}", strings.Join(query, ","))
+			}
+			if _, ok := paths[route]; !ok {
+				paths[route] = map[string]*RoutePath{}
+			}
+			paths[route][path.method] = path
 		}
 
 		for path, methods := range paths {
@@ -159,14 +251,9 @@ func buildApibGroups(d *Document) string {
 			methodStrings := make([]string, 0)
 
 			summaries := make([]string, 0)
-			for method, route := range methods {
-				method = strings.ToUpper(method)
+			for _, route := range methods {
 				summaries = append(summaries, route.summary)
-				methodStr := fmt.Sprintf("### %s [%s]\n\n`%s %s`", route.summary, method, method, route.route)
-				if route.desc != "" {
-					methodStr += "\n\n" + route.desc
-				}
-				methodStr += "\n\n" + buildApibPath(route)
+				methodStr := buildApibPath(securities, route)
 				methodStrings = append(methodStrings, methodStr)
 			}
 
@@ -188,7 +275,21 @@ func buildApibGroups(d *Document) string {
 }
 
 func buildApibDefinitions(d *Document) string {
-	return "<!-- DEFINITIONS -->"
+	definitionStrings := make([]string, 0)
+	for _, definition := range d.definitions {
+		definitionStr := fmt.Sprintf("## %s (object)\n\n%s", definition.name, definition.desc)
+		if len(definition.properties) != 0 {
+			propertyStrings := make([]string, 0)
+			for _, property := range definition.properties {
+				propertyStr := buildApibProperty(property)
+				propertyStrings = append(propertyStrings, propertyStr)
+			}
+			definitionStr += fmt.Sprintf("\n\n%s", strings.Join(propertyStrings, "\n"))
+		}
+		definitionStrings = append(definitionStrings, definitionStr)
+	}
+
+	return fmt.Sprintf("<!-- DEFINITIONS -->\n\n# Data Structures\n\n%s", strings.Join(definitionStrings, "\n\n"))
 }
 
 var apibTemplate = `FORMAT: 1A
@@ -229,6 +330,9 @@ func buildApibDocument(d *Document) []byte {
 	template = fmt.Sprintf(template, routePathString, "%s")
 
 	// definition
+	for _, def := range d.definitions {
+		preHandleDefinitionForGeneric(def)
+	}
 	definitionString := buildApibDefinitions(d)
 	template = fmt.Sprintf(template, definitionString)
 
