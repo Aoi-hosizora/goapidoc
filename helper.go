@@ -91,3 +91,7 @@ func (l *linkedHashMap) MarshalJSON() ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
+
+func (l *linkedHashMap) MarshalYAML() (interface{}, error) {
+	return l.m, nil
+}

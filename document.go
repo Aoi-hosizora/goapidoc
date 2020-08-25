@@ -22,7 +22,7 @@ func (d *Document) Securities(security ...*Security) *Document {
 	return d
 }
 
-func (d *Document) AddPaths(path ...*RoutePath) *Document {
+func (d *Document) AddRoutePaths(path ...*RoutePath) *Document {
 	d.paths = append(d.paths, path...)
 	return d
 }
@@ -122,8 +122,8 @@ func SetSecurities(securities ...*Security) {
 	_document.Securities(securities...)
 }
 
-func AddPaths(paths ...*RoutePath) {
-	_document.AddPaths(paths...)
+func AddRoutePaths(paths ...*RoutePath) {
+	_document.AddRoutePaths(paths...)
 }
 
 func AddDefinitions(definitions ...*Definition) {

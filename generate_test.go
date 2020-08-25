@@ -152,7 +152,7 @@ func TestPrehandleGenericList(t *testing.T) {
 		{name: "Login", properties: []*Property{}},
 		{name: "String", properties: []*Property{}},
 		{name: "Result", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T"}}},
-		{name: "Page", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "name"}, {name: "data", typ: "T[]"}}},
+		{name: "Page", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T[]"}}},
 		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
 		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
 	}
@@ -166,23 +166,26 @@ func TestPrehandleGenericList(t *testing.T) {
 		"Result2<String, Result2<String, String>>",
 	})
 
+	if len(newDefs) != 12 {
+		t.Fatal()
+	}
+
 	contain := func(def *Definition) bool {
 		ok := false
 		for _, newDef := range newDefs {
 			if newDef.name != def.name || len(newDef.properties) != len(def.properties) {
 				continue
 			}
-
-			if len(def.properties) == 0 {
+			if len(newDef.properties) == 0 {
 				ok = true
 				break
 			}
 
-			ok2 := false
+			ok2 := true
 			for idx, newProp := range newDef.properties {
 				prop := def.properties[idx]
-				if newProp.name == prop.name && newProp.typ == prop.typ {
-					ok2 = true
+				if newProp.name != prop.name || newProp.typ != prop.typ {
+					ok2 = false
 					break
 				}
 			}
@@ -200,9 +203,6 @@ func TestPrehandleGenericList(t *testing.T) {
 	// 3: Page<Result2<Login, Page<Login>>>
 	// 4: Result3<User, Page<Result2<Login, Page<Login>>>, String[]>
 
-	if len(newDefs) != 12 {
-		t.Fatal()
-	}
 	for idx, ok := range []bool{
 		contain(&Definition{name: "User", properties: []*Property{}}),
 		contain(&Definition{name: "Login", properties: []*Property{}}),
@@ -219,7 +219,7 @@ func TestPrehandleGenericList(t *testing.T) {
 
 		contain(&Definition{name: "Page<Result2<Login, Page<Login>>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Result2<Login, Page<Login>>[]"}}}),
 
-		contain(&Definition{name: "Result3<User, Page<Result2<Login, Page<Login>>>, String[]>", properties: []*Property{{name: "a", typ: "User"}, {name: "b", typ: "Page<Result2<Login, Page<Login>>>[]"}, {name: "c", typ: "String[]"}}}),
+		contain(&Definition{name: "Result3<User, Page<Result2<Login, Page<Login>>>, String[]>", properties: []*Property{{name: "a", typ: "User"}, {name: "b", typ: "Page<Result2<Login, Page<Login>>>[][]"}, {name: "c", typ: "Result<String[]>"}}}),
 	} {
 		if !ok {
 			t.Fatal(idx)
@@ -229,118 +229,134 @@ func TestPrehandleGenericList(t *testing.T) {
 
 func TestGenerate(t *testing.T) {
 	SetDocument(
-		"localhost:10086", "/",
-		NewInfo("test-api", "a demo description", "1.0").
-			TermsOfService("http://xxx.yyy.zzz").
-			License(NewLicense("MIT", "http://xxx.yyy.zzz")).
-			Contact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
+		"localhost:65530", "/",
+		NewInfo("goapidoc", "goapidoc test api", "1.0").
+			TermsOfService("https://github.com/Aoi-hosizora").
+			License(NewLicense("MIT", "https://github.com/Aoi-hosizora")).
+			Contact(NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
 	)
 	SetTags(
-		NewTag("ping", "ping-controller"),
-		NewTag("user", "user-controller"),
+		NewTag("Authorization", "auth-controller"),
+		NewTag("User", "user-controller"),
+		NewTag("Test", "test-controller"),
 	)
 	SetSecurities(
-		NewSecurity("jwt", HEADER, "Authorization"),
+		NewSecurity("Jwt", "header", "Authorization"),
 	)
 
-	AddPaths(
-		NewRoutePath(GET, "/api/v1/ping", "ping").
-			Desc("ping the server").
-			Tags("ping").
-			Consumes(JSON).
-			Produces(JSON).
+	AddRoutePaths(
+		NewRoutePath("POST", "/auth/register", "Register").
+			Desc("Register.").
+			Tags("Authorization").
+			Params(NewBodyParam("param", "RegisterParam", true, "register param")).
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("POST", "/auth/login", "Login").
+			Desc("Login.").
+			Tags("Authorization").
+			Params(NewBodyParam("param", "LoginParam", true, "login param")).
 			Responses(
-				NewResponse(200).Desc("success").Examples(map[string]string{JSON: "{\n    \"ping\": \"pong\"\n}"}),
+				NewResponse(200, "_Result<LoginDto>"),
+				NewResponse(400, "Result").Examples(map[string]string{"application/json": "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"}),
 			),
-		NewRoutePath(GET, "/api/v1/user", "get users").
-			Tags("user").
-			Consumes(JSON).
-			Produces(JSON).
-			Securities("jwt").
+
+		NewRoutePath("DELETE", "/auth/logout", "Logout").
+			Tags("Authorization").
+			Securities("Jwt").
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("GET", "/user", "Get users").
+			Tags("User").
+			Securities("Jwt").
 			Params(
-				NewQueryParam("page", INTEGER, false, "current page").Default(1).Minimum(1).Maximum(50),
-				NewQueryParam("total", INTEGER, false, "page size").Default(10).Example(20),
-				NewQueryParam("order", STRING, false, "order string").Default("").MinLength(1).MaxLength(50),
+				NewQueryParam("page", "integer#int32", false, "current page").Default(1).Example(1).Minimum(1),
+				NewQueryParam("limit", "integer#int32", false, "page size").Default(20).Example(20).Minimum(15),
 			).
-			Responses(
-				NewResponse(200).Type("_Result<_Page<User>>"),
-			),
-		NewRoutePath(GET, "/api/v1/user/{id}", "get a user").
-			Tags("user").
-			Consumes(JSON).
-			Produces(JSON).
-			Params(NewPathParam("id", INTEGER, true, "user id")).
-			Responses(
-				NewResponse(200).Type("_Result<User>"),
-			),
-		NewRoutePath(PUT, "/api/v1/user/{id}", "ugly update user").
+			Responses(NewResponse(200, "_Result<_Page<UserDto>>")),
+
+		NewRoutePath("GET", "/user/{username}", "Get a user").
+			Tags("User").
+			Securities("Jwt").
+			Params(NewPathParam("username", "string", true, "username")).
+			Responses(NewResponse(200, "_Result<UserDto>")),
+
+		NewRoutePath("PUT", "/user/deprecated", "Update user").
+			Tags("User").
+			Securities("Jwt").
 			Deprecated(true).
-			Tags("user").
-			Consumes(JSON).
-			Produces(JSON).
-			Securities("jwt").
-			Params(
-				NewPathParam("id", INTEGER, true, "user id"),
-				NewBodyParam("body", "User", true, "request body"),
-			).
-			Responses(
-				NewResponse(200).Type("Result").Desc("success"),
-				NewResponse(404).Desc("not found").Headers(NewHeader("Content-Kind", STRING, "demo")),
-				NewResponse(400).Type(STRING).Desc("bad request").Examples(map[string]string{JSON: "bad request"}),
-			),
-		NewRoutePath(HEAD, "/api/v1/test", "test path").
-			Params(
-				NewQueryParam("arr", "integer#int64[]", true, "test"),
-				NewQueryParam("ref", "User[]", true, "test"),
-				NewQueryParam("enum", STRING, true, "test").Enum("male", "female"),
-				NewQueryParam("option1", "_Result<string>[]", true, "test"),
-				NewQueryParam("option2", "_Result<string[]>[]", true, "test"),
-				NewBodyParam("test", "_ResultPage<User>", true, "test"),
-				NewBodyParam("arr2", INTEGER, true, "test"),
-			).
-			Responses(NewResponse(200).Type("TestGeneric<integer, User, string>")),
+			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("PUT", "/user", "Update user").
+			Tags("User").
+			Securities("Jwt").
+			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("DELETE", "/user", "Delete user").
+			Tags("User").
+			Securities("Jwt").
+			Responses(NewResponse(200, "Result")),
 	)
 
 	AddDefinitions(
-		NewDefinition("Result", "global response").Properties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", STRING, true, "status message"),
-		),
-		NewDefinition("User", "user response").Properties(
-			NewProperty("id", INTEGER, true, "user id").Minimum(1).Maximum(65535),
-			NewProperty("name", STRING, true, "user name"),
-			NewProperty("profile", STRING, false, "user profile").AllowEmpty(true).MinLength(1).MaxLength(255),
-			NewProperty("gender", STRING, true, "user gender").Enum("male", "female").Example("female"),
-			NewProperty("create_at", "string#date-time", true, "user register time"),
-			NewProperty("birthday", "string#date", true, "user birthday"),
-			NewProperty("scores", "number[]", true, "user scores"),
-		),
-		NewDefinition("_Result", "global response").Generics("T").Properties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", STRING, true, "status message"),
-			NewProperty("data", "T", true, "response data"),
-		),
-		NewDefinition("_Page", "global page response").Generics("T").Properties(
-			NewProperty("page", INTEGER, true, "current page"),
-			NewProperty("total", INTEGER, true, "data count"),
-			NewProperty("limit", INTEGER, true, "page size"),
-			NewProperty("data", "T[]", true, "page data"),
-		),
-		NewDefinition("_ResultPage", "global response").Generics("T").Properties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", INTEGER, true, "status message"),
-			NewProperty("data", "_Page<T>", true, "response data"),
-		),
+		NewDefinition("Result", "global response").
+			Properties(
+				NewProperty("code", "integer#int32", true, "status code").Example("200"),
+				NewProperty("message", "string", true, "status message").Example("success"),
+			),
 
-		NewDefinition("TestGeneric", "test generics").Generics("T", "U", "W").Properties(
-			NewProperty("t", "T", true, "t"),
-			NewProperty("t2", "T[]", true, "t2"),
-			NewProperty("t3", "T[][]", true, "t3"),
-			NewProperty("u", "_Result<U>", true, "u"),
-			NewProperty("u2", "_Result<U[]>", true, "u2"),
-			NewProperty("u3", "_Result<U[]>[]", true, "u3"),
-			NewProperty("w", "W", true, "w"),
-		),
+		NewDefinition("_Result", "global response").
+			Generics("T").
+			Properties(
+				NewProperty("code", "integer#int32", true, "status code"),
+				NewProperty("message", "string", true, "status message"),
+				NewProperty("data", "T", true, "response data"),
+			),
+
+		NewDefinition("_Page", "global page response").
+			Generics("T").
+			Properties(
+				NewProperty("page", "integer#int32", true, "current page"),
+				NewProperty("limit", "integer#int32", true, "page size"),
+				NewProperty("total", "integer#int32", true, "total count"),
+				NewProperty("data", "T[]", true, "response data"),
+			),
+
+		NewDefinition("UserDto", "user response").
+			Properties(
+				NewProperty("uid", "integer#int64", true, "user id"),
+				NewProperty("username", "string", true, "username"),
+				NewProperty("nickname", "string", true, "nickname"),
+				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
+				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+			),
+
+		NewDefinition("LoginDto", "login response").
+			Properties(
+				NewProperty("user", "UserDto", true, "authorized user"),
+				NewProperty("token", "string", true, "access token"),
+			),
+
+		NewDefinition("RegisterParam", "register param").
+			Properties(
+				NewProperty("username", "string", true, "username").MinLength(5).MaxLength(30),
+				NewProperty("password", "string", true, "password").MinLength(5).MaxLength(30),
+			),
+
+		NewDefinition("LoginParam", "login param").
+			Properties(
+				NewProperty("parameter", "string", true, "login parameter"),
+				NewProperty("password", "string", true, "password"),
+			),
+
+		NewDefinition("UpdateUserParam", "update user param").
+			Properties(
+				NewProperty("username", "string", true, "username"),
+				NewProperty("nickname", "string", true, "nickname"),
+				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
+				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+			),
 	)
 
 	_, err := GenerateSwaggerYaml("./docs/api.yaml")

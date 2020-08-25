@@ -72,13 +72,8 @@ type Response struct {
 	headers  []*Header
 }
 
-func NewResponse(code int) *Response {
-	return &Response{code: code}
-}
-
-func (r *Response) Type(typ string) *Response {
-	r.typ = typ
-	return r
+func NewResponse(code int, typ string) *Response {
+	return &Response{code: code, typ: typ}
 }
 
 func (r *Response) Required(req bool) *Response {

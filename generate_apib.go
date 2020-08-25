@@ -2,7 +2,6 @@ package goapidoc
 
 import (
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -10,11 +9,18 @@ func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
 	// typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
 	if at.kind == apiPrimeKind {
-		return at.prime.typ, at
+		typ := at.prime.typ
+		if typ == "integer" {
+			typ = "number"
+		}
+		return typ, at
 	} else if at.kind == apiObjectKind {
 		return typ, at
 	} else {
 		item, _ := buildApibType(at.array.item.name)
+		if typ == "integer" {
+			item = "number"
+		}
 		return fmt.Sprintf("array[%s]", item), at
 	}
 }
@@ -31,7 +37,7 @@ func buildApibParam(param *Param) string {
 
 	paramStr := fmt.Sprintf("+ %s (%s, %s) - %s", param.name, typ, req, param.desc) // center
 	if param.example != nil {
-		paramStr = fmt.Sprintf("+ %s: `%v` (%s, %s) - %s", param.name, param.example, param.typ, req, param.desc)
+		paramStr = fmt.Sprintf("+ %s: `%v` (%s, %s) - %s", param.name, param.example, typ, req, param.desc)
 	}
 
 	options := make([]string, 0)
@@ -294,13 +300,13 @@ func buildApibDefinitions(d *Document) string {
 				propertyTypes = append(propertyTypes, property.typ)
 			}
 		}
-		for _, path := range d.paths {
-			for _, param := range path.params {
-				propertyTypes = append(propertyTypes, param.typ)
-			}
-			for _, response := range path.responses {
-				propertyTypes = append(propertyTypes, response.typ)
-			}
+	}
+	for _, path := range d.paths {
+		for _, param := range path.params {
+			propertyTypes = append(propertyTypes, param.typ)
+		}
+		for _, response := range path.responses {
+			propertyTypes = append(propertyTypes, response.typ)
 		}
 	}
 	definitions := prehandleGenericList(d.definitions, propertyTypes) // new list
@@ -317,7 +323,7 @@ func buildApibDefinitions(d *Document) string {
 			propertyStrings = append(propertyStrings, propertyStr)
 		}
 
-		definitionStr := fmt.Sprintf("## %s (object)\n\n%s", definition.name, definition.desc)
+		definitionStr := fmt.Sprintf("## %s (object)", definition.name)
 		definitionStr += fmt.Sprintf("\n\n%s", strings.Join(propertyStrings, "\n"))
 		definitionStrings = append(definitionStrings, definitionStr)
 	}
@@ -334,11 +340,7 @@ HOST: %s%s
 
 %s
 
-<!-- GROUPS -->
-
 %s
-
-<!-- DEFINITIONS -->
 
 %s
 `

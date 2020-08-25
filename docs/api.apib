@@ -1,145 +1,39 @@
 FORMAT: 1A
-HOST: localhost:10086/
+HOST: localhost:65530/
 
-# test-api (1.0)
+# goapidoc (1.0)
 
-a demo description
+goapidoc test api
 
-[Terms of service](http://xxx.yyy.zzz)
+[Terms of service](https://github.com/Aoi-hosizora)
 
-[License: MIT](http://xxx.yyy.zzz)
+[License: MIT](https://github.com/Aoi-hosizora)
 
-[author - Website](http://xxx.yyy.zzz)
+[Aoi-hosizora - Website](https://github.com/Aoi-hosizora)
 
-[Send email to author](mailto:xxx@yyy.zzz)
+[Send email to Aoi-hosizora](mailto:aoihosizora@hotmail.com)
 
-<!-- GROUPS -->
+# Group Authorization
 
-# Group ping
+auth-controller
 
-ping-controller
+## Register [/auth/register]
 
-## ping [/api/v1/ping]
+### Register [POST]
 
-### ping [GET]
+`POST /auth/register`
 
-`GET /api/v1/ping`
-
-ping the server
+Register.
 
 + Request (application/json)
 
-    + Attributes
+    + Attributes (RegisterParam)
 
     + Headers
 
     + Body
 
 + Response 200 (application/json)
-
-    success
-
-    + Attributes
-
-    + Headers
-
-    + Body
-
-            {
-                "ping": "pong"
-            }
-
-# Group user
-
-user-controller
-
-## get users [/api/v1/user{?page,total,order}]
-
-### get users [GET]
-
-`GET /api/v1/user`
-
-+ Parameters
-
-    + page (integer, optional) - current page
-        (format: int32, val in \[1, 50\])
-        + Default: `1`
-    + total: `20` (integer, optional) - page size
-        (format: int32)
-        + Default: `10`
-    + order (string, optional) - order string
-        (len in \[1, 50\])
-        + Default: ``
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-            Authorization: jwt apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<_Page<User>>)
-
-    + Headers
-
-    + Body
-
-## get a user, ugly update user [/api/v1/user/{id}]
-
-### get a user [GET]
-
-`GET /api/v1/user/{id}`
-
-+ Parameters
-
-    + id (integer, required) - user id
-        (format: int32)
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<User>)
-
-    + Headers
-
-    + Body
-
-### ugly update user [PUT]
-
-`PUT /api/v1/user/{id}`
-
-Attention: This api is deprecated.
-
-+ Parameters
-
-    + id (integer, required) - user id
-        (format: int32)
-
-+ Request (application/json)
-
-    + Attributes (User)
-
-    + Headers
-
-            Authorization: jwt apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    success
 
     + Attributes (Result)
 
@@ -147,52 +41,17 @@ Attention: This api is deprecated.
 
     + Body
 
-+ Response 404 (application/json)
+## Login [/auth/login]
 
-    not found
+### Login [POST]
 
-    + Attributes
+`POST /auth/login`
 
-    + Headers
-
-            Content-Kind: demo (string)
-
-    + Body
-
-+ Response 400 (application/json)
-
-    bad request
-
-    + Attributes (string)
-
-    + Headers
-
-    + Body
-
-            bad request
-
-# Group Default
-
-## test path [/api/v1/test{?arr,ref,enum,option1,option2}]
-
-### test path [HEAD]
-
-`HEAD /api/v1/test`
-
-+ Parameters
-
-    + arr (array[integer], required) - test
-    + ref (array[User], required) - test
-    + enum (enum[string], required) - test
-        + Members
-            + `male`
-            + `female`
-    + option1 (array[_Result<string>], required) - test
-    + option2 (array[_Result<string[]>], required) - test
+Login.
 
 + Request (application/json)
 
-    + Attributes (integer)
+    + Attributes (LoginParam)
 
     + Headers
 
@@ -200,159 +59,264 @@ Attention: This api is deprecated.
 
 + Response 200 (application/json)
 
-    + Attributes (TestGeneric<integer, User, string>)
+    + Attributes (_Result<LoginDto>)
 
     + Headers
 
     + Body
 
-<!-- DEFINITIONS -->
++ Response 400 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+            {
+              "code": 400, 
+              "message": "Unauthorized"
+            }
+
+## Logout [/auth/logout]
+
+### Logout [DELETE]
+
+`DELETE /auth/logout`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+# Group User
+
+user-controller
+
+## Get a user [/user/{username}]
+
+### Get a user [GET]
+
+`GET /user/{username}`
+
++ Parameters
+
+    + username (string, required) - username
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<UserDto>)
+
+    + Headers
+
+    + Body
+
+## Update user [/user/deprecated]
+
+### Update user [PUT]
+
+`PUT /user/deprecated`
+
+Attention: This api is deprecated.
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Update user, Delete user [/user]
+
+### Update user [PUT]
+
+`PUT /user`
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+### Delete user [DELETE]
+
+`DELETE /user`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Get users [/user{?page,limit}]
+
+### Get users [GET]
+
+`GET /user`
+
++ Parameters
+
+    + page: `1` (number, optional) - current page
+        (format: int32, val >= 1)
+        + Default: `1`
+    + limit: `20` (number, optional) - page size
+        (format: int32, val >= 15)
+        + Default: `20`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<_Page<UserDto>>)
+
+    + Headers
+
+    + Body
 
 # Data Structures
 
-## Result (object)
+## UserDto (object)
 
-global response
-
-+ code (integer, required) - status code
-    (format: int32)
-+ message (string, required) - status message
-
-## User (object)
-
-user response
-
-+ id (integer, required) - user id
-    (format: int32, len >= 1, val >= 1)
-+ name (string, required) - user name
-+ profile (string, optional) - user profile
-    (allow empty, len <= 255, val <= 255)
-+ gender: `female` (string, required) - user gender
++ uid (number, required) - user id
+    (format: int64)
++ username (string, required) - username
++ nickname (string, required) - nickname
++ profile (string, required) - user profile
+    (allow empty)
++ gender (enum[string], required) - user gender
     + Members
+        + `secret`
         + `male`
         + `female`
-+ create_at (string, required) - user register time
-    (format: date-time)
-+ birthday (string, required) - user birthday
-    (format: date)
-+ scores (array[number], required) - user scores
 
-## _Result<_Page<User>> (object)
+## LoginDto (object)
 
-global response
++ user (UserDto, required) - authorized user
++ token (string, required) - access token
 
-+ code (integer, required) - status code
+## RegisterParam (object)
+
++ username (string, required) - username
+    (len <= 30, val <= 30)
++ password (string, required) - password
+    (len <= 30, val <= 30)
+
+## LoginParam (object)
+
++ parameter (string, required) - login parameter
++ password (string, required) - password
+
+## UpdateUserParam (object)
+
++ username (string, required) - username
++ nickname (string, required) - nickname
++ profile (string, required) - user profile
+    (allow empty)
++ gender (enum[string], required) - user gender
+    + Members
+        + `secret`
+        + `male`
+        + `female`
+
+## Result (object)
+
++ code: `200` (number, required) - status code
     (format: int32)
-    + Default: `status code`
++ message: `success` (string, required) - status message
+
+## _Result<LoginDto> (object)
+
++ code (number, required) - status code
+    (format: int32)
 + message (string, required) - status message
-    + Default: `status message`
-+ data («T», required) - response data
-    + Default: `response data`
++ data (LoginDto, required) - response data
 
-## _Result<User> (object)
+## _Result<_Page<UserDto>> (object)
 
-global response
-
-+ code (integer, required) - status code
++ code (number, required) - status code
     (format: int32)
-    + Default: `status code`
 + message (string, required) - status message
-    + Default: `status message`
-+ data («T», required) - response data
-    + Default: `response data`
++ data (_Page<UserDto>, required) - response data
 
-## _Result<string> (object)
+## _Page<UserDto> (object)
 
-global response
-
-+ code (integer, required) - status code
++ page (number, required) - current page
     (format: int32)
-    + Default: `status code`
++ limit (number, required) - page size
+    (format: int32)
++ total (number, required) - total count
+    (format: int32)
++ data (array[UserDto], required) - response data
+
+## _Result<UserDto> (object)
+
++ code (number, required) - status code
+    (format: int32)
 + message (string, required) - status message
-    + Default: `status message`
-+ data («T», required) - response data
-    + Default: `response data`
-
-## _Result<string[]> (object)
-
-global response
-
-+ code (integer, required) - status code
-    (format: int32)
-    + Default: `status code`
-+ message (string, required) - status message
-    + Default: `status message`
-+ data («T», required) - response data
-    + Default: `response data`
-
-## _ResultPage<User> (object)
-
-global response
-
-+ code (integer, required) - status code
-    (format: int32)
-    + Default: `status code`
-+ message (integer, required) - status message
-    (format: int32)
-    + Default: `status message`
-+ data (_Page<«T»>, required) - response data
-    + Default: `response data`
-
-## _Page<«T»> (object)
-
-global page response
-
-+ page (integer, required) - current page
-    (format: int32)
-    + Default: `current page`
-+ total (integer, required) - data count
-    (format: int32)
-    + Default: `data count`
-+ limit (integer, required) - page size
-    (format: int32)
-    + Default: `page size`
-+ data (array[«T»], required) - page data
-    + Default: `page data`
-
-## TestGeneric<integer, User, string> (object)
-
-test generics
-
-+ t («T», required) - t
-    + Default: `t`
-+ t2 (array[«T»], required) - t2
-    + Default: `t2`
-+ t3 (array[array[«T»]], required) - t3
-    + Default: `t3`
-+ u (_Result<«U»>, required) - u
-    + Default: `u`
-+ u2 (_Result<«U»[]>, required) - u2
-    + Default: `u2`
-+ u3 (array[_Result<«U»[]>], required) - u3
-    + Default: `u3`
-+ w («W», required) - w
-    + Default: `w`
-
-## _Result<«U»> (object)
-
-global response
-
-+ code (integer, required) - status code
-    (format: int32)
-    + Default: `status code`
-+ message (string, required) - status message
-    + Default: `status message`
-+ data («T», required) - response data
-    + Default: `response data`
-
-## _Result<«U»[]> (object)
-
-global response
-
-+ code (integer, required) - status code
-    (format: int32)
-    + Default: `status code`
-+ message (string, required) - status message
-    + Default: `status message`
-+ data («T», required) - response data
-    + Default: `response data`
++ data (UserDto, required) - response data

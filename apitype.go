@@ -154,7 +154,10 @@ func prehandleGenericName(def *Definition) {
 
 	// change generic type in generic list
 	for idx := range def.generics {
-		def.generics[idx] = "«" + def.generics[idx] + "»"
+		gen := def.generics[idx]
+		if !strings.HasPrefix(gen, "«") || !strings.HasSuffix(gen, "»") {
+			def.generics[idx] = "«" + gen + "»"
+		}
 	}
 }
 
@@ -197,7 +200,7 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 				required:   prop.required,
 				desc:       prop.desc,
 				allowEmpty: prop.allowEmpty,
-				def:        prop.desc,
+				def:        prop.def,
 				example:    prop.example,
 				enum:       prop.enum,
 				minLength:  prop.minLength,
