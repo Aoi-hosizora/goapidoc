@@ -177,6 +177,11 @@ func swagHandleObject(doc *Document, swagDoc *swagDocument, obj *apiObject) (ori
 						allowEmpty: p.allowEmpty,
 						def:        p.def,
 						enum:       p.enum,
+						example:    p.example,
+						minLength:  p.minLength,
+						maxLength:  p.maxLength,
+						minimum:    p.minimum,
+						maximum:    p.maximum,
 					}
 				}
 				gdef = &Definition{
@@ -505,7 +510,7 @@ func buildSwaggerDocument(d *Document) *swagDocument {
 
 	// models
 	for _, def := range d.definitions {
-		preHandleDefinitionForGeneric(def)
+		prehandleGenericName(def)
 	}
 	for idx := 0; idx < len(d.definitions); idx++ {
 		def := d.definitions[idx]

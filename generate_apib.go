@@ -2,17 +2,21 @@ package goapidoc
 
 import (
 	"fmt"
+	"log"
 	"strings"
 )
 
 func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
-	typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
-	if at.kind != apiArrayKind {
+	// typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
+	if at.kind == apiPrimeKind {
+		return at.prime.typ, at
+	} else if at.kind == apiObjectKind {
 		return typ, at
+	} else {
+		item, _ := buildApibType(at.array.item.name)
+		return fmt.Sprintf("array[%s]", item), at
 	}
-	item, _ := buildApibType(at.array.item.name)
-	return fmt.Sprintf("array[%s]", item), at
 }
 
 func buildApibParam(param *Param) string {
@@ -20,7 +24,7 @@ func buildApibParam(param *Param) string {
 	if !param.required {
 		req = "optional"
 	}
-	typ, _ := buildApibType(param.typ)
+	typ, at := buildApibType(param.typ)
 	if len(param.enum) != 0 {
 		typ = "enum[" + typ + "]"
 	}
@@ -32,6 +36,9 @@ func buildApibParam(param *Param) string {
 
 	options := make([]string, 0)
 
+	if at.kind == apiPrimeKind && at.prime.format != "" {
+		options = append(options, "format: "+at.prime.format)
+	}
 	if param.allowEmpty {
 		options = append(options, "allow empty")
 	}
@@ -277,40 +284,42 @@ func buildApibGroups(d *Document) string {
 	return strings.Join(groupStrings, "\n\n")
 }
 
-func buildApibDefinition(d *Definition, in map[string]*Definition, out map[string]string) {
-	if len(d.generics) != 0 || len(d.properties) == 0 {
-		return
+func buildApibDefinitions(d *Document) string {
+	propertyTypes := make([]string, 0)
+	for _, definition := range d.definitions {
+		prehandleGenericName(definition) // new name
+
+		if len(definition.generics) == 0 && len(definition.properties) > 0 {
+			for _, property := range definition.properties {
+				propertyTypes = append(propertyTypes, property.typ)
+			}
+		}
+		for _, path := range d.paths {
+			for _, param := range path.params {
+				propertyTypes = append(propertyTypes, param.typ)
+			}
+			for _, response := range path.responses {
+				propertyTypes = append(propertyTypes, response.typ)
+			}
+		}
 	}
+	definitions := prehandleGenericList(d.definitions, propertyTypes) // new list
 
-	definitionStr := fmt.Sprintf("## %s (object)\n\n%s", d.name, d.desc)
-
-	propertyStrings := make([]string, 0)
-	for _, property := range d.properties {
-		_, at := buildApibType(property.typ)
-		if at.kind == apiObjectKind && len(at.object.generics) != 0 {
-			// TODO
+	definitionStrings := make([]string, 0)
+	for _, definition := range definitions {
+		if len(definition.generics) > 0 || len(definition.properties) == 0 {
+			continue
 		}
 
-		propertyStr := buildApibProperty(property)
-		propertyStrings = append(propertyStrings, propertyStr)
-	}
-	definitionStr += fmt.Sprintf("\n\n%s", strings.Join(propertyStrings, "\n"))
-	out[d.name] = definitionStr
-}
+		propertyStrings := make([]string, 0)
+		for _, property := range definition.properties {
+			propertyStr := buildApibProperty(property)
+			propertyStrings = append(propertyStrings, propertyStr)
+		}
 
-func buildApibDefinitions(d *Document) string {
-	sourceDefinitions := make(map[string]*Definition)
-	for _, definition := range d.definitions {
-		sourceDefinitions[definition.name] = definition
-	}
-	resultDefinitions := make(map[string]string)
-
-	for _, definition := range sourceDefinitions {
-		buildApibDefinition(definition, sourceDefinitions, resultDefinitions)
-	}
-	definitionStrings := make([]string, 0)
-	for _, v := range resultDefinitions {
-		definitionStrings = append(definitionStrings, v)
+		definitionStr := fmt.Sprintf("## %s (object)\n\n%s", definition.name, definition.desc)
+		definitionStr += fmt.Sprintf("\n\n%s", strings.Join(propertyStrings, "\n"))
+		definitionStrings = append(definitionStrings, definitionStr)
 	}
 
 	return "# Data Structures\n\n" + strings.Join(definitionStrings, "\n\n")
@@ -358,9 +367,6 @@ func buildApibDocument(d *Document) []byte {
 	template = fmt.Sprintf(template, routePathString, "%s")
 
 	// definition
-	for _, def := range d.definitions {
-		preHandleDefinitionForGeneric(def)
-	}
 	definitionString := buildApibDefinitions(d)
 	template = fmt.Sprintf(template, definitionString)
 

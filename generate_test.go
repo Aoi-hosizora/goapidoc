@@ -101,7 +101,7 @@ func TestParseApiType(t *testing.T) {
 	}
 }
 
-func TestPreHandleGenerics(t *testing.T) {
+func TestPrehandleGenericName(t *testing.T) {
 	def := &Definition{
 		generics: []string{"T", "U", "V"},
 		properties: []*Property{
@@ -112,7 +112,7 @@ func TestPreHandleGenerics(t *testing.T) {
 			{typ: "TtT<T,tT[],T[][]>[]"},
 		},
 	}
-	preHandleDefinitionForGeneric(def)
+	prehandleGenericName(def)
 
 	if def.generics[0] != "«T»" {
 		t.Fatal("def.generics[0]")
@@ -143,6 +143,87 @@ func TestPreHandleGenerics(t *testing.T) {
 	}
 	if p4.typ != "TtT<«T», tT[], «T»[][]>[]" {
 		t.Fatal("p4.typ")
+	}
+}
+
+func TestPrehandleGenericList(t *testing.T) {
+	defs := []*Definition{
+		{name: "User", properties: []*Property{}},
+		{name: "Login", properties: []*Property{}},
+		{name: "String", properties: []*Property{}},
+		{name: "Result", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T"}}},
+		{name: "Page", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "name"}, {name: "data", typ: "T[]"}}},
+		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
+		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
+	}
+	for _, def := range defs {
+		prehandleGenericName(def)
+	}
+	newDefs := prehandleGenericList(defs, []string{
+		"Result<Page<User>>",
+		"Result3<User, Page<Result2<Login, Page<Login>>>, String[]>",
+		"Integer",
+		"Result2<String, Result2<String, String>>",
+	})
+
+	contain := func(def *Definition) bool {
+		ok := false
+		for _, newDef := range newDefs {
+			if newDef.name != def.name || len(newDef.properties) != len(def.properties) {
+				continue
+			}
+
+			if len(def.properties) == 0 {
+				ok = true
+				break
+			}
+
+			ok2 := false
+			for idx, newProp := range newDef.properties {
+				prop := def.properties[idx]
+				if newProp.name == prop.name && newProp.typ == prop.typ {
+					ok2 = true
+					break
+				}
+			}
+			if ok2 {
+				ok = true
+				break
+			}
+		}
+		return ok
+	}
+
+	// 0: User | Login | String
+	// 1: Page<User> | Page<Login> | Result<String[]> | Result2<String, String>
+	// 2: Result<Page<User>> | Result2<Login, Page<Login>> | Result2<String, Result2<String, String>>
+	// 3: Page<Result2<Login, Page<Login>>>
+	// 4: Result3<User, Page<Result2<Login, Page<Login>>>, String[]>
+
+	if len(newDefs) != 12 {
+		t.Fatal()
+	}
+	for idx, ok := range []bool{
+		contain(&Definition{name: "User", properties: []*Property{}}),
+		contain(&Definition{name: "Login", properties: []*Property{}}),
+		contain(&Definition{name: "String", properties: []*Property{}}),
+
+		contain(&Definition{name: "Page<User>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "User[]"}}}),
+		contain(&Definition{name: "Page<Login>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Login[]"}}}),
+		contain(&Definition{name: "Result<String[]>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "String[]"}}}),
+		contain(&Definition{name: "Result2<String, String>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "String[]"}}}),
+
+		contain(&Definition{name: "Result<Page<User>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Page<User>"}}}),
+		contain(&Definition{name: "Result2<Login, Page<Login>>", properties: []*Property{{name: "a", typ: "Login"}, {name: "b", typ: "Page<Login>[]"}}}),
+		contain(&Definition{name: "Result2<String, Result2<String, String>>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "Result2<String, String>[]"}}}),
+
+		contain(&Definition{name: "Page<Result2<Login, Page<Login>>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Result2<Login, Page<Login>>[]"}}}),
+
+		contain(&Definition{name: "Result3<User, Page<Result2<Login, Page<Login>>>, String[]>", properties: []*Property{{name: "a", typ: "User"}, {name: "b", typ: "Page<Result2<Login, Page<Login>>>[]"}, {name: "c", typ: "String[]"}}}),
+	} {
+		if !ok {
+			t.Fatal(idx)
+		}
 	}
 }
 

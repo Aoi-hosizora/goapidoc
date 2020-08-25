@@ -62,9 +62,10 @@ user-controller
 + Parameters
 
     + page (integer, optional) - current page
-        (val in \[1, 50\])
+        (format: int32, val in \[1, 50\])
         + Default: `1`
     + total: `20` (integer, optional) - page size
+        (format: int32)
         + Default: `10`
     + order (string, optional) - order string
         (len in \[1, 50\])
@@ -82,7 +83,7 @@ user-controller
 
 + Response 200 (application/json)
 
-    + Attributes (_Result«_Page«User»»)
+    + Attributes (_Result<_Page<User>>)
 
     + Headers
 
@@ -97,6 +98,7 @@ user-controller
 + Parameters
 
     + id (integer, required) - user id
+        (format: int32)
 
 + Request (application/json)
 
@@ -108,7 +110,7 @@ user-controller
 
 + Response 200 (application/json)
 
-    + Attributes (_Result«User»)
+    + Attributes (_Result<User>)
 
     + Headers
 
@@ -123,6 +125,7 @@ Attention: This api is deprecated.
 + Parameters
 
     + id (integer, required) - user id
+        (format: int32)
 
 + Request (application/json)
 
@@ -178,14 +181,14 @@ Attention: This api is deprecated.
 
 + Parameters
 
-    + arr (array[integer#int64], required) - test
+    + arr (array[integer], required) - test
     + ref (array[User], required) - test
     + enum (enum[string], required) - test
         + Members
             + `male`
             + `female`
-    + option1 (array[_Result«string»], required) - test
-    + option2 (array[_Result«string[]»], required) - test
+    + option1 (array[_Result<string>], required) - test
+    + option2 (array[_Result<string[]>], required) - test
 
 + Request (application/json)
 
@@ -197,7 +200,7 @@ Attention: This api is deprecated.
 
 + Response 200 (application/json)
 
-    + Attributes (TestGeneric«integer, User, string»)
+    + Attributes (TestGeneric<integer, User, string>)
 
     + Headers
 
@@ -212,6 +215,7 @@ Attention: This api is deprecated.
 global response
 
 + code (integer, required) - status code
+    (format: int32)
 + message (string, required) - status message
 
 ## User (object)
@@ -219,7 +223,7 @@ global response
 user response
 
 + id (integer, required) - user id
-    (len >= 1, val >= 1)
+    (format: int32, len >= 1, val >= 1)
 + name (string, required) - user name
 + profile (string, optional) - user profile
     (allow empty, len <= 255, val <= 255)
@@ -227,6 +231,128 @@ user response
     + Members
         + `male`
         + `female`
-+ create_at (string#date-time, required) - user register time
-+ birthday (string#date, required) - user birthday
++ create_at (string, required) - user register time
+    (format: date-time)
++ birthday (string, required) - user birthday
+    (format: date)
 + scores (array[number], required) - user scores
+
+## _Result<_Page<User>> (object)
+
+global response
+
++ code (integer, required) - status code
+    (format: int32)
+    + Default: `status code`
++ message (string, required) - status message
+    + Default: `status message`
++ data («T», required) - response data
+    + Default: `response data`
+
+## _Result<User> (object)
+
+global response
+
++ code (integer, required) - status code
+    (format: int32)
+    + Default: `status code`
++ message (string, required) - status message
+    + Default: `status message`
++ data («T», required) - response data
+    + Default: `response data`
+
+## _Result<string> (object)
+
+global response
+
++ code (integer, required) - status code
+    (format: int32)
+    + Default: `status code`
++ message (string, required) - status message
+    + Default: `status message`
++ data («T», required) - response data
+    + Default: `response data`
+
+## _Result<string[]> (object)
+
+global response
+
++ code (integer, required) - status code
+    (format: int32)
+    + Default: `status code`
++ message (string, required) - status message
+    + Default: `status message`
++ data («T», required) - response data
+    + Default: `response data`
+
+## _ResultPage<User> (object)
+
+global response
+
++ code (integer, required) - status code
+    (format: int32)
+    + Default: `status code`
++ message (integer, required) - status message
+    (format: int32)
+    + Default: `status message`
++ data (_Page<«T»>, required) - response data
+    + Default: `response data`
+
+## _Page<«T»> (object)
+
+global page response
+
++ page (integer, required) - current page
+    (format: int32)
+    + Default: `current page`
++ total (integer, required) - data count
+    (format: int32)
+    + Default: `data count`
++ limit (integer, required) - page size
+    (format: int32)
+    + Default: `page size`
++ data (array[«T»], required) - page data
+    + Default: `page data`
+
+## TestGeneric<integer, User, string> (object)
+
+test generics
+
++ t («T», required) - t
+    + Default: `t`
++ t2 (array[«T»], required) - t2
+    + Default: `t2`
++ t3 (array[array[«T»]], required) - t3
+    + Default: `t3`
++ u (_Result<«U»>, required) - u
+    + Default: `u`
++ u2 (_Result<«U»[]>, required) - u2
+    + Default: `u2`
++ u3 (array[_Result<«U»[]>], required) - u3
+    + Default: `u3`
++ w («W», required) - w
+    + Default: `w`
+
+## _Result<«U»> (object)
+
+global response
+
++ code (integer, required) - status code
+    (format: int32)
+    + Default: `status code`
++ message (string, required) - status message
+    + Default: `status message`
++ data («T», required) - response data
+    + Default: `response data`
+
+## _Result<«U»[]> (object)
+
+global response
+
++ code (integer, required) - status code
+    (format: int32)
+    + Default: `status code`
++ message (string, required) - status message
+    + Default: `status message`
++ data («T», required) - response data
+    + Default: `response data`

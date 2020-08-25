@@ -47,12 +47,26 @@ func newLinkedHashMap() *linkedHashMap {
 	}
 }
 
+func (l *linkedHashMap) Keys() []string {
+	return l.i
+}
+
+func (l *linkedHashMap) Has(key string) bool {
+	_, exist := l.m[key]
+	return exist
+}
+
 func (l *linkedHashMap) Set(key string, value interface{}) {
 	_, exist := l.m[key]
 	l.m[key] = value
 	if !exist {
 		l.i = append(l.i, key)
 	}
+}
+
+func (l *linkedHashMap) Get(key string) (interface{}, bool) {
+	v, ok := l.m[key]
+	return v, ok
 }
 
 func (l *linkedHashMap) MarshalJSON() ([]byte, error) {

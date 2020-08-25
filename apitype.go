@@ -132,12 +132,14 @@ func defaultFormat(typ string) string {
 }
 
 // parse generic param
-func preHandleDefinitionForGeneric(def *Definition) {
+func prehandleGenericName(def *Definition) {
+	// change generic type in properties
 	for _, prop := range def.properties {
 		for _, gen := range def.generics { // T -> «T»
 			if strings.HasPrefix(gen, "«") && strings.HasSuffix(gen, "»") {
 				continue
 			}
+
 			newGen := "«" + gen + "»"
 			re, err := regexp.Compile(`(^|[, <])` + gen + `([, <>\[]|$)`) // {, <} {, <>[]}
 			if err != nil {
@@ -150,7 +152,101 @@ func preHandleDefinitionForGeneric(def *Definition) {
 		}
 	}
 
+	// change generic type in generic list
 	for idx := range def.generics {
 		def.generics[idx] = "«" + def.generics[idx] + "»"
 	}
+}
+
+// generate related generic list
+func prehandleGenericList(definitions []*Definition, allTypes []string) []*Definition {
+	genericDefs := make(map[string]*Definition)
+	normalDefs := make(map[string]*Definition)
+	for _, def := range definitions {
+		if len(def.generics) == 0 {
+			normalDefs[def.name] = def
+		} else {
+			genericDefs[def.name] = def
+		}
+	}
+
+	addedDefs := newLinkedHashMap() // make(map[string]*Definition, 0) // new definitions to add
+
+	// preHandle
+	var preHandle func(string)
+	preHandle = func(typ string) { // string
+		at := parseApiType(typ) // *apiType
+		for at.kind == apiArrayKind {
+			at = at.array.item
+		}
+		if at.kind != apiObjectKind || len(at.object.generics) == 0 {
+			return
+		}
+
+		genDef, ok := genericDefs[at.object.typ] // *Definition
+		if !ok {
+			return
+		}
+
+		// new motoDef
+		properties := make([]*Property, 0)
+		for _, prop := range genDef.properties {
+			properties = append(properties, &Property{
+				name:       prop.name,
+				typ:        prop.typ, // << need parse
+				required:   prop.required,
+				desc:       prop.desc,
+				allowEmpty: prop.allowEmpty,
+				def:        prop.desc,
+				example:    prop.example,
+				enum:       prop.enum,
+				minLength:  prop.minLength,
+				maxLength:  prop.maxLength,
+				minimum:    prop.minimum,
+				maximum:    prop.maximum,
+			})
+		}
+		addedDef := &Definition{ // *Definition
+			name:       genDef.name, // << need parse
+			desc:       genDef.desc,
+			generics:   []string{},
+			properties: properties,
+		}
+
+		specNames := make([]string, 0)
+		for idx, genName := range genDef.generics {
+			if len(at.object.generics) < idx {
+				break
+			}
+			specName := at.object.generics[idx].name
+			specNames = append(specNames, specName)
+			for _, prop := range addedDef.properties {
+				prop.typ = strings.ReplaceAll(prop.typ, genName, specName)
+			}
+		}
+		addedDef.name += "<" + strings.Join(specNames, ", ") + ">"
+		addedDefs.Set(addedDef.name, addedDef)
+		// log.Println("added", addedDef.name)
+
+		for _, prop := range addedDef.properties {
+			if !addedDefs.Has(prop.typ) {
+				preHandle(prop.typ) // << preHandle properties types
+			}
+		}
+	}
+
+	for _, typ := range allTypes {
+		preHandle(typ)
+	}
+
+	out := make([]*Definition, 0)
+	for _, def := range normalDefs {
+		out = append(out, def)
+	}
+	for _, key := range addedDefs.Keys() {
+		val, _ := addedDefs.Get(key)
+		out = append(out, val.(*Definition))
+	}
+
+	return out
 }
