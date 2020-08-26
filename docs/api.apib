@@ -13,6 +13,95 @@ goapidoc test api
 
 [Send email to Aoi-hosizora](mailto:aoihosizora@hotmail.com)
 
+# Group Authorization
+
+auth-controller
+
+## Register [/auth/register]
+
+### Register [POST]
+
+`POST /auth/register`
+
+Register.
+
++ Request (application/json)
+
+    + Attributes (RegisterParam)
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Login [/auth/login]
+
+### Login [POST]
+
+`POST /auth/login`
+
+Login.
+
++ Request (application/json)
+
+    + Attributes (LoginParam)
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<LoginDto>)
+
+    + Headers
+
+    + Body
+
++ Response 400 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+            {
+              "code": 400, 
+              "message": "Unauthorized"
+            }
+
+## Logout [/auth/logout]
+
+### Logout [DELETE]
+
+`DELETE /auth/logout`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
 # Group User
 
 user-controller
@@ -150,80 +239,37 @@ Attention: This api is deprecated.
 
     + Body
 
-# Group Authorization
+# Group Test
 
-auth-controller
+test-controller
 
-## Register [/auth/register]
+## Test a [/test/a{?q1,q2,q3}]
 
-### Register [POST]
+### Test a [HEAD]
 
-`POST /auth/register`
+`HEAD /test/a`
 
-Register.
++ Parameters
 
-+ Request (application/json)
-
-    + Attributes (RegisterParam)
-
-    + Headers
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-## Login [/auth/login]
-
-### Login [POST]
-
-`POST /auth/login`
-
-Login.
-
-+ Request (application/json)
-
-    + Attributes (LoginParam)
-
-    + Headers
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<LoginDto>)
-
-    + Headers
-
-    + Body
-
-+ Response 400 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-            {
-              "code": 400, 
-              "message": "Unauthorized"
-            }
-
-## Logout [/auth/logout]
-
-### Logout [DELETE]
-
-`DELETE /auth/logout`
+    + q1 (enum[string], required) - q1
+        (format: date-time)
+        + Members
+            + `0`
+            + `1`
+            + `2`
+    + q2 (number, optional) - q2
+        (format: double, val >= -5)
+    + q3: `ex` (string, required) - q3
+        (format: password, allow empty)
+        + Default: `def`
 
 + Request (application/json)
 
     + Attributes
+
+        + f1 (file, required) - f1
+        + f2 (string, required) - f2
+            (allow empty)
 
     + Headers
 
@@ -233,13 +279,41 @@ Login.
 
 + Response 200 (application/json)
 
+    200 Success
+
     + Attributes (Result)
+
+    + Headers
+
+            Content-Type: content type (string)
+            X-My-Token: my token (string)
+            X-My-Object: my object (UserDto)
+
+    + Body
+
++ Response 409 (application/json)
+
+    409 Conflict
+
+    + Attributes (string)
 
     + Headers
 
     + Body
 
 # Data Structures
+
+## UpdateUserParam (object)
+
++ username (string, required) - username
++ nickname (string, required) - nickname
++ profile (string, required) - user profile
+    (allow empty)
++ gender (enum[string], required) - user gender
+    + Members
+        + `secret`
+        + `male`
+        + `female`
 
 ## Result (object)
 
@@ -277,18 +351,6 @@ Login.
 
 + parameter (string, required) - login parameter
 + password (string, required) - password
-
-## UpdateUserParam (object)
-
-+ username (string, required) - username
-+ nickname (string, required) - nickname
-+ profile (string, required) - user profile
-    (allow empty)
-+ gender (enum[string], required) - user gender
-    + Members
-        + `secret`
-        + `male`
-        + `female`
 
 ## _Result<LoginDto> (object)
 

@@ -69,6 +69,14 @@ func (l *linkedHashMap) Get(key string) (interface{}, bool) {
 	return v, ok
 }
 
+func (l *linkedHashMap) MustGet(key string) interface{} {
+	val, ok := l.Get(key)
+	if !ok {
+		panic("key " + key + " is not found.")
+	}
+	return val
+}
+
 func (l *linkedHashMap) MarshalJSON() ([]byte, error) {
 	ov := make([]interface{}, len(l.i))
 	for idx, field := range l.i {

@@ -219,18 +219,6 @@ func buildApibGroups(d *Document) string {
 	// [#, #]
 	groupStrings := make([]string, 0)
 
-	groups := map[string][]*RoutePath{}
-	for _, path := range d.paths {
-		tags := path.tags
-		if len(tags) == 0 {
-			tags = []string{"Default"}
-		}
-		tag := tags[0] // use first tag
-		if _, ok := groups[tag]; !ok {
-			groups[tag] = make([]*RoutePath, 0)
-		}
-		groups[tag] = append(groups[tag], path)
-	}
 	tags := make(map[string]string)
 	for _, tag := range d.tags {
 		tags[tag.name] = tag.desc
@@ -240,11 +228,29 @@ func buildApibGroups(d *Document) string {
 		securities[security.title] = security
 	}
 
-	for tag, group := range groups {
+	groups := newLinkedHashMap() // map[string][]*RoutePath{}
+	for _, tag := range d.tags {
+		groups.Set(tag.name, make([]*RoutePath, 0))
+	}
+	for _, path := range d.paths {
+		tag := "Default"
+		if len(path.tags) > 0 {
+			tag = path.tags[0]
+		}
+		paths, ok := groups.Get(tag)
+		if !ok {
+			paths = make([]*RoutePath, 0)
+		}
+		paths = append(paths.([]*RoutePath), path)
+		groups.Set(tag, paths)
+	}
+
+	for _, tag := range groups.Keys() {
 		// [##, ##]
 		pathStrings := make([]string, 0)
+		group := groups.MustGet(tag).([]*RoutePath)
 
-		paths := map[string]map[string]*RoutePath{}
+		paths := newLinkedHashMap() // map[string]map[string]*RoutePath{}
 		for _, path := range group {
 			route := path.route
 			query := make([]string, 0)
@@ -256,25 +262,30 @@ func buildApibGroups(d *Document) string {
 			if len(query) != 0 {
 				route += fmt.Sprintf("{?%s}", strings.Join(query, ","))
 			}
-			if _, ok := paths[route]; !ok {
-				paths[route] = map[string]*RoutePath{}
+
+			methods, ok := paths.Get(route)
+			if !ok {
+				methods = newLinkedHashMap() // make(map[string]*RoutePath)
 			}
-			paths[route][path.method] = path
+			methods.(*linkedHashMap).Set(path.method, path)
+			paths.Set(route, methods)
 		}
 
-		for path, methods := range paths {
+		for _, pathKey := range paths.Keys() {
 			// [###, ###]
 			methodStrings := make([]string, 0)
+			methods := paths.MustGet(pathKey).(*linkedHashMap)
 
 			summaries := make([]string, 0)
-			for _, route := range methods {
-				summaries = append(summaries, route.summary)
-				methodStr := buildApibPath(securities, route)
+			for _, methodKey := range methods.Keys() {
+				routePath := methods.MustGet(methodKey).(*RoutePath)
+				summaries = append(summaries, routePath.summary)
+				methodStr := buildApibPath(securities, routePath)
 				methodStrings = append(methodStrings, methodStr)
 			}
 
 			summary := strings.Join(summaries, ", ")
-			pathStr := fmt.Sprintf("## %s [%s]\n\n%s", summary, path, strings.Join(methodStrings, "\n\n"))
+			pathStr := fmt.Sprintf("## %s [%s]\n\n%s", summary, pathKey, strings.Join(methodStrings, "\n\n"))
 			pathStrings = append(pathStrings, pathStr)
 		}
 
@@ -282,7 +293,9 @@ func buildApibGroups(d *Document) string {
 		if tagDesc, ok := tags[tag]; ok {
 			groupStr += fmt.Sprintf("\n\n%s", tagDesc)
 		}
-		groupStr += fmt.Sprintf("\n\n%s", strings.Join(pathStrings, "\n\n"))
+		if len(pathStrings) > 0 {
+			groupStr += fmt.Sprintf("\n\n%s", strings.Join(pathStrings, "\n\n"))
+		}
 
 		groupStrings = append(groupStrings, groupStr)
 	}

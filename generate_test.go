@@ -297,6 +297,27 @@ func TestGenerate(t *testing.T) {
 			Tags("User").
 			Securities("Jwt").
 			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("HEAD", "/test/a", "Test a").
+			Tags("Test").
+			Securities("Jwt", "WrongSecurity").
+			Params(
+				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
+				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
+				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("ex").Default("def"),
+				NewFormParam("f1", "file", true, "f1"),
+				NewFormParam("f2", "string", true, "f2").AllowEmpty(true),
+			).
+			Responses(
+				NewResponse(200, "Result").
+					Desc("200 Success").
+					Headers(
+						NewHeader("Content-Type", "string", "content type"),
+						NewHeader("X-My-Token", "string", "my token"),
+						NewHeader("X-My-Object", "UserDto", "my object"),
+					),
+				NewResponse(409, "string").Desc("409 Conflict"),
+			),
 	)
 
 	AddDefinitions(
@@ -360,11 +381,20 @@ func TestGenerate(t *testing.T) {
 	)
 
 	_, err := GenerateSwaggerYaml("./docs/api.yaml")
-	log.Println(err)
+	if err != nil {
+		log.Println(err)
+		t.Fatal("yaml")
+	}
 
 	_, err = GenerateSwaggerJson("./docs/api.json")
-	log.Println(err)
+	if err != nil {
+		log.Println(err)
+		t.Fatal("json")
+	}
 
 	_, err = GenerateApib("./docs/api.apib")
-	log.Println(err)
+	if err != nil {
+		log.Println(err)
+		t.Fatal("apib")
+	}
 }

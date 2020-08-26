@@ -85,6 +85,73 @@ paths:
           schema:
             originRef: Result
             $ref: '#/definitions/Result'
+  /test/a:
+    head:
+      summary: Test a
+      operationId: -test-a-head
+      tags:
+      - Test
+      security:
+      - Jwt: []
+      - WrongSecurity: []
+      parameters:
+      - name: q1
+        in: query
+        required: true
+        type: string
+        description: q1
+        format: date-time
+        enum:
+        - 0
+        - 1
+        - 2
+      - name: q2
+        in: query
+        required: false
+        type: number
+        description: q2
+        format: double
+        minimum: -5
+      - name: q3
+        in: query
+        required: true
+        type: string
+        description: q3
+        format: password
+        allowEmptyValue: true
+        default: def
+        example: ex
+      - name: f1
+        in: formData
+        required: true
+        type: file
+        description: f1
+      - name: f2
+        in: formData
+        required: true
+        type: string
+        description: f2
+        allowEmptyValue: true
+      responses:
+        "200":
+          description: 200 Success
+          headers:
+            Content-Type:
+              type: string
+              description: content type
+            X-My-Object:
+              type: UserDto
+              description: my object
+            X-My-Token:
+              type: string
+              description: my token
+          schema:
+            originRef: Result
+            $ref: '#/definitions/Result'
+        "409":
+          description: 409 Conflict
+          schema:
+            type: string
   /user:
     delete:
       summary: Delete user
