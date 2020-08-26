@@ -63,9 +63,8 @@ func (r *RoutePath) Responses(responses ...*Response) *RoutePath {
 
 // Route response
 type Response struct {
-	code     int
-	typ      string
-	required bool
+	code int
+	typ  string
 
 	desc     string
 	examples map[string]string // content-type: example
@@ -74,11 +73,6 @@ type Response struct {
 
 func NewResponse(code int, typ string) *Response {
 	return &Response{code: code, typ: typ}
-}
-
-func (r *Response) Required(req bool) *Response {
-	r.required = req
-	return r
 }
 
 func (r *Response) Desc(desc string) *Response {

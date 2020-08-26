@@ -13,76 +13,24 @@ goapidoc test api
 
 [Send email to Aoi-hosizora](mailto:aoihosizora@hotmail.com)
 
-# Group Authorization
+# Group User
 
-auth-controller
+user-controller
 
-## Register [/auth/register]
+## Get users [/user{?page,limit}]
 
-### Register [POST]
+### Get users [GET]
 
-`POST /auth/register`
+`GET /user`
 
-Register.
++ Parameters
 
-+ Request (application/json)
-
-    + Attributes (RegisterParam)
-
-    + Headers
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-## Login [/auth/login]
-
-### Login [POST]
-
-`POST /auth/login`
-
-Login.
-
-+ Request (application/json)
-
-    + Attributes (LoginParam)
-
-    + Headers
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<LoginDto>)
-
-    + Headers
-
-    + Body
-
-+ Response 400 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-            {
-              "code": 400, 
-              "message": "Unauthorized"
-            }
-
-## Logout [/auth/logout]
-
-### Logout [DELETE]
-
-`DELETE /auth/logout`
+    + page: `1` (number, optional) - current page
+        (format: int32, val >= 1)
+        + Default: `1`
+    + limit: `20` (number, optional) - page size
+        (format: int32, val >= 15)
+        + Default: `20`
 
 + Request (application/json)
 
@@ -96,15 +44,11 @@ Login.
 
 + Response 200 (application/json)
 
-    + Attributes (Result)
+    + Attributes (_Result<_Page<UserDto>>)
 
     + Headers
 
     + Body
-
-# Group User
-
-user-controller
 
 ## Get a user [/user/{username}]
 
@@ -206,20 +150,76 @@ Attention: This api is deprecated.
 
     + Body
 
-## Get users [/user{?page,limit}]
+# Group Authorization
 
-### Get users [GET]
+auth-controller
 
-`GET /user`
+## Register [/auth/register]
 
-+ Parameters
+### Register [POST]
 
-    + page: `1` (number, optional) - current page
-        (format: int32, val >= 1)
-        + Default: `1`
-    + limit: `20` (number, optional) - page size
-        (format: int32, val >= 15)
-        + Default: `20`
+`POST /auth/register`
+
+Register.
+
++ Request (application/json)
+
+    + Attributes (RegisterParam)
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Login [/auth/login]
+
+### Login [POST]
+
+`POST /auth/login`
+
+Login.
+
++ Request (application/json)
+
+    + Attributes (LoginParam)
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<LoginDto>)
+
+    + Headers
+
+    + Body
+
++ Response 400 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+            {
+              "code": 400, 
+              "message": "Unauthorized"
+            }
+
+## Logout [/auth/logout]
+
+### Logout [DELETE]
+
+`DELETE /auth/logout`
 
 + Request (application/json)
 
@@ -233,7 +233,7 @@ Attention: This api is deprecated.
 
 + Response 200 (application/json)
 
-    + Attributes (_Result<_Page<UserDto>>)
+    + Attributes (Result)
 
     + Headers
 
