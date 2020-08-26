@@ -241,6 +241,12 @@ Attention: This api is deprecated.
 
 # Data Structures
 
+## Result (object)
+
++ code: `200` (number, required) - status code
+    (format: int32)
++ message: `success` (string, required) - status message
+
 ## UserDto (object)
 
 + uid (number, required) - user id
@@ -283,12 +289,6 @@ Attention: This api is deprecated.
         + `secret`
         + `male`
         + `female`
-
-## Result (object)
-
-+ code: `200` (number, required) - status code
-    (format: int32)
-+ message: `success` (string, required) - status message
 
 ## _Result<LoginDto> (object)
 
