@@ -1,198 +1,185 @@
 package goapidoc
 
 // Route path
-type Path struct {
-	Method  string
-	Route   string
-	Summary string
+type RoutePath struct {
+	method  string
+	route   string
+	summary string
 
-	Description string
-	Tags        []string
-	Consumes    []string
-	Produces    []string
-	Securities  []string
-	Deprecated  bool
+	desc       string
+	tags       []string
+	consumes   []string
+	produces   []string
+	securities []string
+	deprecated bool
 
-	Params    []*Param
-	Responses []*Response
+	params    []*Param
+	responses []*Response
 }
 
-func NewPath(method string, route string, summary string) *Path {
-	return &Path{Method: method, Route: route, Summary: summary}
+func NewRoutePath(method string, route string, summary string) *RoutePath {
+	return &RoutePath{method: method, route: route, summary: summary}
 }
 
-func (r *Path) WithDescription(desc string) *Path {
-	r.Description = desc
+func (r *RoutePath) Desc(desc string) *RoutePath {
+	r.desc = desc
 	return r
 }
 
-func (r *Path) WithTags(tags ...string) *Path {
-	r.Tags = tags
+func (r *RoutePath) Tags(tags ...string) *RoutePath {
+	r.tags = tags
 	return r
 }
 
-func (r *Path) WithConsumes(consumes ...string) *Path {
-	r.Consumes = consumes
+func (r *RoutePath) Consumes(consumes ...string) *RoutePath {
+	r.consumes = consumes
 	return r
 }
 
-func (r *Path) WithProduces(produces ...string) *Path {
-	r.Produces = produces
+func (r *RoutePath) Produces(produces ...string) *RoutePath {
+	r.produces = produces
 	return r
 }
 
-func (r *Path) WithSecurities(securities ...string) *Path {
-	r.Securities = securities
+func (r *RoutePath) Securities(securities ...string) *RoutePath {
+	r.securities = securities
 	return r
 }
 
-func (r *Path) WithDeprecated(deprecated bool) *Path {
-	r.Deprecated = deprecated
+func (r *RoutePath) Deprecated(deprecated bool) *RoutePath {
+	r.deprecated = deprecated
 	return r
 }
 
-// Set parameters
-func (r *Path) WithParams(params ...*Param) *Path {
-	r.Params = params
+func (r *RoutePath) Params(params ...*Param) *RoutePath {
+	r.params = params
 	return r
 }
 
-// Set responses
-func (r *Path) WithResponses(responses ...*Response) *Path {
-	r.Responses = responses
+func (r *RoutePath) Responses(responses ...*Response) *RoutePath {
+	r.responses = responses
 	return r
 }
 
 // Route response
 type Response struct {
-	Code     int
-	Type     string
-	Required bool
+	code int
+	typ  string
 
-	Description string
-	Examples    map[string]string // content-type: example
-	Headers     []*Header
+	desc     string
+	examples map[string]string // content-type: example
+	headers  []*Header
 }
 
-func NewResponse(code int) *Response {
-	return &Response{Code: code}
+func NewResponse(code int, typ string) *Response {
+	return &Response{code: code, typ: typ}
 }
 
-func (r *Response) WithType(t string) *Response {
-	r.Type = t
+func (r *Response) Desc(desc string) *Response {
+	r.desc = desc
 	return r
 }
 
-func (r *Response) WithRequired(req bool) *Response {
-	r.Required = req
+func (r *Response) Examples(examples map[string]string) *Response {
+	r.examples = examples
 	return r
 }
 
-func (r *Response) WithDescription(desc string) *Response {
-	r.Description = desc
-	return r
-}
-
-func (r *Response) WithExamples(examples map[string]string) *Response {
-	r.Examples = examples
-	return r
-}
-
-func (r *Response) WithHeaders(headers ...*Header) *Response {
-	r.Headers = headers
+func (r *Response) Headers(headers ...*Header) *Response {
+	r.headers = headers
 	return r
 }
 
 // Response header
 type Header struct {
-	Name        string
-	Type        string // base type
-	Description string
+	name string
+	typ  string // base type
+	desc string
 }
 
-func NewHeader(name string, t string, desc string) *Header {
-	return &Header{Name: name, Type: t, Description: desc}
+func NewHeader(name string, typ string, desc string) *Header {
+	return &Header{name: name, typ: typ, desc: desc}
 }
 
 // Request parameter
 type Param struct {
-	Name        string
-	In          string
-	Type        string // string number integer boolean array (file)
-	Required    bool
-	Description string
+	name     string
+	in       string
+	typ      string // string number integer boolean array (file)
+	required bool
+	desc     string
 
 	// `in` != body
-	AllowEmptyValue bool
-	Default         interface{}
-	Example         interface{}
-	Enum            []interface{}
-	MinLength       int
-	MaxLength       int
-	Minimum         int
-	Maximum         int
+	allowEmpty bool
+	def        interface{}
+	example    interface{}
+	enum       []interface{}
+	minLength  int
+	maxLength  int
+	minimum    int
+	maximum    int
 }
 
-func NewParam(name string, in string, t string, req bool, desc string) *Param {
-	return &Param{Name: name, In: in, Required: req, Description: desc, Type: t}
+func NewParam(name string, in string, typ string, req bool, desc string) *Param {
+	return &Param{name: name, in: in, required: req, desc: desc, typ: typ}
 }
 
-func NewPathParam(name string, t string, req bool, desc string) *Param {
-	return NewParam(name, PATH, t, req, desc)
+func NewPathParam(name string, typ string, req bool, desc string) *Param {
+	return NewParam(name, PATH, typ, req, desc)
 }
 
-func NewQueryParam(name string, t string, req bool, desc string) *Param {
-	return NewParam(name, QUERY, t, req, desc)
+func NewQueryParam(name string, typ string, req bool, desc string) *Param {
+	return NewParam(name, QUERY, typ, req, desc)
 }
 
-func NewFormParam(name string, t string, req bool, desc string) *Param {
-	return NewParam(name, FORM, t, req, desc)
+func NewFormParam(name string, typ string, req bool, desc string) *Param {
+	return NewParam(name, FORM, typ, req, desc)
 }
 
-func NewBodyParam(name string, t string, req bool, desc string) *Param {
-	return NewParam(name, BODY, t, req, desc)
+func NewBodyParam(name string, typ string, req bool, desc string) *Param {
+	return NewParam(name, BODY, typ, req, desc)
 }
 
-func NewHeaderParam(name string, t string, req bool, desc string) *Param {
-	return NewParam(name, HEADER, t, req, desc)
+func NewHeaderParam(name string, typ string, req bool, desc string) *Param {
+	return NewParam(name, HEADER, typ, req, desc)
 }
 
-func (p *Param) WithAllowEmptyValue(allow bool) *Param {
-	p.AllowEmptyValue = allow
+func (p *Param) AllowEmpty(allow bool) *Param {
+	p.allowEmpty = allow
 	return p
 }
 
-func (p *Param) WithDefault(def interface{}) *Param {
-	p.Default = def
+func (p *Param) Default(def interface{}) *Param {
+	p.def = def
 	return p
 }
 
-func (p *Param) WithExample(ex interface{}) *Param {
-	p.Example = ex
+func (p *Param) Example(ex interface{}) *Param {
+	p.example = ex
 	return p
 }
 
-func (p *Param) WithEnum(enum ...interface{}) *Param {
-	p.Enum = enum
+func (p *Param) Enum(enum ...interface{}) *Param {
+	p.enum = enum
 	return p
 }
 
-func (p *Param) WithMinLength(min int) *Param {
-	p.MinLength = min
+func (p *Param) MinLength(min int) *Param {
+	p.minLength = min
 	return p
 }
 
-func (p *Param) WithMaxLength(max int) *Param {
-	p.MaxLength = max
+func (p *Param) MaxLength(max int) *Param {
+	p.maxLength = max
 	return p
 }
 
-func (p *Param) WithMinimum(min int) *Param {
-	p.Minimum = min
+func (p *Param) Minimum(min int) *Param {
+	p.minimum = min
 	return p
 }
 
-func (p *Param) WithMaximum(max int) *Param {
-	p.Maximum = max
+func (p *Param) Maximum(max int) *Param {
+	p.maximum = max
 	return p
 }

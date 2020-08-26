@@ -1,0 +1,384 @@
+FORMAT: 1A
+HOST: localhost:65530/
+
+# goapidoc (1.0)
+
+goapidoc test api
+
+[Terms of service](https://github.com/Aoi-hosizora)
+
+[License: MIT](https://github.com/Aoi-hosizora)
+
+[Aoi-hosizora - Website](https://github.com/Aoi-hosizora)
+
+[Send email to Aoi-hosizora](mailto:aoihosizora@hotmail.com)
+
+# Group Authorization
+
+auth-controller
+
+## Register [/auth/register]
+
+### Register [POST]
+
+`POST /auth/register`
+
+Register.
+
++ Request (application/json)
+
+    + Attributes (RegisterParam)
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Login [/auth/login]
+
+### Login [POST]
+
+`POST /auth/login`
+
+Login.
+
++ Request (application/json)
+
+    + Attributes (LoginParam)
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<LoginDto>)
+
+    + Headers
+
+    + Body
+
++ Response 400 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+            {
+              "code": 400, 
+              "message": "Unauthorized"
+            }
+
+## Logout [/auth/logout]
+
+### Logout [DELETE]
+
+`DELETE /auth/logout`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+# Group User
+
+user-controller
+
+## Get users [/user{?page,limit}]
+
+### Get users [GET]
+
+`GET /user`
+
++ Parameters
+
+    + page: `1` (number, optional) - current page
+        (format: int32, val >= 1)
+        + Default: `1`
+    + limit: `20` (number, optional) - page size
+        (format: int32, val >= 15)
+        + Default: `20`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<_Page<UserDto>>)
+
+    + Headers
+
+    + Body
+
+## Get a user [/user/{username}]
+
+### Get a user [GET]
+
+`GET /user/{username}`
+
++ Parameters
+
+    + username (string, required) - username
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<UserDto>)
+
+    + Headers
+
+    + Body
+
+## Update user [/user/deprecated]
+
+### Update user [PUT]
+
+`PUT /user/deprecated`
+
+Attention: This api is deprecated.
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Update user, Delete user [/user]
+
+### Update user [PUT]
+
+`PUT /user`
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+### Delete user [DELETE]
+
+`DELETE /user`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+# Group Test
+
+test-controller
+
+## Test a [/test/a{?q1,q2,q3}]
+
+### Test a [HEAD]
+
+`HEAD /test/a`
+
++ Parameters
+
+    + q1 (enum[string], required) - q1
+        (format: date-time)
+        + Members
+            + `0`
+            + `1`
+            + `2`
+    + q2 (number, optional) - q2
+        (format: double, val >= -5)
+    + q3: `ex` (string, required) - q3
+        (format: password, allow empty)
+        + Default: `def`
+
++ Request (application/json)
+
+    + Attributes
+
+        + f1 (file, required) - f1
+        + f2 (string, required) - f2
+            (allow empty)
+
+    + Headers
+
+            Authorization: Jwt apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 Success
+
+    + Attributes (Result)
+
+    + Headers
+
+            Content-Type: content type (string)
+            X-My-Token: my token (string)
+            X-My-Object: my object (UserDto)
+
+    + Body
+
++ Response 409 (application/json)
+
+    409 Conflict
+
+    + Attributes (string)
+
+    + Headers
+
+    + Body
+
+# Data Structures
+
+## UpdateUserParam (object)
+
++ username (string, required) - username
++ nickname (string, required) - nickname
++ profile (string, required) - user profile
+    (allow empty)
++ gender (enum[string], required) - user gender
+    + Members
+        + `secret`
+        + `male`
+        + `female`
+
+## Result (object)
+
++ code: `200` (number, required) - status code
+    (format: int32)
++ message: `success` (string, required) - status message
+
+## UserDto (object)
+
++ uid (number, required) - user id
+    (format: int64)
++ username (string, required) - username
++ nickname (string, required) - nickname
++ profile (string, required) - user profile
+    (allow empty)
++ gender (enum[string], required) - user gender
+    + Members
+        + `secret`
+        + `male`
+        + `female`
+
+## LoginDto (object)
+
++ user (UserDto, required) - authorized user
++ token (string, required) - access token
+
+## RegisterParam (object)
+
++ username (string, required) - username
+    (len <= 30, val <= 30)
++ password (string, required) - password
+    (len <= 30, val <= 30)
+
+## LoginParam (object)
+
++ parameter (string, required) - login parameter
++ password (string, required) - password
+
+## _Result<LoginDto> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (LoginDto, required) - response data
+
+## _Result<_Page<UserDto>> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (_Page<UserDto>, required) - response data
+
+## _Page<UserDto> (object)
+
++ page (number, required) - current page
+    (format: int32)
++ limit (number, required) - page size
+    (format: int32)
++ total (number, required) - total count
+    (format: int32)
++ data (array[UserDto], required) - response data
+
+## _Result<UserDto> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (UserDto, required) - response data

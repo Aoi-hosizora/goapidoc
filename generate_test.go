@@ -5,165 +5,396 @@ import (
 	"testing"
 )
 
-func TestParseInnerType(t *testing.T) {
-	str := "aType<T1<>, T2<TT1<integer[]>>, T3<TT1, TT2>, T4>[][]"
+func TestParseApiType(t *testing.T) {
+	str := "aType<T1<>, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<TT5>>>, T4#FF>[][]"
 	res := parseApiType(str)
-	obj := res.outArray.typ.outArray.typ
-	log.Println(res.name, res.outArray)
-	log.Println(res.outArray.typ.name, res.outArray.typ.outArray)
-	log.Println(obj.name, obj.outObject.typ, obj.outObject.generic)
 
-	g0 := obj.outObject.generic[0]   // T1<>
-	g1 := obj.outObject.generic[1]   // T2<TT1<integer[]>>
-	g10 := g1.outObject.generic[0]   // TT1<integer[]>
-	g100 := g10.outObject.generic[0] // integer[]
-	g1000 := g100.outArray.typ       // integer
-	g2 := obj.outObject.generic[2]   // T3<TT1, TT2>
-	g20 := g2.outObject.generic[0]   // TT1
-	g21 := g2.outObject.generic[1]   // TT2
-	g3 := obj.outObject.generic[3]   // T4
-	log.Println(g0.name, g0.outObject.typ)
-	log.Println(g1.name, g1.outObject.typ, g10.outObject.typ, g100.name, g1000.name)
-	log.Println(g2.name, g2.outObject.typ, g20.outObject.typ, g21.outObject.typ)
-	log.Println(g3.name, g3.outObject.typ)
+	if res.name != str {
+		t.Fatal("res.name")
+	}
+	if res.array.item.name != "aType<T1<>, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<TT5>>>, T4#FF>[]" {
+		t.Fatal("res.array.item.name")
+	}
+	if res.array.item.array.item.name != "aType<T1<>, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<TT5>>>, T4#FF>" {
+		t.Fatal("res.array.item.array.item.name")
+	}
+
+	obj := res.array.item.array.item
+	if len(obj.object.generics) != 4 {
+		t.Fatal("len(obj.object.generics)")
+	}
+
+	gen := obj.object.generics
+	if gen[0].name != "T1<>" {
+		t.Fatal("gen[0].name")
+	}
+	if gen[1].name != "T2<TT1<integer#int32[]>>" {
+		t.Fatal("gen[1].name")
+	}
+	if gen[2].name != "T3<TT1, TT2<TT3, TT4<TT5>>>" {
+		t.Fatal("gen[2].name")
+	}
+	if gen[3].name != "T4#FF" {
+		t.Fatal()
+	}
+
+	g0 := gen[0] // T1<>
+	if g0.object.typ != "T1" {
+		t.Fatal("g0.object.typ")
+	}
+	if len(g0.object.generics) != 0 {
+		t.Fatal("len(g0.object.generics)")
+	}
+
+	g1 := gen[1] // T2<TT1<integer[]>>
+	if g1.object.typ != "T2" {
+		t.Fatal("g1.object.typ")
+	}
+	g10 := g1.object.generics[0]
+	if g10.object.typ != "TT1" {
+		t.Fatal("g10.object.typ")
+	}
+	g100 := g10.object.generics[0]
+	if g100.name != "integer#int32[]" {
+		t.Fatal("g100.name")
+	}
+	if g100.array.item.prime.typ != "integer" {
+		t.Fatal("g100.array.item.prime.typ")
+	}
+	if g100.array.item.prime.format != "int32" {
+		t.Fatal("g100.array.item.prime.format")
+	}
+
+	g2 := gen[2] // T3<TT1, TT2<TT3, TT4<TT5>>>
+	g20 := g2.object.generics[0]
+	g21 := g2.object.generics[1]
+	if g20.object.typ != "TT1" {
+		t.Fatal("g20.object.typ")
+	}
+	if g21.name != "TT2<TT3, TT4<TT5>>" {
+		t.Fatal("g21.name")
+	}
+	if g21.object.typ != "TT2" {
+		t.Fatal("g21.object.typ")
+	}
+	g210 := g21.object.generics[0]
+	g211 := g21.object.generics[1] // TT4<TT5>
+	if g210.object.typ != "TT3" {
+		t.Fatal("g210.object.typ")
+	}
+	if g211.name != "TT4<TT5>" {
+		t.Fatal("g211.name")
+	}
+	if g211.object.typ != "TT4" {
+		t.Fatal("g211.object.typ")
+	}
+	if g211.object.generics[0].object.typ != "TT5" {
+		t.Fatal("g211.object.generics[0].object.typ")
+	}
+
+	g3 := gen[3] // T4#FF
+	if g3.object.typ != "T4#FF" {
+		t.Fatal("g3.object.typ")
+	}
+	if len(g3.object.generics) != 0 {
+		t.Fatal("len(g3.object.generics)")
+	}
 }
 
-func TestPreHandleGeneric(t *testing.T) {
+func TestPrehandleGenericName(t *testing.T) {
 	def := &Definition{
-		Generics: []string{"T", "U", "V"},
-		Properties: []*Property{
-			{Type: "inT[]"},
-			{Type: "O<inT[], T[], T, inT<int>>"},
-			{Type: "T"},
-			{Type: "tT<T<tT>[][], T>[]"},
-			{Type: "TtT<T,tT[],T[][]>[]"},
+		generics: []string{"T", "U", "V"},
+		properties: []*Property{
+			{typ: "inT[]"},
+			{typ: "O<inT[], T[], T, inT<int>>"},
+			{typ: "T"},
+			{typ: "tT<T<tT>[][], T>[]"},
+			{typ: "TtT<T,tT[],T[][]>[]"},
 		},
 	}
-	preHandleGeneric(def)
-	log.Println(def.Generics)
-	for _, p := range def.Properties {
-		log.Println(p.Type)
+	prehandleGenericName(def)
+
+	if def.generics[0] != "«T»" {
+		t.Fatal("def.generics[0]")
+	}
+	if def.generics[1] != "«U»" {
+		t.Fatal("def.generics[1]")
+	}
+	if def.generics[2] != "«V»" {
+		t.Fatal("def.generics[2]")
+	}
+
+	p0 := def.properties[0]
+	p1 := def.properties[1]
+	p2 := def.properties[2]
+	p3 := def.properties[3]
+	p4 := def.properties[4]
+	if p0.typ != "inT[]" {
+		t.Fatal("p0.typ")
+	}
+	if p1.typ != "O<inT[], «T»[], «T», inT<int>>" {
+		t.Fatal("p1.typ")
+	}
+	if p2.typ != "«T»" {
+		t.Fatal("p2.typ")
+	}
+	if p3.typ != "tT<«T»<tT>[][], «T»>[]" {
+		t.Fatal("p3.typ")
+	}
+	if p4.typ != "TtT<«T», tT[], «T»[][]>[]" {
+		t.Fatal("p4.typ")
+	}
+}
+
+func TestPrehandleGenericList(t *testing.T) {
+	defs := []*Definition{
+		{name: "User", properties: []*Property{}},
+		{name: "Login", properties: []*Property{}},
+		{name: "String", properties: []*Property{}},
+		{name: "Result", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T"}}},
+		{name: "Page", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T[]"}}},
+		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
+		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
+	}
+	for _, def := range defs {
+		prehandleGenericName(def)
+	}
+	newDefs := prehandleGenericList(defs, []string{
+		"Result<Page<User>>",
+		"Result3<User, Page<Result2<Login, Page<Login>>>, String[]>",
+		"Integer",
+		"Result2<String, Result2<String, String>>",
+	})
+
+	if len(newDefs) != 12 {
+		t.Fatal()
+	}
+
+	contain := func(def *Definition) bool {
+		ok := false
+		for _, newDef := range newDefs {
+			if newDef.name != def.name || len(newDef.properties) != len(def.properties) {
+				continue
+			}
+			if len(newDef.properties) == 0 {
+				ok = true
+				break
+			}
+
+			ok2 := true
+			for idx, newProp := range newDef.properties {
+				prop := def.properties[idx]
+				if newProp.name != prop.name || newProp.typ != prop.typ {
+					ok2 = false
+					break
+				}
+			}
+			if ok2 {
+				ok = true
+				break
+			}
+		}
+		return ok
+	}
+
+	// 0: User | Login | String
+	// 1: Page<User> | Page<Login> | Result<String[]> | Result2<String, String>
+	// 2: Result<Page<User>> | Result2<Login, Page<Login>> | Result2<String, Result2<String, String>>
+	// 3: Page<Result2<Login, Page<Login>>>
+	// 4: Result3<User, Page<Result2<Login, Page<Login>>>, String[]>
+
+	for idx, ok := range []bool{
+		contain(&Definition{name: "User", properties: []*Property{}}),
+		contain(&Definition{name: "Login", properties: []*Property{}}),
+		contain(&Definition{name: "String", properties: []*Property{}}),
+
+		contain(&Definition{name: "Page<User>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "User[]"}}}),
+		contain(&Definition{name: "Page<Login>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Login[]"}}}),
+		contain(&Definition{name: "Result<String[]>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "String[]"}}}),
+		contain(&Definition{name: "Result2<String, String>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "String[]"}}}),
+
+		contain(&Definition{name: "Result<Page<User>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Page<User>"}}}),
+		contain(&Definition{name: "Result2<Login, Page<Login>>", properties: []*Property{{name: "a", typ: "Login"}, {name: "b", typ: "Page<Login>[]"}}}),
+		contain(&Definition{name: "Result2<String, Result2<String, String>>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "Result2<String, String>[]"}}}),
+
+		contain(&Definition{name: "Page<Result2<Login, Page<Login>>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Result2<Login, Page<Login>>[]"}}}),
+
+		contain(&Definition{name: "Result3<User, Page<Result2<Login, Page<Login>>>, String[]>", properties: []*Property{{name: "a", typ: "User"}, {name: "b", typ: "Page<Result2<Login, Page<Login>>>[][]"}, {name: "c", typ: "Result<String[]>"}}}),
+	} {
+		if !ok {
+			t.Fatal(idx)
+		}
 	}
 }
 
 func TestGenerate(t *testing.T) {
 	SetDocument(
-		"localhost:10086", "/",
-		NewInfo("test-api", "a demo description", "1.0").
-			WithTermsOfService("http://xxx.yyy.zzz").
-			WithLicense(NewLicense("MIT", "http://xxx.yyy.zzz")).
-			WithContact(NewContact("author", "http://xxx.yyy.zzz", "xxx@yyy.zzz")),
+		"localhost:65530", "/",
+		NewInfo("goapidoc", "goapidoc test api", "1.0").
+			TermsOfService("https://github.com/Aoi-hosizora").
+			License(NewLicense("MIT", "https://github.com/Aoi-hosizora")).
+			Contact(NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
 	)
 	SetTags(
-		NewTag("ping", "ping-controller"),
-		NewTag("user", "user-controller"),
+		NewTag("Authorization", "auth-controller"),
+		NewTag("User", "user-controller"),
+		NewTag("Test", "test-controller"),
 	)
 	SetSecurities(
-		NewSecurity("jwt", HEADER, "Authorization"),
+		NewSecurity("Jwt", "header", "Authorization"),
 	)
 
-	AddPaths(
-		NewPath(GET, "/api/v1/ping", "ping").
-			WithDescription("ping the server").
-			WithTags("ping").
-			WithConsumes(JSON).
-			WithProduces(JSON).
-			WithResponses(
-				NewResponse(200).WithDescription("success").WithExamples(map[string]string{JSON: "{\n    \"ping\": \"pong\"\n}"}),
+	AddRoutePaths(
+		NewRoutePath("POST", "/auth/register", "Register").
+			Desc("Register.").
+			Tags("Authorization").
+			Params(NewBodyParam("param", "RegisterParam", true, "register param")).
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("POST", "/auth/login", "Login").
+			Desc("Login.").
+			Tags("Authorization").
+			Params(NewBodyParam("param", "LoginParam", true, "login param")).
+			Responses(
+				NewResponse(200, "_Result<LoginDto>"),
+				NewResponse(400, "Result").Examples(map[string]string{"application/json": "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"}),
 			),
-		NewPath(GET, "/api/v1/user", "get users").
-			WithTags("user").
-			WithConsumes(JSON).
-			WithProduces(JSON).
-			WithSecurities("jwt").
-			WithParams(
-				NewQueryParam("page", INTEGER, false, "current page").WithDefault(1).WithMinimum(1).WithMaximum(50),
-				NewQueryParam("total", INTEGER, false, "page size").WithDefault(10).WithExample(20),
-				NewQueryParam("order", STRING, false, "order string").WithDefault("").WithMinLength(1).WithMaxLength(50),
+
+		NewRoutePath("DELETE", "/auth/logout", "Logout").
+			Tags("Authorization").
+			Securities("Jwt").
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("GET", "/user", "Get users").
+			Tags("User").
+			Securities("Jwt").
+			Params(
+				NewQueryParam("page", "integer#int32", false, "current page").Default(1).Example(1).Minimum(1),
+				NewQueryParam("limit", "integer#int32", false, "page size").Default(20).Example(20).Minimum(15),
 			).
-			WithResponses(
-				NewResponse(200).WithType("_Result<_Page<User>>"),
-			),
-		NewPath(GET, "/api/v1/user/{id}", "get a user").
-			WithTags("user").
-			WithConsumes(JSON).
-			WithProduces(JSON).
-			WithParams(NewPathParam("id", INTEGER, true, "user id")).
-			WithResponses(
-				NewResponse(200).WithType("_Result<User>"),
-			),
-		NewPath(PUT, "/api/v1/user/{id}", "update user (ugly api)").
-			WithTags("user").
-			WithConsumes(JSON).
-			WithProduces(JSON).
-			WithSecurities("jwt").
-			WithParams(
-				NewPathParam("id", INTEGER, true, "user id"),
-				NewBodyParam("body", "User", true, "request body"),
+			Responses(NewResponse(200, "_Result<_Page<UserDto>>")),
+
+		NewRoutePath("GET", "/user/{username}", "Get a user").
+			Tags("User").
+			Securities("Jwt").
+			Params(NewPathParam("username", "string", true, "username")).
+			Responses(NewResponse(200, "_Result<UserDto>")),
+
+		NewRoutePath("PUT", "/user/deprecated", "Update user").
+			Tags("User").
+			Securities("Jwt").
+			Deprecated(true).
+			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("PUT", "/user", "Update user").
+			Tags("User").
+			Securities("Jwt").
+			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("DELETE", "/user", "Delete user").
+			Tags("User").
+			Securities("Jwt").
+			Responses(NewResponse(200, "Result")),
+
+		NewRoutePath("HEAD", "/test/a", "Test a").
+			Tags("Test").
+			Securities("Jwt", "WrongSecurity").
+			Params(
+				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
+				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
+				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("ex").Default("def"),
+				NewFormParam("f1", "file", true, "f1"),
+				NewFormParam("f2", "string", true, "f2").AllowEmpty(true),
 			).
-			WithResponses(
-				NewResponse(200).WithType("Result").WithDescription("success"),
-				NewResponse(404).WithDescription("not found").WithHeaders(NewHeader("Content-Kind", STRING, "demo")),
-				NewResponse(400).WithType(STRING).WithDescription("bad request").WithExamples(map[string]string{JSON: "bad request"}),
+			Responses(
+				NewResponse(200, "Result").
+					Desc("200 Success").
+					Headers(
+						NewHeader("Content-Type", "string", "content type"),
+						NewHeader("X-My-Token", "string", "my token"),
+						NewHeader("X-My-Object", "UserDto", "my object"),
+					),
+				NewResponse(409, "string").Desc("409 Conflict"),
 			),
-		NewPath(HEAD, "/api/v1/test", "test path").
-			WithParams(
-				NewQueryParam("arr", "integer#int64[]", true, "test"),
-				NewQueryParam("ref", "User[]", true, "test"),
-				NewQueryParam("enum", STRING, true, "test").WithEnum("male", "female"),
-				NewQueryParam("option1", "_Result<string>[]", true, "test"),
-				NewQueryParam("option2", "_Result<string[]>[]", true, "test"),
-				NewBodyParam("test", "_ResultPage<User>", true, "test"),
-				NewBodyParam("arr2", INTEGER, true, "test"),
-			).
-			WithResponses(NewResponse(200).WithType("TestGeneric<integer, User, string>")),
 	)
 
 	AddDefinitions(
-		NewDefinition("Result", "global response").WithProperties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", STRING, true, "status message"),
-		),
-		NewDefinition("User", "user response").WithProperties(
-			NewProperty("id", INTEGER, true, "user id").WithMinimum(1).WithMaximum(65535),
-			NewProperty("name", STRING, true, "user name"),
-			NewProperty("profile", STRING, false, "user profile").WithAllowEmptyValue(true).WithMinLength(1).WithMaxLength(255),
-			NewProperty("gender", STRING, true, "user gender").WithEnum("male", "female").WithExample("female"),
-			NewProperty("create_at", "string#date-time", true, "user register time"),
-			NewProperty("birthday", "string#date", true, "user birthday"),
-			NewProperty("scores", "number[]", true, "user scores"),
-		),
-		NewDefinition("_Result", "global response").WithGenerics("T").WithProperties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", STRING, true, "status message"),
-			NewProperty("data", "T", true, "response data"),
-		),
-		NewDefinition("_Page", "global page response").WithGenerics("T").WithProperties(
-			NewProperty("page", INTEGER, true, "current page"),
-			NewProperty("total", INTEGER, true, "data count"),
-			NewProperty("limit", INTEGER, true, "page size"),
-			NewProperty("data", "T[]", true, "page data"),
-		),
-		NewDefinition("_ResultPage", "global response").WithGenerics("T").WithProperties(
-			NewProperty("code", INTEGER, true, "status code"),
-			NewProperty("message", INTEGER, true, "status message"),
-			NewProperty("data", "_Page<T>", true, "response data"),
-		),
+		NewDefinition("Result", "global response").
+			Properties(
+				NewProperty("code", "integer#int32", true, "status code").Example("200"),
+				NewProperty("message", "string", true, "status message").Example("success"),
+			),
 
-		NewDefinition("TestGeneric", "test generic").WithGenerics("T", "U", "W").WithProperties(
-			NewProperty("t", "T", true, "t"),
-			NewProperty("t2", "T[]", true, "t2"),
-			NewProperty("t3", "T[][]", true, "t3"),
-			NewProperty("u", "_Result<U>", true, "u"),
-			NewProperty("u2", "_Result<U[]>", true, "u2"),
-			NewProperty("u3", "_Result<U[]>[]", true, "u3"),
-			NewProperty("w", "W", true, "w"),
-		),
+		NewDefinition("_Result", "global response").
+			Generics("T").
+			Properties(
+				NewProperty("code", "integer#int32", true, "status code"),
+				NewProperty("message", "string", true, "status message"),
+				NewProperty("data", "T", true, "response data"),
+			),
+
+		NewDefinition("_Page", "global page response").
+			Generics("T").
+			Properties(
+				NewProperty("page", "integer#int32", true, "current page"),
+				NewProperty("limit", "integer#int32", true, "page size"),
+				NewProperty("total", "integer#int32", true, "total count"),
+				NewProperty("data", "T[]", true, "response data"),
+			),
+
+		NewDefinition("UserDto", "user response").
+			Properties(
+				NewProperty("uid", "integer#int64", true, "user id"),
+				NewProperty("username", "string", true, "username"),
+				NewProperty("nickname", "string", true, "nickname"),
+				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
+				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+			),
+
+		NewDefinition("LoginDto", "login response").
+			Properties(
+				NewProperty("user", "UserDto", true, "authorized user"),
+				NewProperty("token", "string", true, "access token"),
+			),
+
+		NewDefinition("RegisterParam", "register param").
+			Properties(
+				NewProperty("username", "string", true, "username").MinLength(5).MaxLength(30),
+				NewProperty("password", "string", true, "password").MinLength(5).MaxLength(30),
+			),
+
+		NewDefinition("LoginParam", "login param").
+			Properties(
+				NewProperty("parameter", "string", true, "login parameter"),
+				NewProperty("password", "string", true, "password"),
+			),
+
+		NewDefinition("UpdateUserParam", "update user param").
+			Properties(
+				NewProperty("username", "string", true, "username"),
+				NewProperty("nickname", "string", true, "nickname"),
+				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
+				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+			),
 	)
 
-	doc, err := GenerateYamlWithSwagger2("./docs/api.yaml")
-	log.Println(err)
+	_, err := GenerateSwaggerYaml("./docs/api.yaml")
+	if err != nil {
+		log.Println(err)
+		t.Fatal("yaml")
+	}
 
-	doc, err = GenerateJsonWithSwagger2("./docs/api.json")
-	log.Println(string(doc), err)
+	_, err = GenerateSwaggerJson("./docs/api.json")
+	if err != nil {
+		log.Println(err)
+		t.Fatal("json")
+	}
+
+	_, err = GenerateApib("./docs/api.apib")
+	if err != nil {
+		log.Println(err)
+		t.Fatal("apib")
+	}
 }

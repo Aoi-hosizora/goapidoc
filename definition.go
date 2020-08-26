@@ -2,84 +2,84 @@ package goapidoc
 
 // Model definitions
 type Definition struct {
-	Name        string
-	Description string
+	name string
+	desc string
 
-	Generics   []string
-	Properties []*Property
+	generics   []string
+	properties []*Property
 }
 
 func NewDefinition(title string, desc string) *Definition {
-	return &Definition{Name: title, Description: desc}
+	return &Definition{name: title, desc: desc}
 }
 
-func (d *Definition) WithGenerics(generics ...string) *Definition {
-	d.Generics = generics
+func (d *Definition) Generics(generics ...string) *Definition {
+	d.generics = generics
 	return d
 }
 
-func (d *Definition) WithProperties(properties ...*Property) *Definition {
-	d.Properties = append(d.Properties, properties...)
+func (d *Definition) Properties(properties ...*Property) *Definition {
+	d.properties = append(d.properties, properties...)
 	return d
 }
 
 // Model property
 type Property struct {
-	Name        string
-	Type        string
-	Required    bool
-	Description string
+	name     string
+	typ      string
+	required bool
+	desc     string
 
-	AllowEmptyValue bool
-	Default         interface{}
-	Example         interface{}
-	Enum            []interface{}
-	MinLength       int
-	MaxLength       int
-	Minimum         int
-	Maximum         int
+	allowEmpty bool
+	def        interface{}
+	example    interface{}
+	enum       []interface{}
+	minLength  int
+	maxLength  int
+	minimum    int
+	maximum    int
 }
 
-func NewProperty(name string, t string, req bool, desc string) *Property {
-	return &Property{Name: name, Type: t, Required: req, Description: desc}
+func NewProperty(name string, typ string, req bool, desc string) *Property {
+	return &Property{name: name, typ: typ, required: req, desc: desc}
 }
 
-func (p *Property) WithAllowEmptyValue(allow bool) *Property {
-	p.AllowEmptyValue = allow
+func (p *Property) AllowEmpty(allow bool) *Property {
+	p.allowEmpty = allow
 	return p
 }
 
-func (p *Property) WithDefault(def interface{}) *Property {
-	p.Default = def
+func (p *Property) Default(def interface{}) *Property {
+	p.def = def
 	return p
 }
 
-func (p *Property) WithExample(ex interface{}) *Property {
-	p.Example = ex
+func (p *Property) Example(ex interface{}) *Property {
+	p.example = ex
 	return p
 }
 
-func (p *Property) WithEnum(enum ...interface{}) *Property {
-	p.Enum = enum
+func (p *Property) Enum(enum ...interface{}) *Property {
+	p.enum = enum
 	return p
 }
 
-func (p *Property) WithMinLength(min int) *Property {
-	p.MinLength = min
+func (p *Property) MinLength(min int) *Property {
+	p.minLength = min
 	return p
 }
 
-func (p *Property) WithMaxLength(max int) *Property {
-	p.MaxLength = max
+func (p *Property) MaxLength(max int) *Property {
+	p.maxLength = max
 	return p
 }
 
-func (p *Property) WithMinimum(min int) *Property {
-	p.Minimum = min
+func (p *Property) Minimum(min int) *Property {
+	p.minimum = min
 	return p
 }
 
-func (p *Property) WithMaximum(max int) *Property {
-	p.Maximum = max
+func (p *Property) Maximum(max int) *Property {
+	p.maximum = max
 	return p
 }
