@@ -164,16 +164,16 @@ func prehandleGenericName(def *Definition) {
 // generate related generic list
 func prehandleGenericList(definitions []*Definition, allTypes []string) []*Definition {
 	genericDefs := make(map[string]*Definition)
-	normalDefs := make(map[string]*Definition)
+	normalDefs := newLinkedHashMap() // old definitions
 	for _, def := range definitions {
 		if len(def.generics) == 0 {
-			normalDefs[def.name] = def
+			normalDefs.Set(def.name, def)
 		} else {
 			genericDefs[def.name] = def
 		}
 	}
 
-	addedDefs := newLinkedHashMap() // make(map[string]*Definition, 0) // new definitions to add
+	addedDefs := newLinkedHashMap() //  new definitions to add
 
 	// preHandle
 	var preHandle func(string)
@@ -229,7 +229,6 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 		}
 		addedDef.name += "<" + strings.Join(specNames, ", ") + ">"
 		addedDefs.Set(addedDef.name, addedDef)
-		// log.Println("added", addedDef.name)
 
 		for _, prop := range addedDef.properties {
 			if !addedDefs.Has(prop.typ) {
@@ -243,8 +242,9 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 	}
 
 	out := make([]*Definition, 0)
-	for _, def := range normalDefs {
-		out = append(out, def)
+	for _, key := range normalDefs.Keys() {
+		val, _ := normalDefs.Get(key)
+		out = append(out, val.(*Definition))
 	}
 	for _, key := range addedDefs.Keys() {
 		val, _ := addedDefs.Get(key)

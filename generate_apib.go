@@ -307,7 +307,6 @@ func buildApibDefinitions(d *Document) string {
 	propertyTypes := make([]string, 0)
 	for _, definition := range d.definitions {
 		prehandleGenericName(definition) // new name
-
 		if len(definition.generics) == 0 && len(definition.properties) > 0 {
 			for _, property := range definition.properties {
 				propertyTypes = append(propertyTypes, property.typ)
@@ -322,10 +321,10 @@ func buildApibDefinitions(d *Document) string {
 			propertyTypes = append(propertyTypes, response.typ)
 		}
 	}
-	definitions := prehandleGenericList(d.definitions, propertyTypes) // new list
 
+	newDefinitions := prehandleGenericList(d.definitions, propertyTypes) // new list
 	definitionStrings := make([]string, 0)
-	for _, definition := range definitions {
+	for _, definition := range newDefinitions {
 		if len(definition.generics) > 0 || len(definition.properties) == 0 {
 			continue
 		}
