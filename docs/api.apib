@@ -303,18 +303,6 @@ test-controller
 
 # Data Structures
 
-## UpdateUserParam (object)
-
-+ username (string, required) - username
-+ nickname (string, required) - nickname
-+ profile (string, required) - user profile
-    (allow empty)
-+ gender (enum[string], required) - user gender
-    + Members
-        + `secret`
-        + `male`
-        + `female`
-
 ## Result (object)
 
 + code: `200` (number, required) - status code
@@ -351,6 +339,18 @@ test-controller
 
 + parameter (string, required) - login parameter
 + password (string, required) - password
+
+## UpdateUserParam (object)
+
++ username (string, required) - username
++ nickname (string, required) - nickname
++ profile (string, required) - user profile
+    (allow empty)
++ gender (enum[string], required) - user gender
+    + Members
+        + `secret`
+        + `male`
+        + `female`
 
 ## _Result<LoginDto> (object)
 
