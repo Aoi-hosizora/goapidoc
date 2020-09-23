@@ -1,10 +1,12 @@
 # goapidoc
 
+[![Build Status](https://www.travis-ci.org/Aoi-hosizora/goapidoc.svg?branch=master)](https://www.travis-ci.org/Aoi-hosizora/goapidoc)
+
 + A tool written in golang for generating api document (swagger2 & apib)
 
 ### Function
 
-+ [x] Basic swagger information
++ [x] Support basic information, route and definition
 + [x] Support basic generic type
 + [x] Support basic Swagger 2
 + [x] Support basic API Blueprint 1A (compatible with swagger2)
