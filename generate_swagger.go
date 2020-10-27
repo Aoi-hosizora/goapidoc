@@ -476,6 +476,7 @@ func buildSwaggerDocument(d *Document) *swagDocument {
 	return out
 }
 
+// GenerateSwaggerYaml generates swagger yaml script and writes into file.
 func (d *Document) GenerateSwaggerYaml(path string) ([]byte, error) {
 	swagDoc := buildSwaggerDocument(d)
 	bs, err := yaml.Marshal(swagDoc)
@@ -490,6 +491,7 @@ func (d *Document) GenerateSwaggerYaml(path string) ([]byte, error) {
 	return bs, nil
 }
 
+// GenerateSwaggerJson generates swagger json script and writes into file.
 func (d *Document) GenerateSwaggerJson(path string) ([]byte, error) {
 	swagDoc := buildSwaggerDocument(d)
 	bs, err := jsonMarshal(swagDoc)
@@ -504,10 +506,12 @@ func (d *Document) GenerateSwaggerJson(path string) ([]byte, error) {
 	return bs, nil
 }
 
+// GenerateSwaggerYaml generates swagger yaml script and writes into file.
 func GenerateSwaggerYaml(path string) ([]byte, error) {
 	return _document.GenerateSwaggerYaml(path)
 }
 
+// GenerateSwaggerJson generates swagger json script and writes into file.
 func GenerateSwaggerJson(path string) ([]byte, error) {
 	return _document.GenerateSwaggerJson(path)
 }

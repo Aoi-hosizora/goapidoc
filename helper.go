@@ -35,6 +35,7 @@ func saveFile(path string, data []byte) error {
 	return nil
 }
 
+// linkedHashMap is used to replace map[string]interface{}.
 type linkedHashMap struct {
 	m map[string]interface{}
 	i []string

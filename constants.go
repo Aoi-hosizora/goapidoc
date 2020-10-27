@@ -1,51 +1,59 @@
 package goapidoc
 
+// type
 const (
-	// type
-	INTEGER = "integer" // type: integer, long
-	NUMBER  = "number"  // type: float, double
-	STRING  = "string"  // type: string, byte, binary, date, dateTime, password
-	BOOLEAN = "boolean" // type: boolean
-	ARRAY   = "array"   // type: array
-	FILE    = "file"    // type: file
-	OBJECT  = "object"  // x
+	INTEGER = "integer" // INTEGER type: integer, long
+	NUMBER  = "number"  // NUMBER type: float, double
+	STRING  = "string"  // STRING type: string, byte, binary, date, dateTime, password
+	BOOLEAN = "boolean" // BOOLEAN type: boolean
+	ARRAY   = "array"   // ARRAY type: array
+	FILE    = "file"    // FILE type: file
+	OBJECT  = "object"  // OBJECT x
+)
 
-	// format
-	INT32    = "int32"     // format: signed 32 bits
-	INT64    = "int64"     // format: signed 64 bits
-	FLOAT    = "float"     // format: float
-	DOUBLE   = "double"    // format: double
-	BYTE     = "byte"      // format: base64 encoded characters
-	BINARY   = "binary"    // format: any sequence of octets
-	DATE     = "date"      // format: As defined by full-date - RFC3339
-	DATETIME = "date-time" // format: As defined by date-time - RFC3339
-	PASSWORD = "password"  // format: Used to hint UIs the input needs to be obscured
+// format
+const (
+	INT32    = "int32"     // INT32 format: signed 32 bits
+	INT64    = "int64"     // INT64 format: signed 64 bits
+	FLOAT    = "float"     // FLOAT format: float
+	DOUBLE   = "double"    // DOUBLE format: double
+	BYTE     = "byte"      // BYTE format: base64 encoded characters
+	BINARY   = "binary"    // BINARY format: any sequence of octets
+	DATE     = "date"      // DATE format: As defined by full-date - RFC3339
+	DATETIME = "date-time" // DATETIME format: As defined by date-time - RFC3339
+	PASSWORD = "password"  // PASSWORD format: Used to hint UIs the input needs to be obscured
+)
 
-	// param
-	QUERY  = "query"    // param
-	PATH   = "path"     // param
-	HEADER = "header"   // param
-	BODY   = "body"     // param
-	FORM   = "formData" // param
+// param
+const (
+	QUERY  = "query"    // QUERY param
+	PATH   = "path"     // PATH param
+	HEADER = "header"   // HEADER param
+	BODY   = "body"     // BODY param
+	FORM   = "formData" // FORM param
+)
 
-	// method
-	GET     = "get"     // method
-	PUT     = "put"     // method
-	POST    = "post"    // method
-	DELETE  = "delete"  // method
-	OPTIONS = "options" // method
-	HEAD    = "head"    // method
-	PATCH   = "patch"   // method
+// method
+const (
+	GET     = "get"     // GET method
+	PUT     = "put"     // PUT method
+	POST    = "post"    // POST method
+	DELETE  = "delete"  // DELETE method
+	OPTIONS = "options" // OPTIONS method
+	HEAD    = "head"    // HEAD method
+	PATCH   = "patch"   // PATCH method
+)
 
-	// mime
-	ALL   = "*/*"                               // mime data
-	JSON  = "application/json"                  // mime data
-	XML   = "text/xml"                          // mime data
-	PLAIN = "text/plain"                        // mime data
-	HTML  = "text/html"                         // mime data
-	MPFD  = "multipart/form-data"               // mime data
-	URL   = "application/x-www-form-urlencoded" // mime data
-	PNG   = "image/png"                         // mime data
-	JPEG  = "image/jpeg"                        // mime data
-	GIF   = "image/gif"                         // mime data
+// mime
+const (
+	ALL   = "*/*"                               // ALL mime data: */*
+	JSON  = "application/json"                  // JSON mime data: application/json
+	XML   = "text/xml"                          // XML mime data: text/xml
+	PLAIN = "text/plain"                        // PLAIN mime data: text/plain
+	HTML  = "text/html"                         // HTML mime data: text/html
+	MPFD  = "multipart/form-data"               // MPFD mime data: multipart/form-data
+	URL   = "application/x-www-form-urlencoded" // URL mime data: application/x-www-form-urlencoded
+	PNG   = "image/png"                         // PNG mime data: image/png
+	JPEG  = "image/jpeg"                        // JPEG mime data: image/jpeg
+	GIF   = "image/gif"                         // GIF mime data: image/gif
 )

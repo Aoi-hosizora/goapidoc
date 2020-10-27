@@ -175,7 +175,7 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 	// response
 	produce := "application/json"
 	if len(path.produces) >= 1 {
-		consume = path.produces[0]
+		produce = path.produces[0]
 	}
 	responseStrings := make([]string, 0)
 	for _, response := range path.responses {
@@ -387,6 +387,7 @@ func buildApibDocument(d *Document) []byte {
 	return []byte(template)
 }
 
+// GenerateApib generates apib script and writes into file.
 func (d *Document) GenerateApib(path string) ([]byte, error) {
 	doc := buildApibDocument(d)
 
@@ -397,6 +398,7 @@ func (d *Document) GenerateApib(path string) ([]byte, error) {
 	return doc, nil
 }
 
+// GenerateApib generates apib script and writes into file.
 func GenerateApib(path string) ([]byte, error) {
 	return _document.GenerateApib(path)
 }
