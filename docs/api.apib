@@ -258,7 +258,7 @@ test-controller
             + `1`
             + `2`
     + q2 (number, optional) - q2
-        (format: double, val >= -5)
+        (format: double, val in \[-5, 5\])
     + q3: `ex` (string, required) - q3
         (format: password, allow empty)
         + Default: `def`
@@ -273,7 +273,7 @@ test-controller
 
     + Headers
 
-            Authorization: Jwt apiKey (string, optional)
+            Authorization: authorization (header, optional)
 
     + Body
 

@@ -200,6 +200,13 @@ func (p *Param) MaxLength(max int) *Param {
 	return p
 }
 
+// Length sets the minLength and maxLength in Param.
+func (p *Param) Length(min, max int) *Param {
+	p.minLength = min
+	p.maxLength = max
+	return p
+}
+
 // Minimum sets the minimum in Param.
 func (p *Param) Minimum(min int) *Param {
 	p.minimum = min
@@ -208,6 +215,13 @@ func (p *Param) Minimum(min int) *Param {
 
 // Maximum sets the maximum in Param.
 func (p *Param) Maximum(max int) *Param {
+	p.maximum = max
+	return p
+}
+
+// Minimum sets the minimum and maximum in Param.
+func (p *Param) MinMaximum(min, max int) *Param {
+	p.minimum = min
 	p.maximum = max
 	return p
 }

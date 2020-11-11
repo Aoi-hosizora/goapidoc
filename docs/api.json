@@ -139,9 +139,6 @@
         ],
         "security": [
           {
-            "Jwt": []
-          },
-          {
             "WrongSecurity": []
           }
         ],
@@ -166,6 +163,7 @@
             "type": "number",
             "description": "q2",
             "format": "double",
+            "maximum": 5,
             "minimum": -5
           },
           {
@@ -193,6 +191,16 @@
             "type": "string",
             "description": "f2",
             "allowEmptyValue": true
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "description": "authorization",
+            "schema": {
+              "originRef": "header",
+              "$ref": "#/definitions/header"
+            }
           }
         ],
         "responses": {

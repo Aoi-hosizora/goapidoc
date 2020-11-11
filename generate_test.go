@@ -300,13 +300,14 @@ func TestGenerate(t *testing.T) {
 
 		NewRoutePath("HEAD", "/test/a", "Test a").
 			Tags("Test").
-			Securities("Jwt", "WrongSecurity").
+			Securities("WrongSecurity").
 			Params(
 				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
 				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
 				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("ex").Default("def"),
 				NewFormParam("f1", "file", true, "f1"),
 				NewFormParam("f2", "string", true, "f2").AllowEmpty(true),
+				NewHeaderParam("Authorization", "header", false, "authorization"),
 			).
 			Responses(
 				NewResponse(200, "Result").
