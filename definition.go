@@ -84,6 +84,13 @@ func (p *Property) MaxLength(max int) *Property {
 	return p
 }
 
+// Length sets the minLength and maxLength in Property.
+func (p *Property) Length(min, max int) *Property {
+	p.minLength = min
+	p.maxLength = max
+	return p
+}
+
 // Minimum sets the minimum in Property.
 func (p *Property) Minimum(min int) *Property {
 	p.minimum = min
@@ -92,6 +99,13 @@ func (p *Property) Minimum(min int) *Property {
 
 // Maximum sets the maximum in Property.
 func (p *Property) Maximum(max int) *Property {
+	p.maximum = max
+	return p
+}
+
+// Minimum sets the minimum and maximum in Property.
+func (p *Property) MinMaximum(min, max int) *Property {
+	p.minimum = min
 	p.maximum = max
 	return p
 }

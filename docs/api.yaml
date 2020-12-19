@@ -92,7 +92,6 @@ paths:
       tags:
       - Test
       security:
-      - Jwt: []
       - WrongSecurity: []
       parameters:
       - name: q1
@@ -111,6 +110,7 @@ paths:
         type: number
         description: q2
         format: double
+        maximum: 5
         minimum: -5
       - name: q3
         in: query
@@ -132,6 +132,13 @@ paths:
         type: string
         description: f2
         allowEmptyValue: true
+      - name: Authorization
+        in: header
+        required: false
+        description: authorization
+        schema:
+          originRef: header
+          $ref: '#/definitions/header'
       responses:
         "200":
           description: 200 Success
