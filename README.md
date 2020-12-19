@@ -1,6 +1,6 @@
 # goapidoc
 
-[![Build Status](https://www.travis-ci.org/Aoi-hosizora/goapidoc.svg?branch=master)](https://www.travis-ci.org/Aoi-hosizora/goapidoc)
+[![Build Status](https://travis-ci.com/Aoi-hosizora/goapidoc.svg?branch=master)](https://travis-ci.com/Aoi-hosizora/goapidoc)
 [![codecov](https://codecov.io/gh/Aoi-hosizora/goapidoc/branch/master/graph/badge.svg)](https://codecov.io/gh/Aoi-hosizora/goapidoc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Aoi-hosizora/goapidoc)](https://goreportcard.com/report/github.com/Aoi-hosizora/goapidoc)
 [![License](http://img.shields.io/badge/license-mit-blue.svg)](./LICENSE)
