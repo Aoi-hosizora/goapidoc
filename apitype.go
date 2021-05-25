@@ -132,10 +132,10 @@ func defaultFormat(typ string) string {
 }
 
 // parse generic param
-func prehandleGenericName(def *Definition) {
+func prehandleGenericName(dft *Definition) {
 	// change generic type in properties
-	for _, prop := range def.properties {
-		for _, gen := range def.generics { // T -> «T»
+	for _, prop := range dft.properties {
+		for _, gen := range dft.generics { // T -> «T»
 			if strings.HasPrefix(gen, "«") && strings.HasSuffix(gen, "»") {
 				continue
 			}
@@ -153,10 +153,10 @@ func prehandleGenericName(def *Definition) {
 	}
 
 	// change generic type in generic list
-	for idx := range def.generics {
-		gen := def.generics[idx]
+	for idx := range dft.generics {
+		gen := dft.generics[idx]
 		if !strings.HasPrefix(gen, "«") || !strings.HasSuffix(gen, "»") {
-			def.generics[idx] = "«" + gen + "»"
+			dft.generics[idx] = "«" + gen + "»"
 		}
 	}
 }
@@ -165,11 +165,11 @@ func prehandleGenericName(def *Definition) {
 func prehandleGenericList(definitions []*Definition, allTypes []string) []*Definition {
 	genericDefs := make(map[string]*Definition)
 	normalDefs := newLinkedHashMap() // old definitions
-	for _, def := range definitions {
-		if len(def.generics) == 0 {
-			normalDefs.Set(def.name, def)
+	for _, dft := range definitions {
+		if len(dft.generics) == 0 {
+			normalDefs.Set(dft.name, dft)
 		} else {
-			genericDefs[def.name] = def
+			genericDefs[dft.name] = dft
 		}
 	}
 
@@ -200,9 +200,9 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 				required:   prop.required,
 				desc:       prop.desc,
 				allowEmpty: prop.allowEmpty,
-				def:        prop.def,
+				dft:        prop.dft,
 				example:    prop.example,
-				enum:       prop.enum,
+				enums:      prop.enums,
 				minLength:  prop.minLength,
 				maxLength:  prop.maxLength,
 				minimum:    prop.minimum,

@@ -31,7 +31,7 @@ func buildApibParam(param *Param) string {
 		req = "optional"
 	}
 	typ, at := buildApibType(param.typ)
-	if len(param.enum) != 0 {
+	if len(param.enums) != 0 {
 		typ = "enum[" + typ + "]"
 	}
 
@@ -67,13 +67,13 @@ func buildApibParam(param *Param) string {
 		paramStr += fmt.Sprintf("\n    (%s)", strings.Join(options, ", "))
 	}
 
-	if param.def != nil {
-		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.def)
+	if param.dft != nil {
+		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.dft)
 	}
 
-	if len(param.enum) != 0 {
+	if len(param.enums) != 0 {
 		paramStr += "\n    + Members"
-		for _, enum := range param.enum {
+		for _, enum := range param.enums {
 			paramStr += fmt.Sprintf("\n        + `%v`", enum)
 		}
 	}
@@ -88,9 +88,9 @@ func buildApibProperty(prop *Property) string {
 		required:   prop.required,
 		desc:       prop.desc,
 		allowEmpty: prop.allowEmpty,
-		def:        prop.def,
+		dft:        prop.dft,
 		example:    prop.example,
-		enum:       prop.enum,
+		enums:      prop.enums,
 		minLength:  prop.minimum,
 		maxLength:  prop.maxLength,
 		minimum:    prop.minimum,

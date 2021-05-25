@@ -283,8 +283,8 @@ func buildSwaggerParameters(params []*Param) []*swagParam {
 			Type:            typ,
 			Format:          format,
 			AllowEmptyValue: p.allowEmpty,
-			Default:         p.def,
-			Enum:            p.enum,
+			Default:         p.dft,
+			Enum:            p.enums,
 			Example:         p.example,
 			Maximum:         p.maximum,
 			Minimum:         p.minimum,
@@ -337,10 +337,10 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 	return out
 }
 
-func buildSwaggerDefinition(def *Definition) *swagDefinition {
+func buildSwaggerDefinition(dft *Definition) *swagDefinition {
 	required := make([]string, 0)
 	properties := newLinkedHashMap() // make(map[string]*swagSchema)
-	for _, p := range def.properties {
+	for _, p := range dft.properties {
 		if p.required {
 			required = append(required, p.name)
 		}
@@ -352,9 +352,9 @@ func buildSwaggerDefinition(def *Definition) *swagDefinition {
 			Type:            typ,
 			Format:          format,
 			AllowEmptyValue: p.allowEmpty,
-			Default:         p.def,
+			Default:         p.dft,
 			Example:         p.example,
-			Enum:            p.enum,
+			Enum:            p.enums,
 			Maximum:         p.maximum,
 			Minimum:         p.minimum,
 			MaxLength:       p.maxLength,
@@ -367,7 +367,7 @@ func buildSwaggerDefinition(def *Definition) *swagDefinition {
 
 	return &swagDefinition{
 		Type:        "object",
-		Description: def.desc,
+		Description: dft.desc,
 		Required:    required,
 		Properties:  properties,
 	}
@@ -426,9 +426,9 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 	definitions := prehandleGenericList(doc.definitions, propertyTypes) // new list
 
 	out := make(map[string]*swagDefinition)
-	for _, def := range definitions {
-		if len(def.generics) == 0 {
-			out[def.name] = buildSwaggerDefinition(def)
+	for _, dft := range definitions {
+		if len(dft.generics) == 0 {
+			out[dft.name] = buildSwaggerDefinition(dft)
 		}
 	}
 	return out

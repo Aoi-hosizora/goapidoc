@@ -102,7 +102,7 @@ func TestParseApiType(t *testing.T) {
 }
 
 func TestPrehandleGenericName(t *testing.T) {
-	def := &Definition{
+	dft := &Definition{
 		generics: []string{"T", "U", "V"},
 		properties: []*Property{
 			{typ: "inT[]"},
@@ -112,23 +112,23 @@ func TestPrehandleGenericName(t *testing.T) {
 			{typ: "TtT<T,tT[],T[][]>[]"},
 		},
 	}
-	prehandleGenericName(def)
+	prehandleGenericName(dft)
 
-	if def.generics[0] != "«T»" {
-		t.Fatal("def.generics[0]")
+	if dft.generics[0] != "«T»" {
+		t.Fatal("dft.generics[0]")
 	}
-	if def.generics[1] != "«U»" {
-		t.Fatal("def.generics[1]")
+	if dft.generics[1] != "«U»" {
+		t.Fatal("dft.generics[1]")
 	}
-	if def.generics[2] != "«V»" {
-		t.Fatal("def.generics[2]")
+	if dft.generics[2] != "«V»" {
+		t.Fatal("dft.generics[2]")
 	}
 
-	p0 := def.properties[0]
-	p1 := def.properties[1]
-	p2 := def.properties[2]
-	p3 := def.properties[3]
-	p4 := def.properties[4]
+	p0 := dft.properties[0]
+	p1 := dft.properties[1]
+	p2 := dft.properties[2]
+	p3 := dft.properties[3]
+	p4 := dft.properties[4]
 	if p0.typ != "inT[]" {
 		t.Fatal("p0.typ")
 	}
@@ -156,8 +156,8 @@ func TestPrehandleGenericList(t *testing.T) {
 		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
 		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
 	}
-	for _, def := range defs {
-		prehandleGenericName(def)
+	for _, dft := range defs {
+		prehandleGenericName(dft)
 	}
 	newDefs := prehandleGenericList(defs, []string{
 		"Result<Page<User>>",
@@ -170,10 +170,10 @@ func TestPrehandleGenericList(t *testing.T) {
 		t.Fatal()
 	}
 
-	contain := func(def *Definition) bool {
+	contain := func(dft *Definition) bool {
 		ok := false
 		for _, newDef := range newDefs {
-			if newDef.name != def.name || len(newDef.properties) != len(def.properties) {
+			if newDef.name != dft.name || len(newDef.properties) != len(dft.properties) {
 				continue
 			}
 			if len(newDef.properties) == 0 {
@@ -183,7 +183,7 @@ func TestPrehandleGenericList(t *testing.T) {
 
 			ok2 := true
 			for idx, newProp := range newDef.properties {
-				prop := def.properties[idx]
+				prop := dft.properties[idx]
 				if newProp.name != prop.name || newProp.typ != prop.typ {
 					ok2 = false
 					break
@@ -304,7 +304,7 @@ func TestGenerate(t *testing.T) {
 			Params(
 				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
 				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
-				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("ex").Default("def"),
+				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("ex").Default("dft"),
 				NewFormParam("f1", "file", true, "f1"),
 				NewFormParam("f2", "string", true, "f2").AllowEmpty(true),
 				NewHeaderParam("Authorization", "header", false, "authorization"),

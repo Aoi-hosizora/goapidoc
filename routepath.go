@@ -17,8 +17,38 @@ type RoutePath struct {
 }
 
 // NewRoutePath creates a default RoutePath with given arguments.
-func NewRoutePath(method string, route string, summary string) *RoutePath {
+func NewRoutePath(method, route, summary string) *RoutePath {
 	return &RoutePath{method: method, route: route, summary: summary}
+}
+
+func (r *RoutePath) GetMethod() string         { return r.method }
+func (r *RoutePath) GetRoute() string          { return r.route }
+func (r *RoutePath) GetSummary() string        { return r.summary }
+func (r *RoutePath) GetDesc() string           { return r.desc }
+func (r *RoutePath) GetTags() []string         { return r.tags }
+func (r *RoutePath) GetConsumes() []string     { return r.consumes }
+func (r *RoutePath) GetProduces() []string     { return r.produces }
+func (r *RoutePath) GetSecurities() []string   { return r.securities }
+func (r *RoutePath) GetDeprecated() bool       { return r.deprecated }
+func (r *RoutePath) GetParams() []*Param       { return r.params }
+func (r *RoutePath) GetResponses() []*Response { return r.responses }
+
+// Method sets the method in RoutePath.
+func (r *RoutePath) Method(method string) *RoutePath {
+	r.method = method
+	return r
+}
+
+// Route sets the route in RoutePath.
+func (r *RoutePath) Route(route string) *RoutePath {
+	r.route = route
+	return r
+}
+
+// Summary sets the summary in RoutePath.
+func (r *RoutePath) Summary(summary string) *RoutePath {
+	r.summary = summary
+	return r
 }
 
 // Desc sets the desc in RoutePath.
@@ -27,27 +57,51 @@ func (r *RoutePath) Desc(desc string) *RoutePath {
 	return r
 }
 
-// Tags sets the tags in RoutePath.
+// Tags sets the whole tags in RoutePath.
 func (r *RoutePath) Tags(tags ...string) *RoutePath {
 	r.tags = tags
 	return r
 }
 
-// Consumes sets the consumes in RoutePath.
+// Tags adds some tags into RoutePath.
+func (r *RoutePath) AddTags(tags ...string) *RoutePath {
+	r.tags = append(r.tags, tags...)
+	return r
+}
+
+// Consumes sets the whole consumes in RoutePath.
 func (r *RoutePath) Consumes(consumes ...string) *RoutePath {
 	r.consumes = consumes
 	return r
 }
 
-// Produces sets the produces in RoutePath.
+// AddConsumes adds some consumes into RoutePath.
+func (r *RoutePath) AddConsumes(consumes ...string) *RoutePath {
+	r.consumes = append(r.consumes, consumes...)
+	return r
+}
+
+// Produces sets the whole produces in RoutePath.
 func (r *RoutePath) Produces(produces ...string) *RoutePath {
 	r.produces = produces
 	return r
 }
 
-// Securities sets the securities in RoutePath.
+// AddProduces adds some produces into RoutePath.
+func (r *RoutePath) AddProduces(produces ...string) *RoutePath {
+	r.produces = append(r.produces, produces...)
+	return r
+}
+
+// Securities sets the whole securities in RoutePath.
 func (r *RoutePath) Securities(securities ...string) *RoutePath {
 	r.securities = securities
+	return r
+}
+
+// AddSecurities adds some securities into RoutePath.
+func (r *RoutePath) AddSecurities(securities ...string) *RoutePath {
+	r.securities = append(r.securities, securities...)
 	return r
 }
 
@@ -57,25 +111,37 @@ func (r *RoutePath) Deprecated(deprecated bool) *RoutePath {
 	return r
 }
 
-// Params sets the params in RoutePath.
+// Params sets the whole params in RoutePath.
 func (r *RoutePath) Params(params ...*Param) *RoutePath {
 	r.params = params
 	return r
 }
 
-// Responses sets the responses in RoutePath.
+// AddParams adds some params into RoutePath.
+func (r *RoutePath) AddParams(params ...*Param) *RoutePath {
+	r.params = append(r.params, params...)
+	return r
+}
+
+// Responses sets the whole responses in RoutePath.
 func (r *RoutePath) Responses(responses ...*Response) *RoutePath {
 	r.responses = responses
 	return r
 }
 
-// Response represents a response information.
+// AddResponses adds some responses into RoutePath.
+func (r *RoutePath) AddResponses(responses ...*Response) *RoutePath {
+	r.responses = append(r.responses, responses...)
+	return r
+}
+
+// Response represents a route response information.
 type Response struct {
 	code int
 	typ  string
 
 	desc     string
-	examples map[string]string // content-type: example
+	examples map[string]string
 	headers  []*Header
 }
 
@@ -84,21 +150,45 @@ func NewResponse(code int, typ string) *Response {
 	return &Response{code: code, typ: typ}
 }
 
-// Desc sets the desc in RoutePath.
+func (r *Response) GetCode() int                   { return r.code }
+func (r *Response) GetType() string                { return r.typ }
+func (r *Response) GetDesc() string                { return r.desc }
+func (r *Response) GetExamples() map[string]string { return r.examples }
+func (r *Response) GetHeaders() []*Header          { return r.headers }
+
+// Code sets the code in Response.
+func (r *Response) Code(code int) *Response {
+	r.code = code
+	return r
+}
+
+// Type sets the type in Response.
+func (r *Response) Type(typ string) *Response {
+	r.typ = typ
+	return r
+}
+
+// Desc sets the desc in Response.
 func (r *Response) Desc(desc string) *Response {
 	r.desc = desc
 	return r
 }
 
-// Examples sets the examples in RoutePath.
+// Examples sets the examples in Response.
 func (r *Response) Examples(examples map[string]string) *Response {
 	r.examples = examples
 	return r
 }
 
-// Headers sets the headers in RoutePath.
+// Headers sets the whole headers in Response.
 func (r *Response) Headers(headers ...*Header) *Response {
 	r.headers = headers
+	return r
+}
+
+// AddHeaders add some headers in Response.
+func (r *Response) AddHeaders(headers ...*Header) *Response {
+	r.headers = append(r.headers, headers...)
 	return r
 }
 
@@ -110,8 +200,30 @@ type Header struct {
 }
 
 // NewHeader creates a default Header with given arguments.
-func NewHeader(name string, typ string, desc string) *Header {
+func NewHeader(name, typ, desc string) *Header {
 	return &Header{name: name, typ: typ, desc: desc}
+}
+
+func (h *Header) GetName() string { return h.name }
+func (h *Header) GetType() string { return h.typ }
+func (h *Header) GetDesc() string { return h.desc }
+
+// Name sets the name in Header.
+func (h *Header) Name(name string) *Header {
+	h.name = name
+	return h
+}
+
+// Type sets the type in Header.
+func (h *Header) Type(typ string) *Header {
+	h.typ = typ
+	return h
+}
+
+// Desc sets the desc in Header.
+func (h *Header) Desc(desc string) *Header {
+	h.desc = desc
+	return h
 }
 
 // Param represents a request parameter information.
@@ -124,9 +236,9 @@ type Param struct {
 
 	// `in` != body
 	allowEmpty bool
-	def        interface{}
+	dft        interface{}
 	example    interface{}
-	enum       []interface{}
+	enums      []interface{}
 	minLength  int
 	maxLength  int
 	minimum    int
@@ -134,33 +246,77 @@ type Param struct {
 }
 
 // NewParam creates a default Param with given arguments.
-func NewParam(name string, in string, typ string, req bool, desc string) *Param {
+func NewParam(name, in, typ string, req bool, desc string) *Param {
 	return &Param{name: name, in: in, required: req, desc: desc, typ: typ}
 }
 
 // NewPathParam creates a path Param with given arguments.
-func NewPathParam(name string, typ string, req bool, desc string) *Param {
+func NewPathParam(name, typ string, req bool, desc string) *Param {
 	return NewParam(name, PATH, typ, req, desc)
 }
 
 // NewQueryParam creates a query Param with given arguments.
-func NewQueryParam(name string, typ string, req bool, desc string) *Param {
+func NewQueryParam(name, typ string, req bool, desc string) *Param {
 	return NewParam(name, QUERY, typ, req, desc)
 }
 
 // NewFormParam creates a form Param with given arguments.
-func NewFormParam(name string, typ string, req bool, desc string) *Param {
+func NewFormParam(name, typ string, req bool, desc string) *Param {
 	return NewParam(name, FORM, typ, req, desc)
 }
 
 // NewBodyParam creates a body Param with given arguments.
-func NewBodyParam(name string, typ string, req bool, desc string) *Param {
+func NewBodyParam(name, typ string, req bool, desc string) *Param {
 	return NewParam(name, BODY, typ, req, desc)
 }
 
 // NewHeaderParam creates a header Param with given arguments.
-func NewHeaderParam(name string, typ string, req bool, desc string) *Param {
+func NewHeaderParam(name, typ string, req bool, desc string) *Param {
 	return NewParam(name, HEADER, typ, req, desc)
+}
+
+func (p *Param) GetName() string         { return p.name }
+func (p *Param) GetIn() string           { return p.in }
+func (p *Param) GetType() string         { return p.typ }
+func (p *Param) GetRequired() bool       { return p.required }
+func (p *Param) GetDesc() string         { return p.desc }
+func (p *Param) GetAllowEmpty() bool     { return p.allowEmpty }
+func (p *Param) GetDefault() interface{} { return p.dft }
+func (p *Param) GetExample() interface{} { return p.example }
+func (p *Param) GetEnums() []interface{} { return p.enums }
+func (p *Param) GetMinLength() int       { return p.minLength }
+func (p *Param) GetMaxLength() int       { return p.maxLength }
+func (p *Param) GetMinimum() int         { return p.minimum }
+func (p *Param) GetMaximum() int         { return p.maximum }
+
+// Name sets the name in Param.
+func (p *Param) Name(name string) *Param {
+	p.name = name
+	return p
+}
+
+// Type sets the in in Param.
+func (p *Param) In(in string) *Param {
+	p.in = in
+	return p
+}
+
+// Desc sets the type in Param.
+func (p *Param) Type(typ string) *Param {
+	p.typ = typ
+	return p
+}
+
+// Type sets the required in Param.
+func (p *Param) Required(required bool) *Param {
+	p.required = required
+	return p
+}
+
+// Desc sets the desc in Param.
+func (p *Param) Desc(desc string) *Param {
+	p.desc = desc
+	return p
 }
 
 // AllowEmpty sets the allowEmpty in Param.
@@ -170,20 +326,20 @@ func (p *Param) AllowEmpty(allow bool) *Param {
 }
 
 // Default sets the default in Param.
-func (p *Param) Default(def interface{}) *Param {
-	p.def = def
+func (p *Param) Default(dft interface{}) *Param {
+	p.dft = dft
 	return p
 }
 
 // Example sets the example in Param.
-func (p *Param) Example(ex interface{}) *Param {
-	p.example = ex
+func (p *Param) Example(example interface{}) *Param {
+	p.example = example
 	return p
 }
 
-// Enum sets the enum in Param.
-func (p *Param) Enum(enum ...interface{}) *Param {
-	p.enum = enum
+// Enum sets the whole enums in Param.
+func (p *Param) Enum(enums ...interface{}) *Param {
+	p.enums = enums
 	return p
 }
 

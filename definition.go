@@ -34,9 +34,9 @@ type Property struct {
 	desc     string
 
 	allowEmpty bool
-	def        interface{}
+	dft        interface{}
 	example    interface{}
-	enum       []interface{}
+	enums      []interface{}
 	minLength  int
 	maxLength  int
 	minimum    int
@@ -54,21 +54,21 @@ func (p *Property) AllowEmpty(allow bool) *Property {
 	return p
 }
 
-// Default sets the def in Property.
-func (p *Property) Default(def interface{}) *Property {
-	p.def = def
+// Default sets the dft in Property.
+func (p *Property) Default(dft interface{}) *Property {
+	p.dft = dft
 	return p
 }
 
 // Example sets the example in Property.
-func (p *Property) Example(ex interface{}) *Property {
-	p.example = ex
+func (p *Property) Example(example interface{}) *Property {
+	p.example = example
 	return p
 }
 
-// Enum sets the enum in Property.
-func (p *Property) Enum(enum ...interface{}) *Property {
-	p.enum = enum
+// Enum sets the enums in Property.
+func (p *Property) Enum(enums ...interface{}) *Property {
+	p.enums = enums
 	return p
 }
 
