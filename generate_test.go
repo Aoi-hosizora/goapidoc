@@ -102,7 +102,7 @@ func TestParseApiType(t *testing.T) {
 }
 
 func TestPrehandleGenericName(t *testing.T) {
-	dft := &Definition{
+	definition := &Definition{
 		generics: []string{"T", "U", "V"},
 		properties: []*Property{
 			{typ: "inT[]"},
@@ -112,23 +112,23 @@ func TestPrehandleGenericName(t *testing.T) {
 			{typ: "TtT<T,tT[],T[][]>[]"},
 		},
 	}
-	prehandleGenericName(dft)
+	prehandleGenericName(definition)
 
-	if dft.generics[0] != "«T»" {
-		t.Fatal("dft.generics[0]")
+	if definition.generics[0] != "«T»" {
+		t.Fatal("definition.generics[0]")
 	}
-	if dft.generics[1] != "«U»" {
-		t.Fatal("dft.generics[1]")
+	if definition.generics[1] != "«U»" {
+		t.Fatal("definition.generics[1]")
 	}
-	if dft.generics[2] != "«V»" {
-		t.Fatal("dft.generics[2]")
+	if definition.generics[2] != "«V»" {
+		t.Fatal("definition.generics[2]")
 	}
 
-	p0 := dft.properties[0]
-	p1 := dft.properties[1]
-	p2 := dft.properties[2]
-	p3 := dft.properties[3]
-	p4 := dft.properties[4]
+	p0 := definition.properties[0]
+	p1 := definition.properties[1]
+	p2 := definition.properties[2]
+	p3 := definition.properties[3]
+	p4 := definition.properties[4]
 	if p0.typ != "inT[]" {
 		t.Fatal("p0.typ")
 	}
@@ -147,7 +147,7 @@ func TestPrehandleGenericName(t *testing.T) {
 }
 
 func TestPrehandleGenericList(t *testing.T) {
-	defs := []*Definition{
+	definitions := []*Definition{
 		{name: "User", properties: []*Property{}},
 		{name: "Login", properties: []*Property{}},
 		{name: "String", properties: []*Property{}},
@@ -156,10 +156,10 @@ func TestPrehandleGenericList(t *testing.T) {
 		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
 		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
 	}
-	for _, dft := range defs {
-		prehandleGenericName(dft)
+	for _, definition := range definitions {
+		prehandleGenericName(definition)
 	}
-	newDefs := prehandleGenericList(defs, []string{
+	newDefs := prehandleGenericList(definitions, []string{
 		"Result<Page<User>>",
 		"Result3<User, Page<Result2<Login, Page<Login>>>, String[]>",
 		"Integer",
@@ -170,10 +170,10 @@ func TestPrehandleGenericList(t *testing.T) {
 		t.Fatal()
 	}
 
-	contain := func(dft *Definition) bool {
+	contain := func(definition *Definition) bool {
 		ok := false
 		for _, newDef := range newDefs {
-			if newDef.name != dft.name || len(newDef.properties) != len(dft.properties) {
+			if newDef.name != definition.name || len(newDef.properties) != len(definition.properties) {
 				continue
 			}
 			if len(newDef.properties) == 0 {
@@ -183,7 +183,7 @@ func TestPrehandleGenericList(t *testing.T) {
 
 			ok2 := true
 			for idx, newProp := range newDef.properties {
-				prop := dft.properties[idx]
+				prop := definition.properties[idx]
 				if newProp.name != prop.name || newProp.typ != prop.typ {
 					ok2 = false
 					break
@@ -304,7 +304,7 @@ func TestGenerate(t *testing.T) {
 			Params(
 				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
 				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
-				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("ex").Default("dft"),
+				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("example").Default("default"),
 				NewFormParam("f1", "file", true, "f1"),
 				NewFormParam("f2", "string", true, "f2").AllowEmpty(true),
 				NewHeaderParam("Authorization", "header", false, "authorization"),

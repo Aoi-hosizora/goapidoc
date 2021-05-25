@@ -10,8 +10,25 @@ type Definition struct {
 }
 
 // NewDefinition creates a default Definition with given arguments.
-func NewDefinition(title string, desc string) *Definition {
+func NewDefinition(title, desc string) *Definition {
 	return &Definition{name: title, desc: desc}
+}
+
+func (d *Definition) GetName() string            { return d.name }
+func (d *Definition) GetDesc() string            { return d.desc }
+func (d *Definition) GetGenerics() []string      { return d.generics }
+func (d *Definition) GetProperties() []*Property { return d.properties }
+
+// Name sets the name in Definition.
+func (d *Definition) Name(name string) *Definition {
+	d.name = name
+	return d
+}
+
+// Desc sets the desc in Definition.
+func (d *Definition) Desc(desc string) *Definition {
+	d.desc = desc
+	return d
 }
 
 // Generics sets the generics in Definition.
@@ -20,9 +37,15 @@ func (d *Definition) Generics(generics ...string) *Definition {
 	return d
 }
 
-// Properties sets the properties in Definition.
+// Properties sets the whole properties in Definition.
 func (d *Definition) Properties(properties ...*Property) *Definition {
 	d.properties = properties
+	return d
+}
+
+// Properties add some properties into Definition.
+func (d *Definition) AddProperties(properties ...*Property) *Definition {
+	d.properties = append(d.properties, properties...)
 	return d
 }
 
@@ -34,7 +57,7 @@ type Property struct {
 	desc     string
 
 	allowEmpty bool
-	dft        interface{}
+	defaul     interface{}
 	example    interface{}
 	enums      []interface{}
 	minLength  int
@@ -44,8 +67,45 @@ type Property struct {
 }
 
 // NewProperty creates a default Property with given arguments.
-func NewProperty(name string, typ string, req bool, desc string) *Property {
-	return &Property{name: name, typ: typ, required: req, desc: desc}
+func NewProperty(name, typ string, required bool, desc string) *Property {
+	return &Property{name: name, typ: typ, required: required, desc: desc}
+}
+
+func (p *Property) GetName() string         { return p.name }
+func (p *Property) GetType() string         { return p.typ }
+func (p *Property) GetRequired() bool       { return p.required }
+func (p *Property) GetDesc() string         { return p.desc }
+func (p *Property) GetAllowEmpty() bool     { return p.allowEmpty }
+func (p *Property) GetDefault() interface{} { return p.defaul }
+func (p *Property) GetExample() interface{} { return p.example }
+func (p *Property) GetEnums() []interface{} { return p.enums }
+func (p *Property) GetMinLength() int       { return p.minLength }
+func (p *Property) GetMaxLength() int       { return p.maxLength }
+func (p *Property) GetMinimum() int         { return p.minimum }
+func (p *Property) GetMaximum() int         { return p.maximum }
+
+// Name sets the name in Property.
+func (p *Property) Name(name string) *Property {
+	p.name = name
+	return p
+}
+
+// Type sets the type in Property.
+func (p *Property) Type(typ string) *Property {
+	p.typ = typ
+	return p
+}
+
+// Required sets the required in Property.
+func (p *Property) Required(required bool) *Property {
+	p.required = required
+	return p
+}
+
+// Desc sets the desc in Property.
+func (p *Property) Desc(desc string) *Property {
+	p.desc = desc
+	return p
 }
 
 // AllowEmpty sets the allowEmpty in Property.
@@ -54,9 +114,9 @@ func (p *Property) AllowEmpty(allow bool) *Property {
 	return p
 }
 
-// Default sets the dft in Property.
-func (p *Property) Default(dft interface{}) *Property {
-	p.dft = dft
+// Default sets the default in Property.
+func (p *Property) Default(defaul interface{}) *Property {
+	p.defaul = defaul
 	return p
 }
 

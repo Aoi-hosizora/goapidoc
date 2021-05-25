@@ -195,7 +195,7 @@ func (r *Response) AddHeaders(headers ...*Header) *Response {
 // Header represents a response header information.
 type Header struct {
 	name string
-	typ  string // base type
+	typ  string // basic type
 	desc string
 }
 
@@ -234,9 +234,8 @@ type Param struct {
 	required bool
 	desc     string
 
-	// `in` != body
 	allowEmpty bool
-	dft        interface{}
+	defaul     interface{}
 	example    interface{}
 	enums      []interface{}
 	minLength  int
@@ -246,33 +245,33 @@ type Param struct {
 }
 
 // NewParam creates a default Param with given arguments.
-func NewParam(name, in, typ string, req bool, desc string) *Param {
-	return &Param{name: name, in: in, required: req, desc: desc, typ: typ}
+func NewParam(name, in, typ string, required bool, desc string) *Param {
+	return &Param{name: name, in: in, required: required, desc: desc, typ: typ}
 }
 
 // NewPathParam creates a path Param with given arguments.
-func NewPathParam(name, typ string, req bool, desc string) *Param {
-	return NewParam(name, PATH, typ, req, desc)
+func NewPathParam(name, typ string, required bool, desc string) *Param {
+	return NewParam(name, PATH, typ, required, desc)
 }
 
 // NewQueryParam creates a query Param with given arguments.
-func NewQueryParam(name, typ string, req bool, desc string) *Param {
-	return NewParam(name, QUERY, typ, req, desc)
+func NewQueryParam(name, typ string, required bool, desc string) *Param {
+	return NewParam(name, QUERY, typ, required, desc)
 }
 
 // NewFormParam creates a form Param with given arguments.
-func NewFormParam(name, typ string, req bool, desc string) *Param {
-	return NewParam(name, FORM, typ, req, desc)
+func NewFormParam(name, typ string, required bool, desc string) *Param {
+	return NewParam(name, FORM, typ, required, desc)
 }
 
 // NewBodyParam creates a body Param with given arguments.
-func NewBodyParam(name, typ string, req bool, desc string) *Param {
-	return NewParam(name, BODY, typ, req, desc)
+func NewBodyParam(name, typ string, required bool, desc string) *Param {
+	return NewParam(name, BODY, typ, required, desc)
 }
 
 // NewHeaderParam creates a header Param with given arguments.
-func NewHeaderParam(name, typ string, req bool, desc string) *Param {
-	return NewParam(name, HEADER, typ, req, desc)
+func NewHeaderParam(name, typ string, required bool, desc string) *Param {
+	return NewParam(name, HEADER, typ, required, desc)
 }
 
 func (p *Param) GetName() string         { return p.name }
@@ -281,7 +280,7 @@ func (p *Param) GetType() string         { return p.typ }
 func (p *Param) GetRequired() bool       { return p.required }
 func (p *Param) GetDesc() string         { return p.desc }
 func (p *Param) GetAllowEmpty() bool     { return p.allowEmpty }
-func (p *Param) GetDefault() interface{} { return p.dft }
+func (p *Param) GetDefault() interface{} { return p.defaul }
 func (p *Param) GetExample() interface{} { return p.example }
 func (p *Param) GetEnums() []interface{} { return p.enums }
 func (p *Param) GetMinLength() int       { return p.minLength }
@@ -295,7 +294,7 @@ func (p *Param) Name(name string) *Param {
 	return p
 }
 
-// Type sets the in in Param.
+// Type sets the in-type in Param.
 func (p *Param) In(in string) *Param {
 	p.in = in
 	return p
@@ -326,8 +325,8 @@ func (p *Param) AllowEmpty(allow bool) *Param {
 }
 
 // Default sets the default in Param.
-func (p *Param) Default(dft interface{}) *Param {
-	p.dft = dft
+func (p *Param) Default(defaul interface{}) *Param {
+	p.defaul = defaul
 	return p
 }
 
@@ -337,7 +336,7 @@ func (p *Param) Example(example interface{}) *Param {
 	return p
 }
 
-// Enum sets the whole enums in Param.
+// Enum sets the enums in Param.
 func (p *Param) Enum(enums ...interface{}) *Param {
 	p.enums = enums
 	return p

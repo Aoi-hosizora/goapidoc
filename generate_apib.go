@@ -67,8 +67,8 @@ func buildApibParam(param *Param) string {
 		paramStr += fmt.Sprintf("\n    (%s)", strings.Join(options, ", "))
 	}
 
-	if param.dft != nil {
-		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.dft)
+	if param.defaul != nil {
+		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.defaul)
 	}
 
 	if len(param.enums) != 0 {
@@ -88,7 +88,7 @@ func buildApibProperty(prop *Property) string {
 		required:   prop.required,
 		desc:       prop.desc,
 		allowEmpty: prop.allowEmpty,
-		dft:        prop.dft,
+		defaul:     prop.defaul,
 		example:    prop.example,
 		enums:      prop.enums,
 		minLength:  prop.minimum,
