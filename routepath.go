@@ -1,6 +1,6 @@
 package goapidoc
 
-// RoutePath is a route path information.
+// RoutePath represents an api route path information.
 type RoutePath struct {
 	method  string
 	route   string
@@ -12,12 +12,11 @@ type RoutePath struct {
 	produces   []string
 	securities []string
 	deprecated bool
-
-	params    []*Param
-	responses []*Response
+	params     []*Param
+	responses  []*Response
 }
 
-// NewRoutePath creates a RoutePath.
+// NewRoutePath creates a default RoutePath with given arguments.
 func NewRoutePath(method string, route string, summary string) *RoutePath {
 	return &RoutePath{method: method, route: route, summary: summary}
 }
@@ -70,7 +69,7 @@ func (r *RoutePath) Responses(responses ...*Response) *RoutePath {
 	return r
 }
 
-// Response is a response information.
+// Response represents a response information.
 type Response struct {
 	code int
 	typ  string
@@ -80,7 +79,7 @@ type Response struct {
 	headers  []*Header
 }
 
-// NewResponse creates a Response information.
+// NewResponse creates a default Response with given arguments.
 func NewResponse(code int, typ string) *Response {
 	return &Response{code: code, typ: typ}
 }
@@ -103,19 +102,19 @@ func (r *Response) Headers(headers ...*Header) *Response {
 	return r
 }
 
-// Header is a response header information.
+// Header represents a response header information.
 type Header struct {
 	name string
 	typ  string // base type
 	desc string
 }
 
-// NewHeader creates a Header.
+// NewHeader creates a default Header with given arguments.
 func NewHeader(name string, typ string, desc string) *Header {
 	return &Header{name: name, typ: typ, desc: desc}
 }
 
-// Param is a request parameter information.
+// Param represents a request parameter information.
 type Param struct {
 	name     string
 	in       string
@@ -134,32 +133,32 @@ type Param struct {
 	maximum    int
 }
 
-// NewParam creates a Param.
+// NewParam creates a default Param with given arguments.
 func NewParam(name string, in string, typ string, req bool, desc string) *Param {
 	return &Param{name: name, in: in, required: req, desc: desc, typ: typ}
 }
 
-// NewPathParam creates a Param with path in-type.
+// NewPathParam creates a path Param with given arguments.
 func NewPathParam(name string, typ string, req bool, desc string) *Param {
 	return NewParam(name, PATH, typ, req, desc)
 }
 
-// NewQueryParam creates a Param with query in-type.
+// NewQueryParam creates a query Param with given arguments.
 func NewQueryParam(name string, typ string, req bool, desc string) *Param {
 	return NewParam(name, QUERY, typ, req, desc)
 }
 
-// NewFormParam creates a Param with form in-type.
+// NewFormParam creates a form Param with given arguments.
 func NewFormParam(name string, typ string, req bool, desc string) *Param {
 	return NewParam(name, FORM, typ, req, desc)
 }
 
-// NewBodyParam creates a Param with body in-type.
+// NewBodyParam creates a body Param with given arguments.
 func NewBodyParam(name string, typ string, req bool, desc string) *Param {
 	return NewParam(name, BODY, typ, req, desc)
 }
 
-// NewHeaderParam creates a Param with head in-type.
+// NewHeaderParam creates a header Param with given arguments.
 func NewHeaderParam(name string, typ string, req bool, desc string) *Param {
 	return NewParam(name, HEADER, typ, req, desc)
 }

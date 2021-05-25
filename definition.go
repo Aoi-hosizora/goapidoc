@@ -1,6 +1,6 @@
 package goapidoc
 
-// Definition is a definition information.
+// Definition represents an api definition information.
 type Definition struct {
 	name string
 	desc string
@@ -9,7 +9,7 @@ type Definition struct {
 	properties []*Property
 }
 
-// NewDefinition creates a Definition.
+// NewDefinition creates a default Definition with given arguments.
 func NewDefinition(title string, desc string) *Definition {
 	return &Definition{name: title, desc: desc}
 }
@@ -26,7 +26,7 @@ func (d *Definition) Properties(properties ...*Property) *Definition {
 	return d
 }
 
-// Property is a model property information.
+// Property represents a definition property information.
 type Property struct {
 	name     string
 	typ      string
@@ -43,7 +43,7 @@ type Property struct {
 	maximum    int
 }
 
-// NewProperty creates a Property.
+// NewProperty creates a default Property with given arguments.
 func NewProperty(name string, typ string, req bool, desc string) *Property {
 	return &Property{name: name, typ: typ, required: req, desc: desc}
 }

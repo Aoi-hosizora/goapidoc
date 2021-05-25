@@ -1,6 +1,6 @@
 package goapidoc
 
-// Document is the main api document.
+// Document represents an api document information.
 type Document struct {
 	host     string
 	basePath string
@@ -12,36 +12,68 @@ type Document struct {
 	definitions []*Definition
 }
 
-// NewDocument creates a Document.
-func NewDocument(host string, basePath string, info *Info) *Document {
+// NewDocument creates a default Document with given arguments.
+func NewDocument(host, basePath string, info *Info) *Document {
 	return &Document{host: host, basePath: basePath, info: info}
 }
 
-// Tags sets the tags in Document.
+func (d *Document) GetHost() string               { return d.host }
+func (d *Document) GetBasePath() string           { return d.basePath }
+func (d *Document) GetInfo() *Info                { return d.info }
+func (d *Document) GetTags() []*Tag               { return d.tags }
+func (d *Document) GetSecurities() []*Security    { return d.securities }
+func (d *Document) GetPaths() []*RoutePath        { return d.paths }
+func (d *Document) GetDefinitions() []*Definition { return d.definitions }
+
+// Tags sets the whole tags in Document.
 func (d *Document) Tags(tags ...*Tag) *Document {
 	d.tags = tags
 	return d
 }
 
-// Securities sets the securities in Document.
+// Tags adds some tags into Document.
+func (d *Document) AddTags(tags ...*Tag) *Document {
+	d.tags = append(d.tags, tags...)
+	return d
+}
+
+// Securities sets the whole securities in Document.
 func (d *Document) Securities(security ...*Security) *Document {
 	d.securities = security
 	return d
 }
 
-// AddRoutePaths adds routePaths into Document.
-func (d *Document) AddRoutePaths(path ...*RoutePath) *Document {
-	d.paths = append(d.paths, path...)
+// Securities adds some securities into Document.
+func (d *Document) AddSecurities(security ...*Security) *Document {
+	d.securities = append(d.securities, security...)
 	return d
 }
 
-// AddDefinitions adds definitions into Document.
-func (d *Document) AddDefinitions(models ...*Definition) *Document {
-	d.definitions = append(d.definitions, models...)
+// RoutePaths sets the whole route paths in Document.
+func (d *Document) RoutePaths(paths ...*RoutePath) *Document {
+	d.paths = paths
 	return d
 }
 
-// Info is the basic information of Document.
+// AddRoutePaths adds some route paths into Document.
+func (d *Document) AddRoutePaths(paths ...*RoutePath) *Document {
+	d.paths = append(d.paths, paths...)
+	return d
+}
+
+// Definitions sets the whole definitions in Document.
+func (d *Document) Definitions(definitions ...*Definition) *Document {
+	d.definitions = definitions
+	return d
+}
+
+// AddDefinitions adds some definitions into Document.
+func (d *Document) AddDefinitions(definitions ...*Definition) *Document {
+	d.definitions = append(d.definitions, definitions...)
+	return d
+}
+
+// Info represents a basic api information of Document.
 type Info struct {
 	title   string
 	desc    string
@@ -52,10 +84,17 @@ type Info struct {
 	contact        *Contact
 }
 
-// NewInfo creates an Info.
-func NewInfo(title string, desc string, version string) *Info {
+// NewInfo creates a default Info with given arguments.
+func NewInfo(title, desc, version string) *Info {
 	return &Info{title: title, desc: desc, version: version}
 }
+
+func (i *Info) GetTitle() string          { return i.title }
+func (i *Info) GetDesc() string           { return i.desc }
+func (i *Info) GetVersion() string        { return i.version }
+func (i *Info) GetTermsOfService() string { return i.termsOfService }
+func (i *Info) GetLicense() *License      { return i.license }
+func (i *Info) GetContact() *Contact      { return i.contact }
 
 // TermsOfService sets the termsOfService in Info.
 func (i *Info) TermsOfService(service string) *Info {
@@ -75,79 +114,106 @@ func (i *Info) Contact(contact *Contact) *Info {
 	return i
 }
 
-// License is the license information of Document.
+// License represents an api license information of Document.
 type License struct {
 	name string
 	url  string
 }
 
-// NewLicense creates a License.
-func NewLicense(name string, url string) *License {
+func (l *License) GetName() string { return l.name }
+func (l *License) GetUrl() string  { return l.url }
+
+// NewLicense creates a default License with given arguments.
+func NewLicense(name, url string) *License {
 	return &License{name: name, url: url}
 }
 
-// Contact is the contact information of Document.
+// Contact represents an api contact information of Document.
 type Contact struct {
 	name  string
 	url   string
 	email string
 }
 
-// NewContact creates a Contact.
-func NewContact(name string, url string, email string) *Contact {
+func (c *Contact) GetName() string  { return c.name }
+func (c *Contact) GetUrl() string   { return c.url }
+func (c *Contact) GetEmail() string { return c.email }
+
+// NewContact creates a default Contact with given arguments.
+func NewContact(name, url, email string) *Contact {
 	return &Contact{name: name, url: url, email: email}
 }
 
-// Security is the security information of Document.
-type Security struct {
-	title string
-	typ   string // only support for apiKey
-	in    string
-	name  string
-}
-
-// NewSecurity creates a Security.
-func NewSecurity(title string, in string, name string) *Security {
-	return &Security{title: title, typ: "apiKey", in: in, name: name}
-}
-
-// Tag is the tag information of Document.
+// Tag represents an api tag information of Document.
 type Tag struct {
 	name string
 	desc string
 }
 
-// NewTag creates a Tag.
-func NewTag(name string, desc string) *Tag {
+func (t *Tag) GetName() string { return t.name }
+func (t *Tag) GetDesc() string { return t.desc }
+
+// NewTag creates a default Tag with given arguments.
+func NewTag(name, desc string) *Tag {
 	return &Tag{name: name, desc: desc}
+}
+
+// Security represents an api security information of Document.
+type Security struct {
+	title string
+	typ   string // only supports apiKey
+	in    string
+	name  string
+}
+
+func (s *Security) GetTitle() string { return s.title }
+func (s *Security) GetIn() string    { return s.in }
+func (s *Security) GetName() string  { return s.name }
+
+// NewSecurity creates a default Security with given arguments.
+func NewSecurity(title, in, name string) *Security {
+	return &Security{title: title, typ: "apiKey", in: in, name: name}
 }
 
 // _document is the global Document.
 var _document = NewDocument("", "", nil)
 
-// SetDocument sets the global Document information.
-func SetDocument(host string, basePath string, info *Info) {
-	_document.host = host
-	_document.basePath = basePath
-	_document.info = info
+// Tags sets the whole tags in Document.
+func SetTags(tags ...*Tag) *Document {
+	return _document.Tags(tags...)
 }
 
-// SetTags set the tags to global Document.
-func SetTags(tags ...*Tag) {
-	_document.Tags(tags...)
+// Tags adds some tags into Document.
+func AddTags(tags ...*Tag) *Document {
+	return _document.AddTags(tags...)
 }
 
-// SetSecurities set the securities to global Document.
-func SetSecurities(securities ...*Security) {
-	_document.Securities(securities...)
+// Securities sets the whole securities in Document.
+func SetSecurities(security ...*Security) *Document {
+	return _document.Securities(security...)
 }
 
-// AddRoutePaths adds routePaths into global Document.
-func AddRoutePaths(paths ...*RoutePath) {
-	_document.AddRoutePaths(paths...)
+// Securities adds some securities into Document.
+func AddSecurities(security ...*Security) *Document {
+	return _document.AddSecurities(security...)
 }
 
-// AddDefinitions adds definitions into global Document.
-func AddDefinitions(definitions ...*Definition) {
-	_document.AddDefinitions(definitions...)
+// RoutePaths sets the whole route paths in Document.
+func SetRoutePaths(paths ...*RoutePath) *Document {
+	return _document.RoutePaths(paths...)
+}
+
+// AddRoutePaths adds some route paths into Document.
+func AddRoutePaths(paths ...*RoutePath) *Document {
+	return _document.AddRoutePaths(paths...)
+}
+
+// Definitions sets the whole definitions in Document.
+func SetDefinitions(definitions ...*Definition) *Document {
+	return _document.Definitions(definitions...)
+}
+
+// AddDefinitions adds some definitions into Document.
+func AddDefinitions(definitions ...*Definition) *Document {
+	return _document.AddDefinitions(definitions...)
 }
