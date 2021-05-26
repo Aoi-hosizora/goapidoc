@@ -35,29 +35,30 @@ func saveFile(path string, data []byte) error {
 	return nil
 }
 
-// linkedHashMap is used to replace map[string]interface{}.
-type linkedHashMap struct {
+// orderedMap represents an ordered hashmap, is used to replace map[K]V.
+type orderedMap struct {
 	m map[string]interface{}
 	i []string
 }
 
-func newLinkedHashMap() *linkedHashMap {
-	return &linkedHashMap{
-		m: make(map[string]interface{}),
-		i: make([]string, 0),
+// newOrderedMap creates an empty orderedMap with cap.
+func newOrderedMap(cap int) *orderedMap {
+	return &orderedMap{
+		m: make(map[string]interface{}, cap),
+		i: make([]string, 0, cap),
 	}
 }
 
-func (l *linkedHashMap) Keys() []string {
+func (l *orderedMap) Keys() []string {
 	return l.i
 }
 
-func (l *linkedHashMap) Has(key string) bool {
+func (l *orderedMap) Has(key string) bool {
 	_, exist := l.m[key]
 	return exist
 }
 
-func (l *linkedHashMap) Set(key string, value interface{}) {
+func (l *orderedMap) Set(key string, value interface{}) {
 	_, exist := l.m[key]
 	l.m[key] = value
 	if !exist {
@@ -65,12 +66,12 @@ func (l *linkedHashMap) Set(key string, value interface{}) {
 	}
 }
 
-func (l *linkedHashMap) Get(key string) (interface{}, bool) {
+func (l *orderedMap) Get(key string) (interface{}, bool) {
 	v, ok := l.m[key]
 	return v, ok
 }
 
-func (l *linkedHashMap) MustGet(key string) interface{} {
+func (l *orderedMap) MustGet(key string) interface{} {
 	val, ok := l.Get(key)
 	if !ok {
 		panic("key " + key + " is not found.")
@@ -78,7 +79,7 @@ func (l *linkedHashMap) MustGet(key string) interface{} {
 	return val
 }
 
-func (l *linkedHashMap) MarshalJSON() ([]byte, error) {
+func (l *orderedMap) MarshalJSON() ([]byte, error) {
 	ov := make([]interface{}, len(l.i))
 	for idx, field := range l.i {
 		ov[idx] = l.m[field]
@@ -89,7 +90,7 @@ func (l *linkedHashMap) MarshalJSON() ([]byte, error) {
 	for idx, field := range l.i {
 		b, err := json.Marshal(ov[idx])
 		if err != nil {
-			return []byte{}, err
+			return nil, err
 		}
 		buf.WriteString(fmt.Sprintf("  \"%s\": %s", field, string(b)))
 		if idx < len(l.i)-1 {
@@ -101,6 +102,6 @@ func (l *linkedHashMap) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (l *linkedHashMap) MarshalYAML() (interface{}, error) {
+func (l *orderedMap) MarshalYAML() (interface{}, error) {
 	return l.m, nil
 }

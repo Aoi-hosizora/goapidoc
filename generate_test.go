@@ -381,21 +381,46 @@ func TestGenerate(t *testing.T) {
 			),
 	)
 
-	_, err := GenerateSwaggerYaml("./docs/api.yaml")
+	_, err := GenerateSwaggerYaml()
 	if err != nil {
 		log.Println(err)
 		t.Fatal("yaml")
 	}
 
-	_, err = GenerateSwaggerJson("./docs/api.json")
+	_, err = GenerateSwaggerJson()
 	if err != nil {
 		log.Println(err)
 		t.Fatal("json")
 	}
 
-	_, err = GenerateApib("./docs/api.apib")
+	_, err = GenerateApib()
 	if err != nil {
 		log.Println(err)
 		t.Fatal("apib")
+	}
+
+	_, err = SaveSwaggerYaml("./docs/api.yaml")
+	if err != nil {
+		log.Println(err)
+		t.Fatal("yaml")
+	}
+
+	_, err = SaveSwaggerJson("./docs/api.json")
+	if err != nil {
+		log.Println(err)
+		t.Fatal("json")
+	}
+
+	_, err = SaveApib("./docs/api.apib")
+	if err != nil {
+		log.Println(err)
+		t.Fatal("apib")
+	}
+
+	if GetDefinitions()[1].GetGenerics()[0] != "T" {
+		t.Fatal(`GetDefinitions()[1].GetGenerics()[0] != "T"`)
+	}
+	if GetDefinitions()[1].GetProperties()[2].GetType() != "T" {
+		t.Fatal(`GetDefinitions()[1].GetProperties()[2].GetType() != "T"`)
 	}
 }

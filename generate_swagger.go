@@ -1,7 +1,6 @@
 package goapidoc
 
 import (
-	"gopkg.in/yaml.v2"
 	"strconv"
 	"strings"
 )
@@ -17,9 +16,13 @@ type swagDocument struct {
 	Definitions map[string]*swagDefinition      `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
 }
 
-type swagTag struct {
-	Name        string `yaml:"name"                  json:"name"`
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+type swagInfo struct {
+	Title          string       `yaml:"title"                    json:"title"`
+	Description    string       `yaml:"description"              json:"description"`
+	Version        string       `yaml:"version"                  json:"version"`
+	TermsOfService string       `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
+	License        *swagLicense `yaml:"license,omitempty"        json:"license,omitempty"`
+	Contact        *swagContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
 }
 
 type swagLicense struct {
@@ -33,13 +36,9 @@ type swagContact struct {
 	Email string `yaml:"email,omitempty" json:"email,omitempty"`
 }
 
-type swagInfo struct {
-	Title          string       `yaml:"title"                    json:"title"`
-	Description    string       `yaml:"description"              json:"description"`
-	Version        string       `yaml:"version"                  json:"version"`
-	TermsOfService string       `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
-	License        *swagLicense `yaml:"license,omitempty"        json:"license,omitempty"`
-	Contact        *swagContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
+type swagTag struct {
+	Name        string `yaml:"name"                  json:"name"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 }
 
 type swagSecurity struct {
@@ -96,10 +95,10 @@ type swagHeader struct {
 }
 
 type swagDefinition struct {
-	Type        string         `yaml:"type"                  json:"type"`
-	Required    []string       `yaml:"required"              json:"required"`
-	Description string         `yaml:"description,omitempty" json:"description,omitempty"`
-	Properties  *linkedHashMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
+	Type        string      `yaml:"type"                  json:"type"`
+	Required    []string    `yaml:"required"              json:"required"`
+	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
+	Properties  *orderedMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
 }
 
 type swagSchema struct {
@@ -272,8 +271,8 @@ func buildSwaggerPropertySchema(typ string) (outType string, outFmt string, orig
 }
 
 func buildSwaggerParameters(params []*Param) []*swagParam {
-	out := make([]*swagParam, len(params))
-	for i, p := range params {
+	out := make([]*swagParam, 0, len(params))
+	for _, p := range params {
 		typ, format, schema, items := buildSwaggerParameterSchema(p.typ)
 		param := &swagParam{
 			Name:            p.name,
@@ -313,15 +312,15 @@ func buildSwaggerParameters(params []*Param) []*swagParam {
 			param.Items = nil
 		}
 
-		out[i] = param
+		out = append(out, param)
 	}
 	return out
 }
 
 func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
-	out := make(map[string]*swagResponse)
+	out := make(map[string]*swagResponse, len(responses))
 	for _, r := range responses {
-		headers := make(map[string]*swagHeader)
+		headers := make(map[string]*swagHeader, len(r.headers))
 		for _, h := range r.headers {
 			headers[h.name] = &swagHeader{Type: h.typ, Description: h.desc}
 		}
@@ -338,8 +337,8 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 }
 
 func buildSwaggerDefinition(definition *Definition) *swagDefinition {
-	required := make([]string, 0)
-	properties := newLinkedHashMap() // make(map[string]*swagSchema)
+	required := make([]string, 0, len(definition.properties))
+	properties := newOrderedMap(len(definition.properties)) // make(map[string]*swagSchema)
 	for _, p := range definition.properties {
 		if p.required {
 			required = append(required, p.name)
@@ -374,7 +373,7 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 }
 
 func buildSwaggerPaths(doc *Document) map[string]map[string]*swagPath {
-	out := make(map[string]map[string]*swagPath)
+	out := make(map[string]map[string]*swagPath) // route - method - path
 	for _, p := range doc.paths {
 		_, ok := out[p.route]
 		if !ok {
@@ -383,9 +382,9 @@ func buildSwaggerPaths(doc *Document) map[string]map[string]*swagPath {
 
 		method := strings.ToLower(p.method)
 		id := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(p.route, "/", "-"), "{", ""), "}", "") + "-" + method
-		securities := make([]map[string][]interface{}, 0)
+		securities := make([]map[string][]interface{}, 0, len(p.securities))
 		for _, s := range p.securities {
-			securities = append(securities, map[string][]interface{}{s: {}})
+			securities = append(securities, map[string][]interface{}{s: {}}) // only support apikey
 		}
 
 		out[p.route][method] = &swagPath{
@@ -405,12 +404,13 @@ func buildSwaggerPaths(doc *Document) map[string]map[string]*swagPath {
 }
 
 func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
-	propertyTypes := make([]string, 0)
+	definitions := make([]*Definition, 0, len(doc.definitions))
+	propertyTypes := make([]string, 0) // all property types from definitions, parameters, responses
 	for _, definition := range doc.definitions {
-		prehandleGenericName(definition) // new name
-
-		if len(definition.generics) == 0 && len(definition.properties) > 0 {
-			for _, property := range definition.properties {
+		cloned := prehandleGenericName(definition) // prehandled cloned definition
+		definitions = append(definitions, cloned)
+		if len(cloned.generics) == 0 && len(cloned.properties) > 0 {
+			for _, property := range cloned.properties {
 				propertyTypes = append(propertyTypes, property.typ)
 			}
 		}
@@ -423,10 +423,10 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 			propertyTypes = append(propertyTypes, response.typ)
 		}
 	}
-	definitions := prehandleGenericList(doc.definitions, propertyTypes) // new list
 
+	newDefinitions := prehandleGenericList(definitions, propertyTypes) // new definition list
 	out := make(map[string]*swagDefinition)
-	for _, definition := range definitions {
+	for _, definition := range newDefinitions {
 		if len(definition.generics) == 0 {
 			out[definition.name] = buildSwaggerDefinition(definition)
 		}
@@ -435,6 +435,10 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 }
 
 func buildSwaggerDocument(d *Document) *swagDocument {
+	if d.info == nil {
+		panic("Nil document info")
+	}
+
 	out := &swagDocument{
 		Swagger:  "2.0",
 		Host:     d.host,
@@ -453,65 +457,22 @@ func buildSwaggerDocument(d *Document) *swagDocument {
 		out.Info.Contact = &swagContact{Name: d.info.contact.name, Url: d.info.contact.url, Email: d.info.contact.email}
 	}
 	if len(d.tags) > 0 {
-		tags := make([]*swagTag, 0)
+		tags := make([]*swagTag, 0, len(d.tags))
 		for _, t := range d.tags {
 			tags = append(tags, &swagTag{Name: t.name, Description: t.desc})
 		}
 		out.Tags = tags
 	}
 	if len(d.securities) > 0 {
-		securities := make(map[string]*swagSecurity)
+		securities := make(map[string]*swagSecurity, len(d.securities))
 		for _, s := range d.securities {
 			securities[s.title] = &swagSecurity{Type: s.typ, Name: s.name, In: s.in}
 		}
 		out.Securities = securities
 	}
 
-	// definitions
+	out.Paths = buildSwaggerPaths(d)
 	out.Definitions = buildSwaggerDefinitions(d)
 
-	// paths
-	out.Paths = buildSwaggerPaths(d)
-
 	return out
-}
-
-// GenerateSwaggerYaml generates swagger yaml script and writes into file.
-func (d *Document) GenerateSwaggerYaml(path string) ([]byte, error) {
-	swagDoc := buildSwaggerDocument(d)
-	bs, err := yaml.Marshal(swagDoc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = saveFile(path, bs)
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
-// GenerateSwaggerJson generates swagger json script and writes into file.
-func (d *Document) GenerateSwaggerJson(path string) ([]byte, error) {
-	swagDoc := buildSwaggerDocument(d)
-	bs, err := jsonMarshal(swagDoc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = saveFile(path, bs)
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
-// GenerateSwaggerYaml generates swagger yaml script and writes into file.
-func GenerateSwaggerYaml(path string) ([]byte, error) {
-	return _document.GenerateSwaggerYaml(path)
-}
-
-// GenerateSwaggerJson generates swagger json script and writes into file.
-func GenerateSwaggerJson(path string) ([]byte, error) {
-	return _document.GenerateSwaggerJson(path)
 }

@@ -228,7 +228,7 @@ func buildApibGroups(d *Document) string {
 		securities[security.title] = security
 	}
 
-	groups := newLinkedHashMap() // map[string][]*RoutePath{}
+	groups := newOrderedMap(len(d.tags)) // map[string][]*RoutePath{}
 	for _, tag := range d.tags {
 		groups.Set(tag.name, make([]*RoutePath, 0))
 	}
@@ -250,7 +250,7 @@ func buildApibGroups(d *Document) string {
 		pathStrings := make([]string, 0)
 		group := groups.MustGet(tag).([]*RoutePath)
 
-		paths := newLinkedHashMap() // map[string]map[string]*RoutePath{}
+		paths := newOrderedMap(len(group)) // map[string]map[string]*RoutePath{}
 		for _, path := range group {
 			route := path.route
 			query := make([]string, 0)
@@ -265,16 +265,16 @@ func buildApibGroups(d *Document) string {
 
 			methods, ok := paths.Get(route)
 			if !ok {
-				methods = newLinkedHashMap() // make(map[string]*RoutePath)
+				methods = newOrderedMap(0) // make(map[string]*RoutePath)
 			}
-			methods.(*linkedHashMap).Set(path.method, path)
+			methods.(*orderedMap).Set(path.method, path)
 			paths.Set(route, methods)
 		}
 
 		for _, pathKey := range paths.Keys() {
 			// [###, ###]
 			methodStrings := make([]string, 0)
-			methods := paths.MustGet(pathKey).(*linkedHashMap)
+			methods := paths.MustGet(pathKey).(*orderedMap)
 
 			summaries := make([]string, 0)
 			for _, methodKey := range methods.Keys() {
@@ -304,11 +304,13 @@ func buildApibGroups(d *Document) string {
 }
 
 func buildApibDefinitions(d *Document) string {
-	propertyTypes := make([]string, 0)
+	definitions := make([]*Definition, 0, len(d.definitions))
+	propertyTypes := make([]string, 0) // all property types from definitions, parameters, responses
 	for _, definition := range d.definitions {
-		prehandleGenericName(definition) // new name
-		if len(definition.generics) == 0 && len(definition.properties) > 0 {
-			for _, property := range definition.properties {
+		cloned := prehandleGenericName(definition) // prehandled cloned definition
+		definitions = append(definitions, cloned)
+		if len(cloned.generics) == 0 && len(cloned.properties) > 0 {
+			for _, property := range cloned.properties {
 				propertyTypes = append(propertyTypes, property.typ)
 			}
 		}
@@ -322,7 +324,7 @@ func buildApibDefinitions(d *Document) string {
 		}
 	}
 
-	newDefinitions := prehandleGenericList(d.definitions, propertyTypes) // new list
+	newDefinitions := prehandleGenericList(definitions, propertyTypes) // new definition list
 	definitionStrings := make([]string, 0)
 	for _, definition := range newDefinitions {
 		if len(definition.generics) > 0 || len(definition.properties) == 0 {
@@ -385,20 +387,4 @@ func buildApibDocument(d *Document) []byte {
 	template = fmt.Sprintf(template, definitionString)
 
 	return []byte(template)
-}
-
-// GenerateApib generates apib script and writes into file.
-func (d *Document) GenerateApib(path string) ([]byte, error) {
-	doc := buildApibDocument(d)
-
-	err := saveFile(path, doc)
-	if err != nil {
-		return nil, err
-	}
-	return doc, nil
-}
-
-// GenerateApib generates apib script and writes into file.
-func GenerateApib(path string) ([]byte, error) {
-	return _document.GenerateApib(path)
 }

@@ -163,7 +163,6 @@
             "type": "number",
             "description": "q2",
             "format": "double",
-            "maximum": 5,
             "minimum": -5
           },
           {
@@ -174,8 +173,8 @@
             "description": "q3",
             "format": "password",
             "allowEmptyValue": true,
-            "default": "def",
-            "example": "ex"
+            "default": "default",
+            "example": "example"
           },
           {
             "name": "f1",

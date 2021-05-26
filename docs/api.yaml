@@ -110,7 +110,6 @@ paths:
         type: number
         description: q2
         format: double
-        maximum: 5
         minimum: -5
       - name: q3
         in: query
@@ -119,8 +118,8 @@ paths:
         description: q3
         format: password
         allowEmptyValue: true
-        default: def
-        example: ex
+        default: default
+        example: example
       - name: f1
         in: formData
         required: true

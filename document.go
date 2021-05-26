@@ -279,6 +279,14 @@ func SetDocument(host, basePath string, info *Info) *Document {
 	return _document.Host(host).BasePath(basePath).Info(info)
 }
 
+func GetHost() string               { return _document.GetHost() }
+func GetBasePath() string           { return _document.GetBasePath() }
+func GetInfo() *Info                { return _document.GetInfo() }
+func GetTags() []*Tag               { return _document.GetTags() }
+func GetSecurities() []*Security    { return _document.GetSecurities() }
+func GetPaths() []*RoutePath        { return _document.GetPaths() }
+func GetDefinitions() []*Definition { return _document.GetDefinitions() }
+
 // SetHost sets the host in global Document.
 func SetHost(host string) *Document {
 	return _document.Host(host)

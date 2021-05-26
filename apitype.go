@@ -41,9 +41,13 @@ type apiArray struct {
 }
 
 // parseApiType parses type string to apiType.
+// TODO WAITING FOR REFACTORING, NEED TO BE ROBUST, WITHOUT TEST COMPLETELY
 func parseApiType(typ string) *apiType {
 	typ = strings.TrimSpace(typ)
 	l := len(typ)
+	if !regexp.MustCompile(`[a-zA-Z0-9\-_#, <>«»\[\]]+`).MatchString(typ) {
+		panic("Invalid type `" + typ + "`")
+	}
 
 	// array: X[] | X[][]
 	if l >= 3 && typ[l-2:] == "[]" {
@@ -88,7 +92,7 @@ func parseApiType(typ string) *apiType {
 				if idx+1 < paramsLen {
 					params[idx+1] = params[idx] + "," + params[idx+1] // Z<A,B<C>>
 				} else {
-					panic("Failed to parse type `" + paramStr + "`")
+					panic("Invalid type `" + typ + "`")
 				}
 			}
 		}
@@ -127,11 +131,36 @@ func defaultFormat(typ string) string {
 	return ""
 }
 
-// prehandleGenericName parses and prehandles properties types with generic for Definition.
-func prehandleGenericName(definition *Definition) {
-	// change generic type in properties
+// prehandleGenericName parses and returns the prehandled generic name and properties types for Definition.
+// TODO WAITING FOR REFACTORING, NEED TO BE CONST FUNCTION
+func prehandleGenericName(definition *Definition) *Definition {
+	// clone definition
+	out := &Definition{
+		name:       definition.name,
+		desc:       definition.desc,
+		generics:   append(make([]string, 0, len(definition.generics)), definition.generics...),
+		properties: make([]*Property, 0, len(definition.properties)),
+	}
 	for _, prop := range definition.properties {
-		for _, gen := range definition.generics { // T -> «T»
+		out.properties = append(out.properties, &Property{
+			name:       prop.name,
+			typ:        prop.typ,
+			required:   prop.required,
+			desc:       prop.desc,
+			allowEmpty: prop.allowEmpty,
+			defaul:     prop.defaul,
+			example:    prop.example,
+			enums:      prop.enums,
+			minLength:  prop.minLength,
+			maxLength:  prop.maxLength,
+			minimum:    prop.minimum,
+			maximum:    prop.maximum,
+		})
+	}
+
+	// update generic type in properties
+	for _, prop := range out.properties {
+		for _, gen := range out.generics { // T -> «T»
 			if strings.HasPrefix(gen, "«") && strings.HasSuffix(gen, "»") {
 				continue
 			}
@@ -149,18 +178,21 @@ func prehandleGenericName(definition *Definition) {
 	}
 
 	// change generic type in generic list
-	for idx := range definition.generics {
-		gen := definition.generics[idx]
+	for idx := range out.generics {
+		gen := out.generics[idx]
 		if !strings.HasPrefix(gen, "«") || !strings.HasSuffix(gen, "»") {
-			definition.generics[idx] = "«" + gen + "»"
+			out.generics[idx] = "«" + gen + "»"
 		}
 	}
+	return out
 }
 
-// generate related generic list
+// prehandleGenericList parses and prehandles related generic list for Definition.
+// TODO WAITING FOR REFACTORING, NEED TO BE CONST FUNCTION
 func prehandleGenericList(definitions []*Definition, allTypes []string) []*Definition {
 	genericDefs := make(map[string]*Definition)
-	normalDefs := newLinkedHashMap() // old definitions
+	normalDefs := newOrderedMap(0) // old normal definitions
+	addedDefs := newOrderedMap(0)  // new definitions to add
 	for _, definition := range definitions {
 		if len(definition.generics) == 0 {
 			normalDefs.Set(definition.name, definition)
@@ -169,11 +201,9 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 		}
 	}
 
-	addedDefs := newLinkedHashMap() //  new definitions to add
-
 	// preHandle
 	var preHandle func(string)
-	preHandle = func(typ string) { // string
+	preHandle = func(typ string) {
 		at := parseApiType(typ) // *apiType
 		for at.kind == apiArrayKind {
 			at = at.array.item
@@ -181,18 +211,16 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 		if at.kind != apiObjectKind || len(at.object.generics) == 0 {
 			return
 		}
-
-		genDef, ok := genericDefs[at.object.typ] // *Definition
+		genDef, ok := genericDefs[at.object.typ]
 		if !ok {
 			return
 		}
 
-		// new motoDef
-		properties := make([]*Property, 0)
+		properties := make([]*Property, 0, len(genDef.properties))
 		for _, prop := range genDef.properties {
 			properties = append(properties, &Property{
 				name:       prop.name,
-				typ:        prop.typ, // << need parse
+				typ:        prop.typ, // << need to be parsed
 				required:   prop.required,
 				desc:       prop.desc,
 				allowEmpty: prop.allowEmpty,
@@ -205,14 +233,14 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 				maximum:    prop.maximum,
 			})
 		}
-		addedDef := &Definition{ // *Definition
-			name:       genDef.name, // << need parse
+		addedDef := &Definition{
+			name:       genDef.name, // << need to be parsed
 			desc:       genDef.desc,
 			generics:   []string{},
 			properties: properties,
 		}
 
-		specNames := make([]string, 0)
+		specNames := make([]string, 0, len(genDef.generics))
 		for idx, genName := range genDef.generics {
 			if len(at.object.generics) < idx {
 				break
@@ -220,7 +248,7 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 			specName := at.object.generics[idx].name
 			specNames = append(specNames, specName)
 			for _, prop := range addedDef.properties {
-				prop.typ = strings.ReplaceAll(prop.typ, genName, specName)
+				prop.typ = strings.ReplaceAll(prop.typ, genName, specName) // replace directly
 			}
 		}
 		addedDef.name += "<" + strings.Join(specNames, ", ") + ">"
@@ -237,7 +265,7 @@ func prehandleGenericList(definitions []*Definition, allTypes []string) []*Defin
 		preHandle(typ)
 	}
 
-	out := make([]*Definition, 0)
+	out := make([]*Definition, 0, len(normalDefs.Keys())+len(addedDefs.Keys()))
 	for _, key := range normalDefs.Keys() {
 		val, _ := normalDefs.Get(key)
 		out = append(out, val.(*Definition))
