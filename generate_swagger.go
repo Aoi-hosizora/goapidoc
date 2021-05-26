@@ -407,7 +407,7 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 	definitions := make([]*Definition, 0, len(doc.definitions))
 	propertyTypes := make([]string, 0) // all property types from definitions, parameters, responses
 	for _, definition := range doc.definitions {
-		cloned := prehandleGenericName(definition) // prehandled cloned definition
+		cloned := prehandleDefinition(definition) // prehandled cloned definition
 		definitions = append(definitions, cloned)
 		if len(cloned.generics) == 0 && len(cloned.properties) > 0 {
 			for _, property := range cloned.properties {
@@ -424,7 +424,7 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 		}
 	}
 
-	newDefinitions := prehandleGenericList(definitions, propertyTypes) // new definition list
+	newDefinitions := prehandleDefinitionList(definitions, propertyTypes) // new definition list
 	out := make(map[string]*swagDefinition)
 	for _, definition := range newDefinitions {
 		if len(definition.generics) == 0 {

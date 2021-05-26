@@ -307,7 +307,7 @@ func buildApibDefinitions(d *Document) string {
 	definitions := make([]*Definition, 0, len(d.definitions))
 	propertyTypes := make([]string, 0) // all property types from definitions, parameters, responses
 	for _, definition := range d.definitions {
-		cloned := prehandleGenericName(definition) // prehandled cloned definition
+		cloned := prehandleDefinition(definition) // prehandled cloned definition
 		definitions = append(definitions, cloned)
 		if len(cloned.generics) == 0 && len(cloned.properties) > 0 {
 			for _, property := range cloned.properties {
@@ -324,7 +324,7 @@ func buildApibDefinitions(d *Document) string {
 		}
 	}
 
-	newDefinitions := prehandleGenericList(definitions, propertyTypes) // new definition list
+	newDefinitions := prehandleDefinitionList(definitions, propertyTypes) // new definition list
 	definitionStrings := make([]string, 0)
 	for _, definition := range newDefinitions {
 		if len(definition.generics) > 0 || len(definition.properties) == 0 {

@@ -101,7 +101,7 @@ func TestParseApiType(t *testing.T) {
 	}
 }
 
-func TestPrehandleGenericName(t *testing.T) {
+func TestPrehandleDefinition(t *testing.T) {
 	definition := &Definition{
 		generics: []string{"T", "U", "V"},
 		properties: []*Property{
@@ -112,7 +112,7 @@ func TestPrehandleGenericName(t *testing.T) {
 			{typ: "TtT<T,tT[],T[][]>[]"},
 		},
 	}
-	prehandleGenericName(definition)
+	definition = prehandleDefinition(definition)
 
 	if definition.generics[0] != "«T»" {
 		t.Fatal("definition.generics[0]")
@@ -146,7 +146,7 @@ func TestPrehandleGenericName(t *testing.T) {
 	}
 }
 
-func TestPrehandleGenericList(t *testing.T) {
+func TestPrehandleDefinitionList(t *testing.T) {
 	definitions := []*Definition{
 		{name: "User", properties: []*Property{}},
 		{name: "Login", properties: []*Property{}},
@@ -156,10 +156,11 @@ func TestPrehandleGenericList(t *testing.T) {
 		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
 		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
 	}
+	newDefinitions := make([]*Definition, 0, len(definitions))
 	for _, definition := range definitions {
-		prehandleGenericName(definition)
+		newDefinitions = append(newDefinitions,  prehandleDefinition(definition))
 	}
-	newDefs := prehandleGenericList(definitions, []string{
+	newDefs := prehandleDefinitionList(newDefinitions, []string{
 		"Result<Page<User>>",
 		"Result3<User, Page<Result2<Login, Page<Login>>>, String[]>",
 		"Integer",
