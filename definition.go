@@ -43,7 +43,7 @@ func (d *Definition) Properties(properties ...*Property) *Definition {
 	return d
 }
 
-// Properties add some properties into Definition.
+// AddProperties add some properties into Definition.
 func (d *Definition) AddProperties(properties ...*Property) *Definition {
 	d.properties = append(d.properties, properties...)
 	return d
@@ -126,8 +126,9 @@ func (p *Property) Example(example interface{}) *Property {
 	return p
 }
 
-// Enum sets the enums in Property.
-func (p *Property) Enum(enums ...interface{}) *Property {
+// Enums sets the enums in Property.
+// TODO BREAK CHANGE
+func (p *Property) Enums(enums ...interface{}) *Property {
 	p.enums = enums
 	return p
 }
@@ -163,7 +164,7 @@ func (p *Property) Maximum(max int) *Property {
 	return p
 }
 
-// Minimum sets the minimum and maximum in Property.
+// MinMaximum sets the minimum and maximum in Property.
 func (p *Property) MinMaximum(min, max int) *Property {
 	p.minimum = min
 	p.maximum = max

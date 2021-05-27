@@ -52,11 +52,24 @@ func checkTypeName(typ string) {
 		panic("Invalid type `" + typ + "`")
 	}
 	// <(.+)>
-	for _, subTyps := range typeNameRe.FindStringSubmatch(typ)[1:] {
-		// xxx, xxx, xxx
-		for _, subTyp := range strings.Split(subTyps, ",") {
-			if subTyp = strings.TrimSpace(subTyp); subTyp != "" {
-				checkTypeName(subTyp)
+	for _, subTyp := range typeNameRe.FindStringSubmatch(typ)[1:] {
+		// T1, T2<T3, T4> => T1 | T2<T3 | T4> => T1, T2<T3, T4>
+		genParts := strings.Split(subTyp, ",")
+		genStrings := make([]string, 0, 2)
+		for idx, part := range genParts {
+			if strings.Count(part, "<") == strings.Count(part, ">") {
+				genStrings = append(genStrings, part)
+			} else {
+				if idx+1 < len(genParts) {
+					genParts[idx+1] = genParts[idx] + "," + genParts[idx+1]
+				} else {
+					panic("Invalid type `" + typ + "`")
+				}
+			}
+		}
+		for _, genTyp := range genStrings {
+			if genTyp = strings.TrimSpace(genTyp); genTyp != "" {
+				checkTypeName(genTyp)
 			}
 		}
 	}
@@ -98,7 +111,7 @@ func parseApiType(typ string) *apiType {
 	if strings.Contains(typ, "<") {
 		genIdx := strings.Index(typ, "<") + 1
 		genParts := strings.Split(typ[genIdx:len(typ)-1], ",") // Y<Z> || {Y, Z<A, B<C>>}
-		genStrings := make([]string, 0, 1)
+		genStrings := make([]string, 0, 2)
 		for idx, part := range genParts {
 			part = strings.TrimSpace(part)
 			if strings.Count(part, "<") == strings.Count(part, ">") { // Y<Z>
@@ -107,18 +120,23 @@ func parseApiType(typ string) *apiType {
 				if idx+1 < len(genParts) {
 					genParts[idx+1] = genParts[idx] + "," + genParts[idx+1] // -> Z<A + , + B<C>>
 				} else {
-					panic("Invalid type `" + typ + "`") // unreachable
+					panic("Invalid type `" + typ + "`")
 				}
 			}
 		}
-		genTypes := make([]*apiType, 0, 1)
+		genTypes := make([]*apiType, 0, 2)
 		for _, gen := range genStrings {
 			genTypes = append(genTypes, parseApiType(gen))
+		}
+		object := typ[:genIdx-1]
+		switch object {
+		case INTEGER, NUMBER, STRING, BOOLEAN, FILE, ARRAY, OBJECT: // TODO remove?
+			panic("Invalid type `" + typ + "`")
 		}
 		return &apiType{
 			name:   typ,
 			kind:   apiObjectKind,
-			object: &apiObject{typ: typ[:genIdx-1], generics: genTypes},
+			object: &apiObject{typ: object, generics: genTypes},
 		}
 	}
 
@@ -156,7 +174,7 @@ func defaultFormat(typ string) string {
 
 // prehandleDefinition prehandles and returns a cloned Definition with new generic type name.
 func prehandleDefinition(definition *Definition) *Definition {
-	// check generic name and clone definition
+	// check and deduplicate generic names, clone definition
 	out := &Definition{
 		name:       definition.name,
 		desc:       definition.desc,
@@ -164,10 +182,19 @@ func prehandleDefinition(definition *Definition) *Definition {
 		properties: make([]*Property, 0, len(definition.properties)),
 	}
 	for _, gen := range definition.generics {
-		if !genericNameRe.MatchString(gen) {
-			panic("Invalid generic type `" + gen + "`")
+		contained := false
+		for _, newGen := range out.generics {
+			if newGen == gen {
+				contained = true
+				break
+			}
 		}
-		out.generics = append(out.generics, gen)
+		if !contained {
+			if !genericNameRe.MatchString(gen) {
+				panic("Invalid generic type `" + gen + "`")
+			}
+			out.generics = append(out.generics, gen)
+		}
 	}
 	for _, prop := range definition.properties {
 		out.properties = append(out.properties, &Property{
@@ -189,14 +216,20 @@ func prehandleDefinition(definition *Definition) *Definition {
 	// update generic type name
 	for idx, gen := range out.generics {
 		newGen := "«" + gen + "»"
-		re, err := regexp.Compile(`(^|[, <])` + gen + `([, <>\[]|$)`) // {, <} {, <>[}
+		re, err := regexp.Compile(`(^|[,\s<])` + gen + `([,\s<>\[]|$)`) // {,\s<>[]} => {,\s<} xxx {,\s<>[}
 		if err != nil {
 			panic("Invalid generic type `" + gen + "`") // unreachable
 		}
 		for _, prop := range out.properties {
-			prop.typ = strings.ReplaceAll(prop.typ, " ", "")
-			prop.typ = re.ReplaceAllString(prop.typ, "$1"+newGen+"$2") // T -> «T»
-			prop.typ = strings.ReplaceAll(prop.typ, ",", ", ")
+			for { // replace all
+				curr := prop.typ
+				prop.typ = strings.ReplaceAll(prop.typ, " ", "")
+				prop.typ = re.ReplaceAllString(prop.typ, "$1"+newGen+"$2") // T -> «T»
+				prop.typ = strings.ReplaceAll(prop.typ, ",", ", ")
+				if prop.typ == curr {
+					break
+				}
+			}
 		}
 		out.generics[idx] = newGen
 	}

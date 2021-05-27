@@ -5,232 +5,6 @@ import (
 	"testing"
 )
 
-func TestParseApiType(t *testing.T) {
-	str := "aType<T1, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<number>>>, string#date-time>[][]"
-	res := parseApiType(str)
-
-	if res.name != str {
-		t.Fatal("res.name")
-	}
-	if res.array.item.name != "aType<T1, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<number>>>, string#date-time>[]" {
-		t.Fatal("res.array.item.name")
-	}
-	if res.array.item.array.item.name != "aType<T1, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<number>>>, string#date-time>" {
-		t.Fatal("res.array.item.array.item.name")
-	}
-
-	obj := res.array.item.array.item
-	if len(obj.object.generics) != 4 {
-		t.Fatal("len(obj.object.generics)")
-	}
-
-	gen := obj.object.generics
-	if gen[0].name != "T1" {
-		t.Fatal("gen[0].name")
-	}
-	if gen[1].name != "T2<TT1<integer#int32[]>>" {
-		t.Fatal("gen[1].name")
-	}
-	if gen[2].name != "T3<TT1, TT2<TT3, TT4<number>>>" {
-		t.Fatal("gen[2].name")
-	}
-	if gen[3].name != "string#date-time" {
-		t.Fatal(gen[3].name)
-	}
-
-	g0 := gen[0] // T1
-	if g0.object.typ != "T1" {
-		t.Fatal("g0.object.typ")
-	}
-	if len(g0.object.generics) != 0 {
-		t.Fatal("len(g0.object.generics)")
-	}
-
-	g1 := gen[1] // T2<TT1<integer[]>>
-	if g1.object.typ != "T2" {
-		t.Fatal("g1.object.typ")
-	}
-	g10 := g1.object.generics[0]
-	if g10.object.typ != "TT1" {
-		t.Fatal("g10.object.typ")
-	}
-	g100 := g10.object.generics[0]
-	if g100.name != "integer#int32[]" {
-		t.Fatal("g100.name")
-	}
-	if g100.array.item.prime.typ != "integer" {
-		t.Fatal("g100.array.item.prime.typ")
-	}
-	if g100.array.item.prime.format != "int32" {
-		t.Fatal("g100.array.item.prime.format")
-	}
-
-	g2 := gen[2] // T3<TT1, TT2<TT3, TT4<number>>>
-	g20 := g2.object.generics[0]
-	g21 := g2.object.generics[1]
-	if g20.object.typ != "TT1" {
-		t.Fatal("g20.object.typ")
-	}
-	if g21.name != "TT2<TT3, TT4<number>>" {
-		t.Fatal("g21.name")
-	}
-	if g21.object.typ != "TT2" {
-		t.Fatal("g21.object.typ")
-	}
-	g210 := g21.object.generics[0]
-	g211 := g21.object.generics[1] // TT4<number>
-	if g210.object.typ != "TT3" {
-		t.Fatal("g210.object.typ")
-	}
-	if g211.name != "TT4<number>" {
-		t.Fatal("g211.name")
-	}
-	if g211.object.typ != "TT4" {
-		t.Fatal("g211.object.typ")
-	}
-	if g211.object.generics[0].prime.typ != "number" {
-		t.Fatal("g211.object.generics[0].prime.typ")
-	}
-	if g211.object.generics[0].prime.format != "double" {
-		t.Fatal("g211.object.generics[0].prime.format")
-	}
-
-	g3 := gen[3] // string#date-time
-	if g3.prime.typ != "string" {
-		t.Fatal("g3.prime.typ")
-	}
-	if g3.prime.format != "date-time" {
-		t.Fatal("g3.prime.format")
-	}
-}
-
-func TestPrehandleDefinition(t *testing.T) {
-	definition := &Definition{
-		generics: []string{"T", "U", "V"},
-		properties: []*Property{
-			{typ: "inT[]"},
-			{typ: "O<inT[], T[], T, inT<int>>"},
-			{typ: "T"},
-			{typ: "tT<T<tT>[][], T>[]"},
-			{typ: "TtT<T,tT[],T[][]>[]"},
-		},
-	}
-	definition = prehandleDefinition(definition)
-
-	if definition.generics[0] != "«T»" {
-		t.Fatal("definition.generics[0]")
-	}
-	if definition.generics[1] != "«U»" {
-		t.Fatal("definition.generics[1]")
-	}
-	if definition.generics[2] != "«V»" {
-		t.Fatal("definition.generics[2]")
-	}
-
-	p0 := definition.properties[0]
-	p1 := definition.properties[1]
-	p2 := definition.properties[2]
-	p3 := definition.properties[3]
-	p4 := definition.properties[4]
-	if p0.typ != "inT[]" {
-		t.Fatal("p0.typ")
-	}
-	if p1.typ != "O<inT[], «T»[], «T», inT<int>>" {
-		t.Fatal("p1.typ")
-	}
-	if p2.typ != "«T»" {
-		t.Fatal("p2.typ")
-	}
-	if p3.typ != "tT<«T»<tT>[][], «T»>[]" {
-		t.Fatal("p3.typ")
-	}
-	if p4.typ != "TtT<«T», tT[], «T»[][]>[]" {
-		t.Fatal("p4.typ")
-	}
-}
-
-func TestPrehandleDefinitionList(t *testing.T) {
-	definitions := []*Definition{
-		{name: "User", properties: []*Property{}},
-		{name: "Login", properties: []*Property{}},
-		{name: "String", properties: []*Property{}},
-		{name: "Result", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T"}}},
-		{name: "Page", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T[]"}}},
-		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
-		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
-	}
-	newDefinitions := make([]*Definition, 0, len(definitions))
-	for _, definition := range definitions {
-		newDefinitions = append(newDefinitions, prehandleDefinition(definition))
-	}
-	newDefs := prehandleDefinitionList(newDefinitions, []string{
-		"Result<Page<User>>",
-		"Result3<User, Page<Result2<Login, Page<Login>>>, String[]>",
-		"Integer",
-		"Result2<String, Result2<String, String>>",
-	})
-
-	if len(newDefs) != 12 {
-		t.Fatal()
-	}
-
-	contain := func(definition *Definition) bool {
-		ok := false
-		for _, newDef := range newDefs {
-			if newDef.name != definition.name || len(newDef.properties) != len(definition.properties) {
-				continue
-			}
-			if len(newDef.properties) == 0 {
-				ok = true
-				break
-			}
-
-			ok2 := true
-			for idx, newProp := range newDef.properties {
-				prop := definition.properties[idx]
-				if newProp.name != prop.name || newProp.typ != prop.typ {
-					ok2 = false
-					break
-				}
-			}
-			if ok2 {
-				ok = true
-				break
-			}
-		}
-		return ok
-	}
-
-	// 0: User | Login | String
-	// 1: Page<User> | Page<Login> | Result<String[]> | Result2<String, String>
-	// 2: Result<Page<User>> | Result2<Login, Page<Login>> | Result2<String, Result2<String, String>>
-	// 3: Page<Result2<Login, Page<Login>>>
-	// 4: Result3<User, Page<Result2<Login, Page<Login>>>, String[]>
-
-	for idx, ok := range []bool{
-		contain(&Definition{name: "User", properties: []*Property{}}),
-		contain(&Definition{name: "Login", properties: []*Property{}}),
-		contain(&Definition{name: "String", properties: []*Property{}}),
-
-		contain(&Definition{name: "Page<User>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "User[]"}}}),
-		contain(&Definition{name: "Page<Login>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Login[]"}}}),
-		contain(&Definition{name: "Result<String[]>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "String[]"}}}),
-		contain(&Definition{name: "Result2<String, String>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "String[]"}}}),
-
-		contain(&Definition{name: "Result<Page<User>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Page<User>"}}}),
-		contain(&Definition{name: "Result2<Login, Page<Login>>", properties: []*Property{{name: "a", typ: "Login"}, {name: "b", typ: "Page<Login>[]"}}}),
-		contain(&Definition{name: "Result2<String, Result2<String, String>>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "Result2<String, String>[]"}}}),
-
-		contain(&Definition{name: "Page<Result2<Login, Page<Login>>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Result2<Login, Page<Login>>[]"}}}),
-
-		contain(&Definition{name: "Result3<User, Page<Result2<Login, Page<Login>>>, String[]>", properties: []*Property{{name: "a", typ: "User"}, {name: "b", typ: "Page<Result2<Login, Page<Login>>>[][]"}, {name: "c", typ: "Result<String[]>"}}}),
-	} {
-		if !ok {
-			t.Fatal(idx)
-		}
-	}
-}
-
 func TestGenerate(t *testing.T) {
 	SetDocument(
 		"localhost:65530", "/",
@@ -306,7 +80,7 @@ func TestGenerate(t *testing.T) {
 			Tags("Test").
 			Securities("WrongSecurity").
 			Params(
-				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
+				NewQueryParam("q1", "string#date-time", true, "q1").Enums(0, 1, 2),
 				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
 				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("example").Default("default"),
 				NewFormParam("f1", "file", true, "f1"),
@@ -355,7 +129,7 @@ func TestGenerate(t *testing.T) {
 				NewProperty("username", "string", true, "username"),
 				NewProperty("nickname", "string", true, "nickname"),
 				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+				NewProperty("gender", "string", true, "user gender").Enums("secret", "male", "female"),
 			),
 
 		NewDefinition("LoginDto", "login response").
@@ -381,7 +155,7 @@ func TestGenerate(t *testing.T) {
 				NewProperty("username", "string", true, "username"),
 				NewProperty("nickname", "string", true, "nickname"),
 				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+				NewProperty("gender", "string", true, "user gender").Enums("secret", "male", "female"),
 			),
 	)
 
@@ -421,10 +195,10 @@ func TestGenerate(t *testing.T) {
 		t.Fatal("apib")
 	}
 
-	if GetDefinitions()[1].GetGenerics()[0] != "T" {
+	if _document.definitions[1].GetGenerics()[0] != "T" {
 		t.Fatal(`GetDefinitions()[1].GetGenerics()[0] != "T"`)
 	}
-	if GetDefinitions()[1].GetProperties()[2].GetType() != "T" {
+	if _document.definitions[1].GetProperties()[2].GetType() != "T" {
 		t.Fatal(`GetDefinitions()[1].GetProperties()[2].GetType() != "T"`)
 	}
 }

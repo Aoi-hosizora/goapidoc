@@ -63,7 +63,7 @@ func (r *RoutePath) Tags(tags ...string) *RoutePath {
 	return r
 }
 
-// Tags adds some tags into RoutePath.
+// AddTags adds some tags into RoutePath.
 func (r *RoutePath) AddTags(tags ...string) *RoutePath {
 	r.tags = append(r.tags, tags...)
 	return r
@@ -294,19 +294,19 @@ func (p *Param) Name(name string) *Param {
 	return p
 }
 
-// Type sets the in-type in Param.
+// In sets the in-type in Param.
 func (p *Param) In(in string) *Param {
 	p.in = in
 	return p
 }
 
-// Desc sets the type in Param.
+// Type sets the type in Param.
 func (p *Param) Type(typ string) *Param {
 	p.typ = typ
 	return p
 }
 
-// Type sets the required in Param.
+// Required sets the required in Param.
 func (p *Param) Required(required bool) *Param {
 	p.required = required
 	return p
@@ -336,8 +336,9 @@ func (p *Param) Example(example interface{}) *Param {
 	return p
 }
 
-// Enum sets the enums in Param.
-func (p *Param) Enum(enums ...interface{}) *Param {
+// Enums sets the enums in Param.
+// TODO BREAK CHANGE
+func (p *Param) Enums(enums ...interface{}) *Param {
 	p.enums = enums
 	return p
 }
@@ -373,7 +374,7 @@ func (p *Param) Maximum(max int) *Param {
 	return p
 }
 
-// Minimum sets the minimum and maximum in Param.
+// MinMaximum sets the minimum and maximum in Param.
 func (p *Param) MinMaximum(min, max int) *Param {
 	p.minimum = min
 	p.maximum = max

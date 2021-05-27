@@ -8,7 +8,7 @@ const (
 	BOOLEAN = "boolean" // BOOLEAN type: boolean
 	ARRAY   = "array"   // ARRAY type: array
 	FILE    = "file"    // FILE type: file
-	OBJECT  = "object"  // OBJECT x
+	OBJECT  = "object"  // OBJECT type: object
 )
 
 // format

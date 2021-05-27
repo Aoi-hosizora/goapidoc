@@ -1,15 +1,11 @@
 package goapidoc
 
-import (
-	"gopkg.in/yaml.v2"
-)
-
 // TODO BREAK CHANGES
 
 // GenerateSwaggerYaml generates swagger yaml script and returns byte array.
 func (d *Document) GenerateSwaggerYaml() ([]byte, error) {
 	swagDoc := buildSwaggerDocument(d)
-	return yaml.Marshal(swagDoc)
+	return yamlMarshal(swagDoc)
 }
 
 // GenerateSwaggerJson generates swagger json script and returns byte array.
