@@ -165,7 +165,7 @@ func buildSwaggerItems(arr *apiArray) *swagItems {
 	return nil
 }
 
-func buildSwaggerParameterSchema(typ string) (outType string, outFormat string, schema *swagSchema, items *swagItems) {
+func buildSwaggerParameterSchema(typ string) (outType, outFormat string, schema *swagSchema, items *swagItems) {
 	/*
 		{
 		  "type": "string"
@@ -235,7 +235,7 @@ func buildSwaggerResponseSchema(typ string) *swagSchema {
 	return nil
 }
 
-func buildSwaggerPropertySchema(typ string) (outType string, outFmt string, origin string, ref string, items *swagItems) {
+func buildSwaggerPropertySchema(typ string) (outType, outFmt, origin, ref string, items *swagItems) {
 	/*
 		{
 		  "type": "integer"
@@ -322,11 +322,13 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 	for _, r := range responses {
 		headers := make(map[string]*swagHeader, len(r.headers))
 		for _, h := range r.headers {
-			headers[h.name] = &swagHeader{Type: h.typ, Description: h.desc}
+			headers[h.name] = &swagHeader{
+				Type:        h.typ,
+				Description: h.desc,
+			}
 		}
 
-		code := strconv.Itoa(r.code)
-		out[code] = &swagResponse{
+		out[strconv.Itoa(r.code)] = &swagResponse{
 			Description: r.desc,
 			Schema:      buildSwaggerResponseSchema(r.typ),
 			Examples:    r.examples,
@@ -338,7 +340,7 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 
 func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 	required := make([]string, 0, len(definition.properties))
-	properties := newOrderedMap(len(definition.properties)) // make(map[string]*swagSchema)
+	properties := newOrderedMap(len(definition.properties)) // map[string]*swagSchema
 	for _, p := range definition.properties {
 		if p.required {
 			required = append(required, p.name)
@@ -373,7 +375,8 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 }
 
 func buildSwaggerPaths(doc *Document) map[string]map[string]*swagPath {
-	out := make(map[string]map[string]*swagPath) // route - method - path
+	// route - method - swagPath
+	out := make(map[string]map[string]*swagPath)
 	for _, p := range doc.paths {
 		_, ok := out[p.route]
 		if !ok {
@@ -406,8 +409,10 @@ func buildSwaggerPaths(doc *Document) map[string]map[string]*swagPath {
 func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 	definitions := make([]*Definition, 0, len(doc.definitions))
 	propertyTypes := make([]string, 0) // all property types from definitions, parameters, responses
+
+	// prehandle cloned definition, collect all property types
 	for _, definition := range doc.definitions {
-		cloned := prehandleDefinition(definition) // prehandled cloned definition
+		cloned := prehandleDefinition(definition)
 		definitions = append(definitions, cloned)
 		if len(cloned.generics) == 0 && len(cloned.properties) > 0 {
 			for _, property := range cloned.properties {
@@ -424,7 +429,10 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 		}
 	}
 
-	newDefinitions := prehandleDefinitionList(definitions, propertyTypes) // new definition list
+	// prehandle definition list
+	newDefinitions := prehandleDefinitionList(definitions, propertyTypes)
+
+	// combine result definition list
 	out := make(map[string]*swagDefinition)
 	for _, definition := range newDefinitions {
 		if len(definition.generics) == 0 {
@@ -434,45 +442,49 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 	return out
 }
 
-func buildSwaggerDocument(d *Document) *swagDocument {
-	if d.info == nil {
+func buildSwaggerDocument(doc *Document) *swagDocument {
+	if doc.info == nil {
 		panic("Nil document info")
 	}
 
+	// info
 	out := &swagDocument{
 		Swagger:  "2.0",
-		Host:     d.host,
-		BasePath: d.basePath,
+		Host:     doc.host,
+		BasePath: doc.basePath,
 		Info: &swagInfo{
-			Title:          d.info.title,
-			Description:    d.info.desc,
-			Version:        d.info.version,
-			TermsOfService: d.info.termsOfService,
+			Title:          doc.info.title,
+			Description:    doc.info.desc,
+			Version:        doc.info.version,
+			TermsOfService: doc.info.termsOfService,
 		},
 	}
-	if d.info.license != nil {
-		out.Info.License = &swagLicense{Name: d.info.license.name, Url: d.info.license.url}
+	if doc.info.license != nil {
+		out.Info.License = &swagLicense{Name: doc.info.license.name, Url: doc.info.license.url}
 	}
-	if d.info.contact != nil {
-		out.Info.Contact = &swagContact{Name: d.info.contact.name, Url: d.info.contact.url, Email: d.info.contact.email}
+	if doc.info.contact != nil {
+		out.Info.Contact = &swagContact{Name: doc.info.contact.name, Url: doc.info.contact.url, Email: doc.info.contact.email}
 	}
-	if len(d.tags) > 0 {
-		tags := make([]*swagTag, 0, len(d.tags))
-		for _, t := range d.tags {
+
+	// tag & security
+	if len(doc.tags) > 0 {
+		tags := make([]*swagTag, 0, len(doc.tags))
+		for _, t := range doc.tags {
 			tags = append(tags, &swagTag{Name: t.name, Description: t.desc})
 		}
 		out.Tags = tags
 	}
-	if len(d.securities) > 0 {
-		securities := make(map[string]*swagSecurity, len(d.securities))
-		for _, s := range d.securities {
+	if len(doc.securities) > 0 {
+		securities := make(map[string]*swagSecurity, len(doc.securities))
+		for _, s := range doc.securities {
 			securities[s.title] = &swagSecurity{Type: s.typ, Name: s.name, In: s.in}
 		}
 		out.Securities = securities
 	}
 
-	out.Paths = buildSwaggerPaths(d)
-	out.Definitions = buildSwaggerDefinitions(d)
+	// path & definition
+	out.Paths = buildSwaggerPaths(doc)
+	out.Definitions = buildSwaggerDefinitions(doc)
 
 	return out
 }

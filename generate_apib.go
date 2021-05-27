@@ -9,11 +9,11 @@ func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
 	// typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
 	if at.kind == apiPrimeKind {
-		typ := at.prime.typ
-		if typ == "integer" {
-			typ = "number"
+		t := at.prime.typ
+		if t == "integer" {
+			t = "number"
 		}
-		return typ, at
+		return t, at
 	} else if at.kind == apiObjectKind {
 		return typ, at
 	} else {
@@ -25,7 +25,7 @@ func buildApibType(typ string) (string, *apiType) {
 	}
 }
 
-func buildApibParam(param *Param) string {
+func buildApibParameter(param *Param) string {
 	req := "required"
 	if !param.required {
 		req = "optional"
@@ -82,7 +82,7 @@ func buildApibParam(param *Param) string {
 }
 
 func buildApibProperty(prop *Property) string {
-	return buildApibParam(&Param{
+	return buildApibParameter(&Param{
 		name:       prop.name,
 		typ:        prop.typ,
 		required:   prop.required,
@@ -126,7 +126,7 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 	attributeStrings := make([]string, 0)
 	headerStrings := make([]string, 0)
 	for _, param := range params {
-		paramStr := buildApibParam(param)
+		paramStr := buildApibParameter(param)
 		paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
 		if param.in == "path" || param.in == "query" {
 			parameterStrings = append(parameterStrings, "    "+paramStr)
@@ -215,24 +215,22 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 	return fmt.Sprintf("%s\n\n%s\n\n%s", metaStr, requestStr, responseStr)
 }
 
-func buildApibGroups(d *Document) string {
-	// [#, #]
-	groupStrings := make([]string, 0)
-
-	tags := make(map[string]string)
-	for _, tag := range d.tags {
+func buildApibGroups(doc *Document) string {
+	tags := make(map[string]string, len(doc.tags))
+	for _, tag := range doc.tags {
 		tags[tag.name] = tag.desc
 	}
-	securities := make(map[string]*Security)
-	for _, security := range d.securities {
+	securities := make(map[string]*Security, len(doc.securities))
+	for _, security := range doc.securities {
 		securities[security.title] = security
 	}
 
-	groups := newOrderedMap(len(d.tags)) // map[string][]*RoutePath{}
-	for _, tag := range d.tags {
+	// tag - RoutePath (route&method)
+	groups := newOrderedMap(len(doc.tags)) // map[string][]*RoutePath{}
+	for _, tag := range doc.tags {
 		groups.Set(tag.name, make([]*RoutePath, 0))
 	}
-	for _, path := range d.paths {
+	for _, path := range doc.paths {
 		tag := "Default"
 		if len(path.tags) > 0 {
 			tag = path.tags[0]
@@ -245,11 +243,12 @@ func buildApibGroups(d *Document) string {
 		groups.Set(tag, paths)
 	}
 
-	for _, tag := range groups.Keys() {
-		// [##, ##]
-		pathStrings := make([]string, 0)
-		group := groups.MustGet(tag).([]*RoutePath)
+	// [#, #]
+	groupStrings := make([]string, 0, len(groups.Keys()))
 
+	for _, tag := range groups.Keys() {
+		group := groups.MustGet(tag).([]*RoutePath)
+		// route - method - RoutePath
 		paths := newOrderedMap(len(group)) // map[string]map[string]*RoutePath{}
 		for _, path := range group {
 			route := path.route
@@ -265,18 +264,20 @@ func buildApibGroups(d *Document) string {
 
 			methods, ok := paths.Get(route)
 			if !ok {
-				methods = newOrderedMap(0) // make(map[string]*RoutePath)
+				methods = newOrderedMap(0) // map[string]*RoutePath
 			}
 			methods.(*orderedMap).Set(path.method, path)
 			paths.Set(route, methods)
 		}
 
+		// [##, ##]
+		pathStrings := make([]string, 0, len(paths.Keys()))
 		for _, pathKey := range paths.Keys() {
-			// [###, ###]
-			methodStrings := make([]string, 0)
 			methods := paths.MustGet(pathKey).(*orderedMap)
 
-			summaries := make([]string, 0)
+			// [###, ###]
+			methodStrings := make([]string, 0, len(methods.Keys()))
+			summaries := make([]string, 0, len(methods.Keys()))
 			for _, methodKey := range methods.Keys() {
 				routePath := methods.MustGet(methodKey).(*RoutePath)
 				summaries = append(summaries, routePath.summary)
@@ -303,11 +304,13 @@ func buildApibGroups(d *Document) string {
 	return strings.Join(groupStrings, "\n\n")
 }
 
-func buildApibDefinitions(d *Document) string {
-	definitions := make([]*Definition, 0, len(d.definitions))
+func buildApibDefinitions(doc *Document) string {
+	definitions := make([]*Definition, 0, len(doc.definitions))
 	propertyTypes := make([]string, 0) // all property types from definitions, parameters, responses
-	for _, definition := range d.definitions {
-		cloned := prehandleDefinition(definition) // prehandled cloned definition
+
+	// prehandle cloned definition, collect all property types
+	for _, definition := range doc.definitions {
+		cloned := prehandleDefinition(definition)
 		definitions = append(definitions, cloned)
 		if len(cloned.generics) == 0 && len(cloned.properties) > 0 {
 			for _, property := range cloned.properties {
@@ -315,7 +318,7 @@ func buildApibDefinitions(d *Document) string {
 			}
 		}
 	}
-	for _, path := range d.paths {
+	for _, path := range doc.paths {
 		for _, param := range path.params {
 			propertyTypes = append(propertyTypes, param.typ)
 		}
@@ -324,7 +327,10 @@ func buildApibDefinitions(d *Document) string {
 		}
 	}
 
-	newDefinitions := prehandleDefinitionList(definitions, propertyTypes) // new definition list
+	// prehandle definition list
+	newDefinitions := prehandleDefinitionList(definitions, propertyTypes)
+
+	// render result string
 	definitionStrings := make([]string, 0)
 	for _, definition := range newDefinitions {
 		if len(definition.generics) > 0 || len(definition.properties) == 0 {
@@ -359,17 +365,21 @@ HOST: %s%s
 %s
 `
 
-func buildApibDocument(d *Document) []byte {
-	// header
-	template := fmt.Sprintf(apibTemplate, d.host, d.basePath, d.info.title, d.info.version, d.info.desc, "%s", "%s", "%s")
-	infoArray := make([]string, 0)
-	if d.info.termsOfService != "" {
-		infoArray = append(infoArray, fmt.Sprintf("[Terms of service](%s)", d.info.termsOfService))
+func buildApibDocument(doc *Document) []byte {
+	if doc.info == nil {
+		panic("Nil document info")
 	}
-	if license := d.info.license; license != nil {
+
+	// header
+	template := fmt.Sprintf(apibTemplate, doc.host, doc.basePath, doc.info.title, doc.info.version, doc.info.desc, "%s", "%s", "%s")
+	infoArray := make([]string, 0, 4)
+	if doc.info.termsOfService != "" {
+		infoArray = append(infoArray, fmt.Sprintf("[Terms of service](%s)", doc.info.termsOfService))
+	}
+	if license := doc.info.license; license != nil {
 		infoArray = append(infoArray, fmt.Sprintf("[License: %s](%s)", license.name, license.url))
 	}
-	if contact := d.info.contact; contact != nil {
+	if contact := doc.info.contact; contact != nil {
 		infoArray = append(infoArray, fmt.Sprintf("[%s - Website](%s)", contact.name, contact.url))
 		if contact.email != "" {
 			infoArray = append(infoArray, fmt.Sprintf("[Send email to %s](mailto:%s)", contact.name, contact.email))
@@ -379,12 +389,12 @@ func buildApibDocument(d *Document) []byte {
 	template = fmt.Sprintf(template, infoString, "%s", "%s")
 
 	// route path
-	routePathString := buildApibGroups(d)
-	template = fmt.Sprintf(template, routePathString, "%s")
+	groupsString := buildApibGroups(doc)
+	template = fmt.Sprintf(template, groupsString, "%s")
 
 	// definition
-	definitionString := buildApibDefinitions(d)
-	template = fmt.Sprintf(template, definitionString)
+	definitionsString := buildApibDefinitions(doc)
+	template = fmt.Sprintf(template, definitionsString)
 
 	return []byte(template)
 }

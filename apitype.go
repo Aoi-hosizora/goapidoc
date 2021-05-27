@@ -268,12 +268,12 @@ func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []
 	// combine result definition list
 	out := make([]*Definition, 0, len(normalDefs.Keys())+len(addedDefs.Keys()))
 	for _, key := range normalDefs.Keys() {
-		val, _ := normalDefs.Get(key)
-		out = append(out, val.(*Definition))
+		val := normalDefs.MustGet(key).(*Definition)
+		out = append(out, val)
 	}
 	for _, key := range addedDefs.Keys() {
-		val, _ := addedDefs.Get(key)
-		out = append(out, val.(*Definition))
+		val := addedDefs.MustGet(key).(*Definition)
+		out = append(out, val)
 	}
 	return out
 }
