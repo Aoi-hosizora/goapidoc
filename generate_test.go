@@ -6,16 +6,16 @@ import (
 )
 
 func TestParseApiType(t *testing.T) {
-	str := "aType<T1<>, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<TT5>>>, T4#FF>[][]"
+	str := "aType<T1, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<number>>>, string#date-time>[][]"
 	res := parseApiType(str)
 
 	if res.name != str {
 		t.Fatal("res.name")
 	}
-	if res.array.item.name != "aType<T1<>, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<TT5>>>, T4#FF>[]" {
+	if res.array.item.name != "aType<T1, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<number>>>, string#date-time>[]" {
 		t.Fatal("res.array.item.name")
 	}
-	if res.array.item.array.item.name != "aType<T1<>, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<TT5>>>, T4#FF>" {
+	if res.array.item.array.item.name != "aType<T1, T2<TT1<integer#int32[]>>, T3<TT1, TT2<TT3, TT4<number>>>, string#date-time>" {
 		t.Fatal("res.array.item.array.item.name")
 	}
 
@@ -25,20 +25,20 @@ func TestParseApiType(t *testing.T) {
 	}
 
 	gen := obj.object.generics
-	if gen[0].name != "T1<>" {
+	if gen[0].name != "T1" {
 		t.Fatal("gen[0].name")
 	}
 	if gen[1].name != "T2<TT1<integer#int32[]>>" {
 		t.Fatal("gen[1].name")
 	}
-	if gen[2].name != "T3<TT1, TT2<TT3, TT4<TT5>>>" {
+	if gen[2].name != "T3<TT1, TT2<TT3, TT4<number>>>" {
 		t.Fatal("gen[2].name")
 	}
-	if gen[3].name != "T4#FF" {
-		t.Fatal()
+	if gen[3].name != "string#date-time" {
+		t.Fatal(gen[3].name)
 	}
 
-	g0 := gen[0] // T1<>
+	g0 := gen[0] // T1
 	if g0.object.typ != "T1" {
 		t.Fatal("g0.object.typ")
 	}
@@ -65,39 +65,42 @@ func TestParseApiType(t *testing.T) {
 		t.Fatal("g100.array.item.prime.format")
 	}
 
-	g2 := gen[2] // T3<TT1, TT2<TT3, TT4<TT5>>>
+	g2 := gen[2] // T3<TT1, TT2<TT3, TT4<number>>>
 	g20 := g2.object.generics[0]
 	g21 := g2.object.generics[1]
 	if g20.object.typ != "TT1" {
 		t.Fatal("g20.object.typ")
 	}
-	if g21.name != "TT2<TT3, TT4<TT5>>" {
+	if g21.name != "TT2<TT3, TT4<number>>" {
 		t.Fatal("g21.name")
 	}
 	if g21.object.typ != "TT2" {
 		t.Fatal("g21.object.typ")
 	}
 	g210 := g21.object.generics[0]
-	g211 := g21.object.generics[1] // TT4<TT5>
+	g211 := g21.object.generics[1] // TT4<number>
 	if g210.object.typ != "TT3" {
 		t.Fatal("g210.object.typ")
 	}
-	if g211.name != "TT4<TT5>" {
+	if g211.name != "TT4<number>" {
 		t.Fatal("g211.name")
 	}
 	if g211.object.typ != "TT4" {
 		t.Fatal("g211.object.typ")
 	}
-	if g211.object.generics[0].object.typ != "TT5" {
-		t.Fatal("g211.object.generics[0].object.typ")
+	if g211.object.generics[0].prime.typ != "number" {
+		t.Fatal("g211.object.generics[0].prime.typ")
+	}
+	if g211.object.generics[0].prime.format != "double" {
+		t.Fatal("g211.object.generics[0].prime.format")
 	}
 
-	g3 := gen[3] // T4#FF
-	if g3.object.typ != "T4#FF" {
-		t.Fatal("g3.object.typ")
+	g3 := gen[3] // string#date-time
+	if g3.prime.typ != "string" {
+		t.Fatal("g3.prime.typ")
 	}
-	if len(g3.object.generics) != 0 {
-		t.Fatal("len(g3.object.generics)")
+	if g3.prime.format != "date-time" {
+		t.Fatal("g3.prime.format")
 	}
 }
 
@@ -158,7 +161,7 @@ func TestPrehandleDefinitionList(t *testing.T) {
 	}
 	newDefinitions := make([]*Definition, 0, len(definitions))
 	for _, definition := range definitions {
-		newDefinitions = append(newDefinitions,  prehandleDefinition(definition))
+		newDefinitions = append(newDefinitions, prehandleDefinition(definition))
 	}
 	newDefs := prehandleDefinitionList(newDefinitions, []string{
 		"Result<Page<User>>",

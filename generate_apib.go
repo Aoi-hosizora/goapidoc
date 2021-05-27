@@ -305,30 +305,35 @@ func buildApibGroups(doc *Document) string {
 }
 
 func buildApibDefinitions(doc *Document) string {
-	definitions := make([]*Definition, 0, len(doc.definitions))
-	propertyTypes := make([]string, 0) // all property types from definitions, parameters, responses
-
-	// prehandle cloned definition, collect all property types
+	// check and collect type names
+	allSpecTypes := make([]string, 0)
+	for _, path := range doc.paths {
+		for _, param := range path.params {
+			checkTypeName(param.typ)
+			allSpecTypes = append(allSpecTypes, param.typ)
+		}
+		for _, response := range path.responses {
+			checkTypeName(response.typ)
+			allSpecTypes = append(allSpecTypes, response.typ)
+		}
+	}
 	for _, definition := range doc.definitions {
-		cloned := prehandleDefinition(definition)
-		definitions = append(definitions, cloned)
-		if len(cloned.generics) == 0 && len(cloned.properties) > 0 {
-			for _, property := range cloned.properties {
-				propertyTypes = append(propertyTypes, property.typ)
+		for _, property := range definition.properties {
+			checkTypeName(property.typ)
+		}
+		if len(definition.generics) == 0 {
+			for _, property := range definition.properties {
+				allSpecTypes = append(allSpecTypes, property.typ)
 			}
 		}
 	}
-	for _, path := range doc.paths {
-		for _, param := range path.params {
-			propertyTypes = append(propertyTypes, param.typ)
-		}
-		for _, response := range path.responses {
-			propertyTypes = append(propertyTypes, response.typ)
-		}
-	}
 
-	// prehandle definition list
-	newDefinitions := prehandleDefinitionList(definitions, propertyTypes)
+	// prehandle cloned definition list
+	clonedDefinitions := make([]*Definition, 0, len(doc.definitions))
+	for _, definition := range doc.definitions {
+		clonedDefinitions = append(clonedDefinitions, prehandleDefinition(definition)) // with generic name checked
+	}
+	newDefinitions := prehandleDefinitionList(clonedDefinitions, allSpecTypes)
 
 	// render result string
 	definitionStrings := make([]string, 0)
