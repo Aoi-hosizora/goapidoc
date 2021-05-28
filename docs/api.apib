@@ -359,13 +359,6 @@ test-controller
 + message (string, required) - status message
 + data (LoginDto, required) - response data
 
-## _Result<_Page<UserDto>> (object)
-
-+ code (number, required) - status code
-    (format: int32)
-+ message (string, required) - status message
-+ data (_Page<UserDto>, required) - response data
-
 ## _Page<UserDto> (object)
 
 + page (number, required) - current page
@@ -375,6 +368,13 @@ test-controller
 + total (number, required) - total count
     (format: int32)
 + data (array[UserDto], required) - response data
+
+## _Result<_Page<UserDto>> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (_Page<UserDto>, required) - response data
 
 ## _Result<UserDto> (object)
 

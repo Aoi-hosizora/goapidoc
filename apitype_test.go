@@ -2,16 +2,15 @@ package goapidoc
 
 import (
 	"fmt"
-	"log"
 	"testing"
 )
 
-func fail(t *testing.T, msg string) {
+func failNow(t *testing.T, msg string) {
 	fmt.Println(msg)
-	t.Fail()
+	t.FailNow()
 }
 
-func testPanic(t *testing.T, want bool, fn func()) {
+func testPanic(t *testing.T, want bool, fn func(), message string) {
 	didPanic := false
 	var msg interface{}
 	func() {
@@ -24,9 +23,39 @@ func testPanic(t *testing.T, want bool, fn func()) {
 	}()
 
 	if didPanic && !want {
-		fail(t, fmt.Sprintf("Test case want no panic but panic with `%s`.", msg))
+		failNow(t, fmt.Sprintf("Test case for %s want no panic but panic with `%s`", message, msg))
 	} else if !didPanic && want {
-		fail(t, "Test case want panic but no panic happened.")
+		failNow(t, fmt.Sprintf("Test case for %s want panic but no panic happened", message))
+	}
+}
+
+func testMatchElements(t *testing.T, s1, s2 []string, s1Msg, s2Msg string) {
+	if len(s1) != len(s2) {
+		failNow(t, fmt.Sprintf("Two slice's lengths (%s and %s) is not same", s1Msg, s2Msg))
+	}
+	for _, i1 := range s1 {
+		contained := false
+		for _, i2 := range s2 {
+			if i1 == i2 {
+				contained = true
+				break
+			}
+		}
+		if !contained {
+			failNow(t, fmt.Sprintf("There are some items in %s that are not found in %s", s1Msg, s2Msg))
+		}
+	}
+	for _, i2 := range s2 {
+		contained := false
+		for _, i1 := range s1 {
+			if i1 == i2 {
+				contained = true
+				break
+			}
+		}
+		if !contained {
+			failNow(t, fmt.Sprintf("There are some items in %s that are not found in %s", s2Msg, s1Msg))
+		}
 	}
 }
 
@@ -76,7 +105,7 @@ func TestCheckTypeName(t *testing.T) {
 		t.Run(tc.give, func(t *testing.T) {
 			testPanic(t, tc.wantPanic, func() {
 				checkTypeName(tc.give)
-			})
+			}, "checkTypeName")
 		})
 	}
 }
@@ -155,13 +184,17 @@ func TestParseApiType(t *testing.T) {
 		{"integer<Object>", true, nil},
 		{"Object#xxx", true, nil},
 		{"Object<xxx,xxx<xxx>", true, nil},
+		{"array", true, nil},
+		{"array[]", true, nil},
+		{"object#", true, nil},
+		{"Object<object>", true, nil},
 	} {
 		t.Run(tc.give, func(t *testing.T) {
 			testPanic(t, tc.wantPanic, func() {
 				if at := parseApiType(tc.give); !tc.checkFn(at) {
-					fail(t, "Test case failed")
+					failNow(t, "Parse and get a wrong ApiType")
 				}
-			})
+			}, "parseApiType")
 		})
 	}
 }
@@ -203,104 +236,116 @@ func TestPrehandleDefinition(t *testing.T) {
 				prehandled := prehandleDefinition(def)
 
 				if !tc.wantPanic {
-					if len(prehandled.generics) != len(tc.wantGenerics) || len(prehandled.properties) != len(tc.wantPropTypes) {
-						fail(t, "Test case failed")
+					testMatchElements(t, prehandled.generics, tc.wantGenerics, "prehandledGenerics", "wantGenerics")
+					prehandledProperties := make([]string, 0, len(prehandled.properties))
+					for _, prop := range prehandled.properties {
+						prehandledProperties = append(prehandledProperties, prop.typ)
 					}
-					for idx := range tc.wantGenerics {
-						if prehandled.generics[idx] != tc.wantGenerics[idx] {
-							fail(t, "Test case failed")
-						}
-					}
-					for idx := range tc.wantPropTypes {
-						if prehandled.properties[idx].typ != tc.wantPropTypes[idx] {
-							log.Println(prehandled.properties[idx].typ, tc.wantPropTypes[idx])
-							fail(t, "Test case failed")
-						}
-					}
+					testMatchElements(t, prehandledProperties, tc.wantPropTypes, "prehandledPropTypes", "wantPropTypes")
 				}
-			})
+			}, "prehandleDefinition")
 		})
 	}
 }
 
 func TestPrehandleDefinitionList(t *testing.T) {
 	definitions := []*Definition{
-		{name: "User", properties: []*Property{}},
-		{name: "Login", properties: []*Property{}},
-		{name: "String", properties: []*Property{}},
-		{name: "Result", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T"}}},
-		{name: "Page", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "T[]"}}},
-		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[]"}}},
-		{name: "Result3", generics: []string{"T", "U", "V"}, properties: []*Property{{name: "a", typ: "T"}, {name: "b", typ: "U[][]"}, {name: "c", typ: "Result<V>"}}},
+		{name: "Result", generics: []string{"T"}, properties: []*Property{{name: "code", typ: "integer"}, {name: "data", typ: "T"}}},
+		{name: "Result2", generics: []string{"T", "U"}, properties: []*Property{{name: "code", typ: "integer"}, {name: "data", typ: "T"}, {name: "error", typ: "U"}}},
+		{name: "Page", generics: []string{"T"}, properties: []*Property{{name: "total", typ: "integer"}, {name: "data", typ: "T[]"}}},
+		{name: "Page2", generics: []string{"T"}, properties: []*Property{{name: "next_max_id", typ: "integer"}, {name: "total", typ: "integer"}, {name: "data", typ: "T[]"}}},
+
+		{name: "UserDto", properties: []*Property{{name: "uid", typ: "integer"}, {name: "name", typ: "string"}}},
+		{name: "ErrorDto", properties: []*Property{{name: "type", typ: "string"}, {name: "detail", typ: "string"}}},
 	}
-	newDefinitions := make([]*Definition, 0, len(definitions))
+	prehandledDefinitions := make([]*Definition, 0, len(definitions))
 	for _, definition := range definitions {
-		newDefinitions = append(newDefinitions, prehandleDefinition(definition))
-	}
-	newDefs := prehandleDefinitionList(newDefinitions, []string{
-		"Result<Page<User>>",
-		"Result3<User, Page<Result2<Login, Page<Login>>>, String[]>",
-		"Integer",
-		"Result2<String, Result2<String, String>>",
-	})
-
-	if len(newDefs) != 12 {
-		t.Fatal()
+		prehandledDefinitions = append(prehandledDefinitions, prehandleDefinition(definition))
 	}
 
-	contain := func(definition *Definition) bool {
-		ok := false
-		for _, newDef := range newDefs {
-			if newDef.name != definition.name || len(newDef.properties) != len(definition.properties) {
-				continue
-			}
-			if len(newDef.properties) == 0 {
-				ok = true
-				break
-			}
+	for _, tc := range []struct {
+		name            string
+		giveTypes       []string
+		wantPanic       bool
+		wantObjectNames []string
+		wantPropNames   [][]string
+		wantPropTypes   [][]string
+	}{
+		{"", []string{""}, false, []string{"UserDto", "ErrorDto"},
+			[][]string{{"uid", "name"}, {"type", "detail"}},
+			[][]string{{"integer", "string"}, {"string", "string"}}},
+		{"integer", []string{"integer"}, false, []string{"UserDto", "ErrorDto"},
+			[][]string{{"uid", "name"}, {"type", "detail"}},
+			[][]string{{"integer", "string"}, {"string", "string"}}},
+		{"Object", []string{"Object"}, false, []string{"UserDto", "ErrorDto"},
+			[][]string{{"uid", "name"}, {"type", "detail"}},
+			[][]string{{"integer", "string"}, {"string", "string"}}},
+		{"Result<integer>", []string{"Result<integer>"}, false, []string{"UserDto", "ErrorDto", "Result<integer>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "integer"}}},
+		{"Result<UserDto>", []string{"Result<UserDto>"}, false, []string{"UserDto", "ErrorDto", "Result<UserDto>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto"}}},
+		{"Result2<UserDto, ErrorDto>", []string{"Result2<UserDto, ErrorDto>"}, false, []string{"UserDto", "ErrorDto", "Result2<UserDto, ErrorDto>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data", "error"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto", "ErrorDto"}}},
+		{"Result<Page<UserDto>>", []string{"Result<Page<UserDto>>"}, false, []string{"UserDto", "ErrorDto", "Page<UserDto>", "Result<Page<UserDto>>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"total", "data"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto[]"}, {"integer", "Page<UserDto>"}}},
+		{"UserDto[][] | Page<UserDto[]>", []string{"UserDto[][]", "Result<UserDto[]>"}, false, []string{"UserDto", "ErrorDto", "Result<UserDto[]>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto[]"}}},
+		{"Page<UserDto> | Page<UserDto> | Result<Page<UserDto>>", []string{"Page<UserDto>", "Page<UserDto>", "Result<Page<UserDto>>"}, false,
+			[]string{"UserDto", "ErrorDto", "Page<UserDto>", "Result<Page<UserDto>>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"total", "data"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto[]"}, {"integer", "Page<UserDto>"}}},
+		{"Result<UserDto> | Result<Result<UserDto>> | Result<Result<Result<UserDto>>>", []string{"Result<UserDto>", "Result<Result<UserDto>>", "Result<Result<Result<UserDto>>>"}, false,
+			[]string{"UserDto", "ErrorDto", "Result<UserDto>", "Result<Result<UserDto>>", "Result<Result<Result<UserDto>>>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}, {"code", "data"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto"}, {"integer", "Result<UserDto>"}, {"integer", "Result<Result<UserDto>>"}}},
+		{"Page<UserDto> | Result<Result<UserDto>>[] | Result<Result<Result<UserDto>>>",
+			[]string{"Page<UserDto>", "Result<UserDto>", "Result<Result<UserDto>>[]", "Result<Result<Result<UserDto>>>"}, false,
+			[]string{"UserDto", "ErrorDto", "Page<UserDto>", "Result<UserDto>", "Result<Result<UserDto>>", "Result<Result<Result<UserDto>>>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"total", "data"}, {"code", "data"}, {"code", "data"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto[]"}, {"integer", "UserDto"}, {"integer", "Result<UserDto>"}, {"integer", "Result<Result<UserDto>>"}}},
+		{"Result2<Result<UserDto>, ErrorDto> | Result<Result<UserDto[]>> | Page<Result<Result<UserDto>>>",
+			[]string{"Result2<Result<UserDto>, ErrorDto>", "Result<Result<UserDto[]>>", "Page<Result<Result<UserDto>>>"}, false,
+			[]string{"UserDto", "ErrorDto", "Result<UserDto>", "Result2<Result<UserDto>, ErrorDto>", "Result<UserDto[]>", "Result<Result<UserDto[]>>", "Result<Result<UserDto>>", "Page<Result<Result<UserDto>>>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}, {"code", "data", "error"}, {"code", "data"}, {"code", "data"}, {"code", "data"}, {"total", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto"}, {"integer", "Result<UserDto>", "ErrorDto"}, {"integer", "UserDto[]"}, {"integer", "Result<UserDto[]>"}, {"integer", "Result<UserDto>"}, {"integer", "Result<Result<UserDto>>[]"}}},
 
-			ok2 := true
-			for idx, newProp := range newDef.properties {
-				prop := definition.properties[idx]
-				if newProp.name != prop.name || newProp.typ != prop.typ {
-					ok2 = false
-					break
-				}
-			}
-			if ok2 {
-				ok = true
-				break
-			}
-		}
-		return ok
-	}
-
-	// 0: User | Login | String
-	// 1: Page<User> | Page<Login> | Result<String[]> | Result2<String, String>
-	// 2: Result<Page<User>> | Result2<Login, Page<Login>> | Result2<String, Result2<String, String>>
-	// 3: Page<Result2<Login, Page<Login>>>
-	// 4: Result3<User, Page<Result2<Login, Page<Login>>>, String[]>
-
-	for idx, ok := range []bool{
-		contain(&Definition{name: "User", properties: []*Property{}}),
-		contain(&Definition{name: "Login", properties: []*Property{}}),
-		contain(&Definition{name: "String", properties: []*Property{}}),
-
-		contain(&Definition{name: "Page<User>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "User[]"}}}),
-		contain(&Definition{name: "Page<Login>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Login[]"}}}),
-		contain(&Definition{name: "Result<String[]>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "String[]"}}}),
-		contain(&Definition{name: "Result2<String, String>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "String[]"}}}),
-
-		contain(&Definition{name: "Result<Page<User>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Page<User>"}}}),
-		contain(&Definition{name: "Result2<Login, Page<Login>>", properties: []*Property{{name: "a", typ: "Login"}, {name: "b", typ: "Page<Login>[]"}}}),
-		contain(&Definition{name: "Result2<String, Result2<String, String>>", properties: []*Property{{name: "a", typ: "String"}, {name: "b", typ: "Result2<String, String>[]"}}}),
-
-		contain(&Definition{name: "Page<Result2<Login, Page<Login>>>", properties: []*Property{{name: "code", typ: "number"}, {name: "data", typ: "Result2<Login, Page<Login>>[]"}}}),
-
-		contain(&Definition{name: "Result3<User, Page<Result2<Login, Page<Login>>>, String[]>", properties: []*Property{{name: "a", typ: "User"}, {name: "b", typ: "Page<Result2<Login, Page<Login>>>[][]"}, {name: "c", typ: "Result<String[]>"}}}),
+		{"integer<integer>", []string{"integer<integer>"}, true, []string{"UserDto", "ErrorDto"},
+			[][]string{{"uid", "name"}, {"type", "detail"}},
+			[][]string{{"integer", "string"}, {"string", "string"}}},
+		{"UserDto<integer>", []string{"UserDto<integer>"}, true, []string{"UserDto", "ErrorDto"},
+			[][]string{{"uid", "name"}, {"type", "detail"}},
+			[][]string{{"integer", "string"}, {"string", "string"}}},
+		{"Result<UserDto, ErrorDto>", []string{"Result<UserDto, ErrorDto>"}, true, []string{"UserDto", "ErrorDto", "Result<UserDto>"},
+			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}},
+			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto"}}},
+		{"Result2<UserDto>", []string{"Result2<UserDto>"}, true, []string{"UserDto", "ErrorDto"},
+			[][]string{{"uid", "name"}, {"type", "detail"}},
+			[][]string{{"integer", "string"}, {"string", "string"}}},
 	} {
-		if !ok {
-			t.Fatal(idx)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			testPanic(t, tc.wantPanic, func() {
+				newDefinitions := prehandleDefinitionList(prehandledDefinitions, tc.giveTypes)
+				newObjectNames := make([]string, 0, len(newDefinitions))
+				for _, def := range newDefinitions {
+					newObjectNames = append(newObjectNames, def.name)
+				}
+				testMatchElements(t, newObjectNames, tc.wantObjectNames, "newObjectNames", "wantObjectNames")
+				for idx, def := range newDefinitions {
+					newPropNames := make([]string, 0, len(def.properties))
+					newPropTypes := make([]string, 0, len(def.properties))
+					for _, prop := range def.properties {
+						newPropNames = append(newPropNames, prop.name)
+						newPropTypes = append(newPropTypes, prop.typ)
+					}
+					testMatchElements(t, newPropNames, tc.wantPropNames[idx], "newPropNames", "wantPropNames")
+					testMatchElements(t, newPropTypes, tc.wantPropTypes[idx], "newPropTypes", "wantPropTypes")
+				}
+			}, "prehandleDefinitionList")
+		})
 	}
 }
