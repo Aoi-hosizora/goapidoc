@@ -1,6 +1,10 @@
 package goapidoc
 
-// RoutePath represents an api route path information.
+// =========
+// RoutePath
+// =========
+
+// RoutePath represents an api route path information of Document.
 type RoutePath struct {
 	method  string
 	route   string
@@ -19,6 +23,41 @@ type RoutePath struct {
 // NewRoutePath creates a default RoutePath with given arguments.
 func NewRoutePath(method, route, summary string) *RoutePath {
 	return &RoutePath{method: method, route: route, summary: summary}
+}
+
+// NewGetRoutePath creates a get RoutePath with given arguments.
+func NewGetRoutePath(route, summary string) *RoutePath {
+	return NewRoutePath(GET, route, summary)
+}
+
+// NewPutRoutePath creates a put RoutePath with given arguments.
+func NewPutRoutePath(route, summary string) *RoutePath {
+	return NewRoutePath(PUT, route, summary)
+}
+
+// NewPostRoutePath creates a post RoutePath with given arguments.
+func NewPostRoutePath(route, summary string) *RoutePath {
+	return NewRoutePath(POST, route, summary)
+}
+
+// NewDeleteRoutePath creates a delete RoutePath with given arguments.
+func NewDeleteRoutePath(route, summary string) *RoutePath {
+	return NewRoutePath(DELETE, route, summary)
+}
+
+// NewOptionsRoutePath creates a options RoutePath with given arguments.
+func NewOptionsRoutePath(route, summary string) *RoutePath {
+	return NewRoutePath(OPTIONS, route, summary)
+}
+
+// NewHeadRoutePath creates a head RoutePath with given arguments.
+func NewHeadRoutePath(route, summary string) *RoutePath {
+	return NewRoutePath(HEAD, route, summary)
+}
+
+// NewPatchRoutePath creates a patch RoutePath with given arguments.
+func NewPatchRoutePath(route, summary string) *RoutePath {
+	return NewRoutePath(PATCH, route, summary)
 }
 
 func (r *RoutePath) GetMethod() string         { return r.method }
@@ -135,7 +174,11 @@ func (r *RoutePath) AddResponses(responses ...*Response) *RoutePath {
 	return r
 }
 
-// Response represents a route response information.
+// ========
+// Response
+// ========
+
+// Response represents a route response information of RoutePath.
 type Response struct {
 	code int
 	typ  string
@@ -192,7 +235,11 @@ func (r *Response) AddHeaders(headers ...*Header) *Response {
 	return r
 }
 
-// Header represents a response header information.
+// ======
+// Header
+// ======
+
+// Header represents a response header information of Response.
 type Header struct {
 	name string
 	typ  string // basic type
@@ -226,7 +273,11 @@ func (h *Header) Desc(desc string) *Header {
 	return h
 }
 
-// Param represents a request parameter information.
+// =====
+// Param
+// =====
+
+// Param represents a request parameter information of RoutePath.
 type Param struct {
 	name     string
 	in       string
@@ -336,8 +387,8 @@ func (p *Param) Example(example interface{}) *Param {
 	return p
 }
 
-// Enums sets the enums in Param.
-// TODO BREAK CHANGE
+// Enums sets the whole enums in Param.
+// TODO BREAK CHANGES
 func (p *Param) Enums(enums ...interface{}) *Param {
 	p.enums = enums
 	return p

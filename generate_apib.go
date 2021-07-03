@@ -117,7 +117,7 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 	params := path.params
 	bodyParamString := ""
 	if len(path.securities) >= 1 {
-		securityString := path.securities[0]
+		securityString := path.securities[0] // only support apiKey
 		if security, ok := securities[securityString]; ok {
 			params = append(params, &Param{name: security.name, in: security.in, typ: "string", desc: securityString + " " + security.typ})
 		}
@@ -216,19 +216,23 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 }
 
 func buildApibGroups(doc *Document) string {
-	tags := make(map[string]string, len(doc.tags))
-	for _, tag := range doc.tags {
-		tags[tag.name] = tag.desc
-	}
-	securities := make(map[string]*Security, len(doc.securities))
-	for _, security := range doc.securities {
-		securities[security.title] = security
+	var tags map[string]string
+	var securities map[string]*Security
+	if doc.option != nil {
+		tags = make(map[string]string, len(doc.option.tags))
+		for _, tag := range doc.option.tags {
+			tags[tag.name] = tag.desc
+		}
+		securities = make(map[string]*Security, len(doc.option.securities))
+		for _, security := range doc.option.securities {
+			securities[security.title] = security
+		}
 	}
 
 	// tag - RoutePath (route&method)
-	groups := newOrderedMap(len(doc.tags)) // map[string][]*RoutePath{}
-	for _, tag := range doc.tags {
-		groups.Set(tag.name, make([]*RoutePath, 0))
+	groups := newOrderedMap(len(tags)) // map[string][]*RoutePath{}
+	for name := range tags {
+		groups.Set(name, make([]*RoutePath, 0))
 	}
 	for _, path := range doc.paths {
 		tag := "Default"

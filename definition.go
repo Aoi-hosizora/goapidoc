@@ -1,6 +1,10 @@
 package goapidoc
 
-// Definition represents an api definition information.
+// ==========
+// Definition
+// ==========
+
+// Definition represents an api definition information of Document.
 type Definition struct {
 	name string
 	desc string
@@ -31,7 +35,7 @@ func (d *Definition) Desc(desc string) *Definition {
 	return d
 }
 
-// Generics sets the generics in Definition.
+// Generics sets the whole generics in Definition.
 func (d *Definition) Generics(generics ...string) *Definition {
 	d.generics = generics
 	return d
@@ -49,7 +53,11 @@ func (d *Definition) AddProperties(properties ...*Property) *Definition {
 	return d
 }
 
-// Property represents a definition property information.
+// ========
+// Property
+// ========
+
+// Property represents a definition property information of Definition.
 type Property struct {
 	name     string
 	typ      string
@@ -126,8 +134,8 @@ func (p *Property) Example(example interface{}) *Property {
 	return p
 }
 
-// Enums sets the enums in Property.
-// TODO BREAK CHANGE
+// Enums sets the whole enums in Property.
+// TODO BREAK CHANGES
 func (p *Property) Enums(enums ...interface{}) *Property {
 	p.enums = enums
 	return p

@@ -5,21 +5,41 @@ import (
 	"testing"
 )
 
+func TestGetSet(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		giveFn func() interface{}
+		testFn func(interface{}) bool
+	}{
+		{"default document",
+			func() interface{} { return NewDocument("", "", nil) },
+			func(i interface{}) bool { return i.(*Document).GetHost() == "" && i.(*Document).GetBasePath() == "" && i.(*Document).GetInfo() == nil }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			itf := tc.giveFn()
+			if !tc.testFn(itf) {
+				failNow(t, "Not matched object")
+			}
+		})
+	}
+}
+
 func TestGenerate(t *testing.T) {
 	SetDocument(
 		"localhost:65530", "/",
 		NewInfo("goapidoc", "goapidoc test api", "1.0").
 			TermsOfService("https://github.com/Aoi-hosizora").
 			License(NewLicense("MIT", "https://github.com/Aoi-hosizora")).
-			Contact(NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
+			Contact(NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "a970335605@hotmail.com")),
 	)
-	SetTags(
-		NewTag("Authorization", "auth-controller"),
-		NewTag("User", "user-controller"),
-		NewTag("Test", "test-controller"),
-	)
-	SetSecurities(
-		NewSecurity("Jwt", "header", "Authorization"),
+	SetOption(
+		NewOption().Tags(
+			NewTag("Authorization", "auth-controller"),
+			NewTag("User", "user-controller"),
+			NewTag("Test", "test-controller"),
+		).Securities(
+			NewSecurity("Jwt", "header", "Authorization"),
+		),
 	)
 
 	AddRoutePaths(

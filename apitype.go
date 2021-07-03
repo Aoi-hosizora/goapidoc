@@ -41,7 +41,7 @@ type apiArray struct {
 }
 
 var (
-	typeNameRe    = regexp.MustCompile(`^[a-zA-Z0-9_]+(?:(?:<(.+)>)|(?:#[a-zA-Z0-9\-_]*))?(?:\[])*$`) // xxx(<xxx, xxx>|#xxx)?[]*
+	typeNameRe    = regexp.MustCompile(`^[a-zA-Z0-9_]+(?:(?:<(.+)>)|(?:#[a-zA-Z0-9\-_]*))?(?:\[])*$`) // xxx(?:<(yyy)>|#zzz)?(?:[])*
 	genericNameRe = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 )
 
@@ -53,13 +53,14 @@ func checkTypeName(typ string) {
 	}
 	// <(.+)>
 	for _, subTyp := range typeNameRe.FindStringSubmatch(typ)[1:] {
-		// T1, T2<T3, T4> => T1 | T2<T3 | T4> => T1, T2<T3, T4>
 		genParts := strings.Split(subTyp, ",")
-		genStrings := make([]string, 0, 2)
+		genStrings := make([]string, 0, 2) // cap defaults to 2
 		for idx, part := range genParts {
 			if strings.Count(part, "<") == strings.Count(part, ">") {
+				// T1, T2<T3>
 				genStrings = append(genStrings, part)
 			} else {
+				// T1, T2<T3, T4> => T1 | T2<T3 | T4> => T1 | T2<T3,T4>
 				if idx+1 < len(genParts) {
 					genParts[idx+1] = genParts[idx] + "," + genParts[idx+1]
 				} else {
@@ -114,7 +115,7 @@ func parseApiType(typ string) *apiType {
 	if strings.Contains(typ, "<") {
 		genIdx := strings.Index(typ, "<") + 1
 		genParts := strings.Split(typ[genIdx:len(typ)-1], ",") // Y<Z> || {Y, Z<A, B<C>>}
-		genStrings := make([]string, 0, 2)
+		genStrings := make([]string, 0, 2)                     // cap defaults to 2
 		for idx, part := range genParts {
 			part = strings.TrimSpace(part)
 			if strings.Count(part, "<") == strings.Count(part, ">") { // Y<Z>
@@ -127,7 +128,7 @@ func parseApiType(typ string) *apiType {
 				}
 			}
 		}
-		genTypes := make([]*apiType, 0, 2)
+		genTypes := make([]*apiType, 0, len(genStrings))
 		for _, gen := range genStrings {
 			genTypes = append(genTypes, parseApiType(gen))
 		}
@@ -152,7 +153,7 @@ func parseApiType(typ string) *apiType {
 			prime: &apiPrime{typ: typ, format: defaultFormat(typ)},
 		}
 	case ARRAY, OBJECT:
-		panic("Use array or object in type `" + typ + "` invalidly")
+		panic("Use array or object as type invalidly")
 	}
 
 	// 5. object without generic: X

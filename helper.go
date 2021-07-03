@@ -25,19 +25,13 @@ func jsonMarshal(t interface{}) ([]byte, error) {
 
 func saveFile(path string, data []byte) error {
 	dir := filepath.Dir(path)
-	_, err := os.Stat(dir)
-	if os.IsNotExist(err) {
-		err := os.MkdirAll(dir, 0644)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0644)
 		if err != nil {
 			return err
 		}
 	}
-
-	err = ioutil.WriteFile(path, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+	return ioutil.WriteFile(path, data, 0644)
 }
 
 // orderedMap represents an ordered hashmap, is used to replace map[K]V.

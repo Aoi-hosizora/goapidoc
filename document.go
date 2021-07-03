@@ -1,13 +1,16 @@
 package goapidoc
 
+// ========
+// Document
+// ========
+
 // Document represents an api document information.
 type Document struct {
 	host     string
 	basePath string
 	info     *Info
 
-	tags        []*Tag
-	securities  []*Security
+	option      *Option
 	paths       []*RoutePath
 	definitions []*Definition
 }
@@ -20,8 +23,7 @@ func NewDocument(host, basePath string, info *Info) *Document {
 func (d *Document) GetHost() string               { return d.host }
 func (d *Document) GetBasePath() string           { return d.basePath }
 func (d *Document) GetInfo() *Info                { return d.info }
-func (d *Document) GetTags() []*Tag               { return d.tags }
-func (d *Document) GetSecurities() []*Security    { return d.securities }
+func (d *Document) GetOption() *Option            { return d.option }
 func (d *Document) GetPaths() []*RoutePath        { return d.paths }
 func (d *Document) GetDefinitions() []*Definition { return d.definitions }
 
@@ -43,27 +45,9 @@ func (d *Document) Info(info *Info) *Document {
 	return d
 }
 
-// Tags sets the whole tags in Document.
-func (d *Document) Tags(tags ...*Tag) *Document {
-	d.tags = tags
-	return d
-}
-
-// AddTags adds some tags into Document.
-func (d *Document) AddTags(tags ...*Tag) *Document {
-	d.tags = append(d.tags, tags...)
-	return d
-}
-
-// Securities sets the whole securities in Document.
-func (d *Document) Securities(securities ...*Security) *Document {
-	d.securities = securities
-	return d
-}
-
-// AddSecurities adds some securities into Document.
-func (d *Document) AddSecurities(securities ...*Security) *Document {
-	d.securities = append(d.securities, securities...)
+// Option sets the option in Document.
+func (d *Document) Option(option *Option) *Document {
+	d.option = option
 	return d
 }
 
@@ -90,6 +74,10 @@ func (d *Document) AddDefinitions(definitions ...*Definition) *Document {
 	d.definitions = append(d.definitions, definitions...)
 	return d
 }
+
+// ====
+// Info
+// ====
 
 // Info represents a basic api information of Document.
 type Info struct {
@@ -133,8 +121,8 @@ func (i *Info) Version(version string) *Info {
 }
 
 // TermsOfService sets the termsOfService in Info.
-func (i *Info) TermsOfService(service string) *Info {
-	i.termsOfService = service
+func (i *Info) TermsOfService(terms string) *Info {
+	i.termsOfService = terms
 	return i
 }
 
@@ -149,6 +137,10 @@ func (i *Info) Contact(contact *Contact) *Info {
 	i.contact = contact
 	return i
 }
+
+// =======
+// License
+// =======
 
 // License represents an api license information of Document.
 type License struct {
@@ -175,6 +167,10 @@ func (l *License) Url(url string) *License {
 	l.url = url
 	return l
 }
+
+// =======
+// Contact
+// =======
 
 // Contact represents an api contact information of Document.
 type Contact struct {
@@ -210,6 +206,95 @@ func (c *Contact) Email(email string) *Contact {
 	return c
 }
 
+// ======
+// Option
+// ======
+
+// Option represents an extra options of Document.
+// TODO BREAK CHANGES
+type Option struct {
+	schemas    []string
+	consumes   []string
+	produces   []string
+	tags       []*Tag
+	securities []*Security
+}
+
+// NewOption creates an empty document Option.
+func NewOption() *Option {
+	return &Option{}
+}
+
+func (o *Option) GetSchemas() []string       { return o.schemas }
+func (o *Option) GetConsumes() []string      { return o.consumes }
+func (o *Option) GetProduces() []string      { return o.produces }
+func (o *Option) GetTags() []*Tag            { return o.tags }
+func (o *Option) GetSecurities() []*Security { return o.securities }
+
+// Schemas sets the whole schemas in Option.
+func (o *Option) Schemas(schemas ...string) *Option {
+	o.schemas = schemas
+	return o
+}
+
+// AddSchemas adds some tags schemas into Option.
+func (o *Option) AddSchemas(schemas ...string) *Option {
+	o.schemas = append(o.schemas, schemas...)
+	return o
+}
+
+// Consumes sets the whole consumes in Option.
+func (o *Option) Consumes(consumes ...string) *Option {
+	o.consumes = consumes
+	return o
+}
+
+// AddConsumes adds some consumes into Option.
+func (o *Option) AddConsumes(consumes ...string) *Option {
+	o.consumes = append(o.consumes, consumes...)
+	return o
+}
+
+// Produces sets the whole produces in Document.
+func (o *Option) Produces(produces ...string) *Option {
+	o.produces = produces
+	return o
+}
+
+// AddProduces adds some produces into Document.
+func (o *Option) AddProduces(produces ...string) *Option {
+	o.produces = append(o.produces, produces...)
+	return o
+}
+
+// Tags sets the whole tags in Option.
+func (o *Option) Tags(tags ...*Tag) *Option {
+	o.tags = tags
+	return o
+}
+
+// AddTags adds some tags into Option.
+func (o *Option) AddTags(tags ...*Tag) *Option {
+	o.tags = append(o.tags, tags...)
+	return o
+}
+
+// Securities sets the whole securities in Option.
+func (o *Option) Securities(securities ...*Security) *Option {
+	o.securities = securities
+	return o
+}
+
+// AddSecurities adds some securities into Option.
+func (o *Option) AddSecurities(securities ...*Security) *Option {
+	o.securities = append(o.securities, securities...)
+	return o
+}
+
+// ===
+// Tag
+// ===
+
 // Tag represents an api tag information of Document.
 type Tag struct {
 	name string
@@ -236,6 +321,10 @@ func (t *Tag) Desc(desc string) *Tag {
 	return t
 }
 
+// ========
+// Security
+// ========
+
 // Security represents an api security information of Document.
 type Security struct {
 	title string
@@ -259,7 +348,7 @@ func (s *Security) Title(title string) *Security {
 	return s
 }
 
-// In sets the in in Security.
+// In sets the in-type in Security.
 func (s *Security) In(in string) *Security {
 	s.in = in
 	return s
@@ -271,7 +360,11 @@ func (s *Security) Name(name string) *Security {
 	return s
 }
 
-// _document is the global Document.
+// ===============
+// global document
+// ===============
+
+// _document represents a global Document.
 var _document = NewDocument("", "", nil)
 
 // SetDocument sets the basic information for global Document.
@@ -282,8 +375,7 @@ func SetDocument(host, basePath string, info *Info) *Document {
 func GetHost() string               { return _document.GetHost() }
 func GetBasePath() string           { return _document.GetBasePath() }
 func GetInfo() *Info                { return _document.GetInfo() }
-func GetTags() []*Tag               { return _document.GetTags() }
-func GetSecurities() []*Security    { return _document.GetSecurities() }
+func GetOption() *Option            { return _document.GetOption() }
 func GetPaths() []*RoutePath        { return _document.GetPaths() }
 func GetDefinitions() []*Definition { return _document.GetDefinitions() }
 
@@ -302,24 +394,9 @@ func SetInfo(info *Info) *Document {
 	return _document.Info(info)
 }
 
-// SetTags sets the whole tags in global Document.
-func SetTags(tags ...*Tag) *Document {
-	return _document.Tags(tags...)
-}
-
-// AddTags adds some tags into global Document.
-func AddTags(tags ...*Tag) *Document {
-	return _document.AddTags(tags...)
-}
-
-// SetSecurities sets the whole securities in global Document.
-func SetSecurities(securities ...*Security) *Document {
-	return _document.Securities(securities...)
-}
-
-// AddSecurities adds some securities into global Document.
-func AddSecurities(securities ...*Security) *Document {
-	return _document.AddSecurities(securities...)
+// SetOption sets the option in Document.
+func SetOption(option *Option) *Document {
+	return _document.Option(option)
 }
 
 // SetRoutePaths sets the whole route paths in global Document.

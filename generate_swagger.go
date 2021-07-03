@@ -10,6 +10,9 @@ type swagDocument struct {
 	Host        string                          `yaml:"host"                          json:"host"`
 	BasePath    string                          `yaml:"basePath"                      json:"basePath"`
 	Info        *swagInfo                       `yaml:"info"                          json:"info"`
+	Schemas     []string                        `yaml:"schemas,omitempty"             json:"schemas,omitempty"`
+	Consumes    []string                        `yaml:"consumes,omitempty"            json:"consumes,omitempty"`
+	Produces    []string                        `yaml:"produces,omitempty"            json:"produces,omitempty"`
 	Tags        []*swagTag                      `yaml:"tags,omitempty"                json:"tags,omitempty"`
 	Securities  map[string]*swagSecurity        `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
 	Paths       map[string]map[string]*swagPath `yaml:"paths,omitempty"               json:"paths,omitempty"`
@@ -387,7 +390,7 @@ func buildSwaggerPaths(doc *Document) map[string]map[string]*swagPath {
 		id := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(p.route, "/", "-"), "{", ""), "}", "") + "-" + method
 		securities := make([]map[string][]interface{}, 0, len(p.securities))
 		for _, s := range p.securities {
-			securities = append(securities, map[string][]interface{}{s: {}}) // only support apikey
+			securities = append(securities, map[string][]interface{}{s: {}}) // only support apiKey
 		}
 
 		out[p.route][method] = &swagPath{
@@ -448,8 +451,21 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 }
 
 func buildSwaggerDocument(doc *Document) *swagDocument {
+	// check
+	if doc.host == "" {
+		panic("Host is required in swagger 2.0")
+	}
 	if doc.info == nil {
-		panic("Nil document info")
+		panic("Info is required in swagger 2.0")
+	}
+	if doc.info.title == "" {
+		panic("Info.title is required in swagger 2.0")
+	}
+	if doc.info.version == "" {
+		panic("Info.version is required in swagger 2.0")
+	}
+	if len(doc.paths) == 0 {
+		panic("Empty paths is not allowed in swagger 2.0")
 	}
 
 	// info
@@ -471,20 +487,43 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 		out.Info.Contact = &swagContact{Name: doc.info.contact.name, Url: doc.info.contact.url, Email: doc.info.contact.email}
 	}
 
-	// tag & security
-	if len(doc.tags) > 0 {
-		tags := make([]*swagTag, 0, len(doc.tags))
-		for _, t := range doc.tags {
-			tags = append(tags, &swagTag{Name: t.name, Description: t.desc})
+	// option
+	if doc.option != nil {
+		if len(doc.option.schemas) > 0 {
+			out.Schemas = doc.option.schemas
 		}
-		out.Tags = tags
-	}
-	if len(doc.securities) > 0 {
-		securities := make(map[string]*swagSecurity, len(doc.securities))
-		for _, s := range doc.securities {
-			securities[s.title] = &swagSecurity{Type: s.typ, Name: s.name, In: s.in}
+		if len(doc.option.consumes) > 0 {
+			out.Consumes = doc.option.consumes
 		}
-		out.Securities = securities
+		if len(doc.option.produces) > 0 {
+			out.Produces = doc.option.produces
+		}
+		if len(doc.option.tags) > 0 {
+			tags := make([]*swagTag, 0, len(doc.option.tags))
+			for _, t := range doc.option.tags {
+				if t.name == "" {
+					panic("Empty tag name is not allowed in swagger 2.0")
+				}
+				tags = append(tags, &swagTag{Name: t.name, Description: t.desc})
+			}
+			out.Tags = tags
+		}
+		if len(doc.option.securities) > 0 {
+			securities := make(map[string]*swagSecurity, len(doc.option.securities))
+			for _, s := range doc.option.securities {
+				if s.title == "" {
+					panic("Empty security title is not allowed in swagger 2.0")
+				}
+				if s.name == "" {
+					panic("Empty security name is not allowed in swagger 2.0")
+				}
+				if s.in == "" {
+					panic("Empty security in-type is not allowed in swagger 2.0")
+				}
+				securities[s.title] = &swagSecurity{Type: s.typ /* apiKey */, Name: s.name, In: s.in}
+			}
+			out.Securities = securities
+		}
 	}
 
 	// path & definition
