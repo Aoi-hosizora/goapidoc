@@ -24,7 +24,7 @@ func (d *Document) GetHost() string               { return d.host }
 func (d *Document) GetBasePath() string           { return d.basePath }
 func (d *Document) GetInfo() *Info                { return d.info }
 func (d *Document) GetOption() *Option            { return d.option }
-func (d *Document) GetPaths() []*RoutePath        { return d.paths }
+func (d *Document) GetRoutePaths() []*RoutePath   { return d.paths }
 func (d *Document) GetDefinitions() []*Definition { return d.definitions }
 
 // Host sets the host in Document.
@@ -255,13 +255,13 @@ func (o *Option) AddConsumes(consumes ...string) *Option {
 	return o
 }
 
-// Produces sets the whole produces in Document.
+// Produces sets the whole produces in Option.
 func (o *Option) Produces(produces ...string) *Option {
 	o.produces = produces
 	return o
 }
 
-// AddProduces adds some produces into Document.
+// AddProduces adds some produces into Option.
 func (o *Option) AddProduces(produces ...string) *Option {
 	o.produces = append(o.produces, produces...)
 	return o
@@ -325,20 +325,34 @@ func (t *Tag) Desc(desc string) *Tag {
 // Security
 // ========
 
-// Security represents an api security information of Document.
+// Security represents an api security definition information of Document.
 type Security struct {
 	title string
-	typ   string // only supports apiKey
+	typ   string // supports apiKey and basic
+	desc  string
 	in    string
 	name  string
 }
 
 // NewSecurity creates a default Security with given arguments.
-func NewSecurity(title, in, name string) *Security {
+// TODO BREAK CHANGES
+func NewSecurity(title string, typ string) *Security {
+	return &Security{title: title, typ: typ}
+}
+
+// NewApiKeySecurity creates an apiKey authentication Security with given arguments.
+func NewApiKeySecurity(title, in, name string) *Security {
 	return &Security{title: title, typ: "apiKey", in: in, name: name}
 }
 
+// NewBasicSecurity creates a basic authentication Security with given arguments.
+func NewBasicSecurity(title string) *Security {
+	return &Security{title: title, typ: "basic"}
+}
+
 func (s *Security) GetTitle() string { return s.title }
+func (s *Security) GetType() string  { return s.typ }
+func (s *Security) GetDesc() string  { return s.desc }
 func (s *Security) GetIn() string    { return s.in }
 func (s *Security) GetName() string  { return s.name }
 
@@ -348,7 +362,19 @@ func (s *Security) Title(title string) *Security {
 	return s
 }
 
-// In sets the in-type in Security.
+// Type sets the authentication type in Security.
+func (s *Security) Type(typ string) *Security {
+	s.typ = typ
+	return s
+}
+
+// Desc sets the desc in Security.
+func (s *Security) Desc(desc string) *Security {
+	s.desc = desc
+	return s
+}
+
+// In sets the in-location in Security.
 func (s *Security) In(in string) *Security {
 	s.in = in
 	return s
@@ -376,7 +402,7 @@ func GetHost() string               { return _document.GetHost() }
 func GetBasePath() string           { return _document.GetBasePath() }
 func GetInfo() *Info                { return _document.GetInfo() }
 func GetOption() *Option            { return _document.GetOption() }
-func GetPaths() []*RoutePath        { return _document.GetPaths() }
+func GetRoutePaths() []*RoutePath   { return _document.GetRoutePaths() }
 func GetDefinitions() []*Definition { return _document.GetDefinitions() }
 
 // SetHost sets the host in global Document.

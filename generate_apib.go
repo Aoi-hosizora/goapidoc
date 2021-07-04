@@ -117,9 +117,17 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 	params := path.params
 	bodyParamString := ""
 	if len(path.securities) >= 1 {
-		securityString := path.securities[0] // only support apiKey
+		securityString := path.securities[0] // only support one authentication
 		if security, ok := securities[securityString]; ok {
-			params = append(params, &Param{name: security.name, in: security.in, typ: "string", desc: securityString + " " + security.typ})
+			desc := securityString + " (" + security.desc + "), " + security.typ
+			if security.desc == "" {
+				desc = securityString + ", " + security.typ
+			}
+			if security.typ == "apiKey" {
+				params = append(params, &Param{name: security.name, in: security.in, typ: "string", desc: desc})
+			} else if security.typ == "basic" {
+				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc})
+			}
 		}
 	}
 	parameterStrings := make([]string, 0)

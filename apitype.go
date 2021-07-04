@@ -242,12 +242,14 @@ func prehandleDefinition(definition *Definition) *Definition {
 	return out
 }
 
-// prehandleDefinitionList prehandles and returns final Definition list with given definition list and type list.
+// prehandleDefinitionList prehandles and returns final Definition list with given Definition list and type list.
 func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []*Definition {
 	// extract generic definitions from given definitions
-	genericDefs := make(map[string]*Definition)
+	allDefTypes := make(map[string]bool, len(allDefinitions))
+	genericDefs := make(map[string]*Definition)    // generic definitions
 	finalMap := newOrderedMap(len(allDefinitions)) // map[string]*Definition
 	for _, definition := range allDefinitions {
+		allDefTypes[definition.name] = true
 		if len(definition.generics) != 0 {
 			genericDefs[definition.name] = definition
 		} else {
@@ -262,14 +264,21 @@ func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []
 		for at.kind == apiArrayKind {
 			at = at.array.item
 		}
-		if at.kind != apiObjectKind || len(at.object.generics) == 0 {
+		if at.kind != apiObjectKind {
+			return
+		}
+		_, ok := allDefTypes[at.object.typ]
+		if !ok {
+			panic("Invalid type `" + typ + "`") // object type not found
+		}
+		if len(at.object.generics) == 0 {
 			return
 		}
 
 		// check and get object with generic
 		genDef, ok := genericDefs[at.object.typ]
 		if !ok {
-			panic("Invalid type `" + typ + "`") // type has no generic defined
+			panic("Invalid type `" + typ + "`") // object type has no generic defined
 		}
 		if len(at.object.generics) != len(genDef.generics) {
 			panic("Invalid type `" + typ + "`") // generic parameter length not matched

@@ -29,8 +29,8 @@ paths:
   /auth/login:
     post:
       summary: Login
-      operationId: -auth-login-post
       description: Login.
+      operationId: -auth-login-post
       tags:
       - Authorization
       parameters:
@@ -68,8 +68,8 @@ paths:
   /auth/register:
     post:
       summary: Register
-      operationId: -auth-register-post
       description: Register.
+      operationId: -auth-register-post
       tags:
       - Authorization
       parameters:
@@ -134,10 +134,8 @@ paths:
       - name: Authorization
         in: header
         required: false
+        type: string
         description: authorization
-        schema:
-          originRef: header
-          $ref: '#/definitions/header'
       responses:
         "200":
           description: 200 Success

@@ -38,7 +38,7 @@ func TestGenerate(t *testing.T) {
 			NewTag("User", "user-controller"),
 			NewTag("Test", "test-controller"),
 		).Securities(
-			NewSecurity("Jwt", "header", "Authorization"),
+			NewApiKeySecurity("Jwt", "header", "Authorization"),
 		),
 	)
 
@@ -105,7 +105,7 @@ func TestGenerate(t *testing.T) {
 				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("example").Default("default"),
 				NewFormParam("f1", "file", true, "f1"),
 				NewFormParam("f2", "string", true, "f2").AllowEmpty(true),
-				NewHeaderParam("Authorization", "header", false, "authorization"),
+				NewHeaderParam("Authorization", "string", false, "authorization"),
 			).
 			Responses(
 				NewResponse(200, "Result").

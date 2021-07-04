@@ -42,8 +42,8 @@
     "/auth/login": {
       "post": {
         "summary": "Login",
-        "operationId": "-auth-login-post",
         "description": "Login.",
+        "operationId": "-auth-login-post",
         "tags": [
           "Authorization"
         ],
@@ -103,8 +103,8 @@
     "/auth/register": {
       "post": {
         "summary": "Register",
-        "operationId": "-auth-register-post",
         "description": "Register.",
+        "operationId": "-auth-register-post",
         "tags": [
           "Authorization"
         ],
@@ -195,11 +195,8 @@
             "name": "Authorization",
             "in": "header",
             "required": false,
-            "description": "authorization",
-            "schema": {
-              "originRef": "header",
-              "$ref": "#/definitions/header"
-            }
+            "type": "string",
+            "description": "authorization"
           }
         ],
         "responses": {

@@ -13,6 +13,205 @@ goapidoc test api
 
 [Send email to Aoi-hosizora](mailto:a970335605@hotmail.com)
 
+# Group User
+
+user-controller
+
+## Get users [/user{?page,limit}]
+
+### Get users [GET]
+
+`GET /user`
+
++ Parameters
+
+    + page: `1` (number, optional) - current page
+        (format: int32, val >= 1)
+        + Default: `1`
+    + limit: `20` (number, optional) - page size
+        (format: int32, val >= 15)
+        + Default: `20`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<_Page<UserDto>>)
+
+    + Headers
+
+    + Body
+
+## Get a user [/user/{username}]
+
+### Get a user [GET]
+
+`GET /user/{username}`
+
++ Parameters
+
+    + username (string, required) - username
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<UserDto>)
+
+    + Headers
+
+    + Body
+
+## Update user [/user/deprecated]
+
+### Update user [PUT]
+
+`PUT /user/deprecated`
+
+Attention: This api is deprecated.
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Update user, Delete user [/user]
+
+### Update user [PUT]
+
+`PUT /user`
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+### Delete user [DELETE]
+
+`DELETE /user`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+# Group Test
+
+test-controller
+
+## Test a [/test/a{?q1,q2,q3}]
+
+### Test a [HEAD]
+
+`HEAD /test/a`
+
++ Parameters
+
+    + q1 (enum[string], required) - q1
+        (format: date-time)
+        + Members
+            + `0`
+            + `1`
+            + `2`
+    + q2 (number, optional) - q2
+        (format: double, val >= -5)
+    + q3: `example` (string, required) - q3
+        (format: password, allow empty)
+        + Default: `default`
+
++ Request (application/json)
+
+    + Attributes
+
+        + f1 (file, required) - f1
+        + f2 (string, required) - f2
+            (allow empty)
+
+    + Headers
+
+            Authorization: authorization (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 Success
+
+    + Attributes (Result)
+
+    + Headers
+
+            Content-Type: content type (string)
+            X-My-Token: my token (string)
+            X-My-Object: my object (UserDto)
+
+    + Body
+
++ Response 409 (application/json)
+
+    409 Conflict
+
+    + Attributes (string)
+
+    + Headers
+
+    + Body
+
 # Group Authorization
 
 auth-controller
@@ -90,212 +289,13 @@ Login.
 
     + Headers
 
-            Authorization: Jwt apiKey (string, optional)
+            Authorization: Jwt, apiKey (string, optional)
 
     + Body
 
 + Response 200 (application/json)
 
     + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-# Group User
-
-user-controller
-
-## Get users [/user{?page,limit}]
-
-### Get users [GET]
-
-`GET /user`
-
-+ Parameters
-
-    + page: `1` (number, optional) - current page
-        (format: int32, val >= 1)
-        + Default: `1`
-    + limit: `20` (number, optional) - page size
-        (format: int32, val >= 15)
-        + Default: `20`
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-            Authorization: Jwt apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<_Page<UserDto>>)
-
-    + Headers
-
-    + Body
-
-## Get a user [/user/{username}]
-
-### Get a user [GET]
-
-`GET /user/{username}`
-
-+ Parameters
-
-    + username (string, required) - username
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-            Authorization: Jwt apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<UserDto>)
-
-    + Headers
-
-    + Body
-
-## Update user [/user/deprecated]
-
-### Update user [PUT]
-
-`PUT /user/deprecated`
-
-Attention: This api is deprecated.
-
-+ Request (application/json)
-
-    + Attributes (UpdateUserParam)
-
-    + Headers
-
-            Authorization: Jwt apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-## Update user, Delete user [/user]
-
-### Update user [PUT]
-
-`PUT /user`
-
-+ Request (application/json)
-
-    + Attributes (UpdateUserParam)
-
-    + Headers
-
-            Authorization: Jwt apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-### Delete user [DELETE]
-
-`DELETE /user`
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-            Authorization: Jwt apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-# Group Test
-
-test-controller
-
-## Test a [/test/a{?q1,q2,q3}]
-
-### Test a [HEAD]
-
-`HEAD /test/a`
-
-+ Parameters
-
-    + q1 (enum[string], required) - q1
-        (format: date-time)
-        + Members
-            + `0`
-            + `1`
-            + `2`
-    + q2 (number, optional) - q2
-        (format: double, val >= -5)
-    + q3: `example` (string, required) - q3
-        (format: password, allow empty)
-        + Default: `default`
-
-+ Request (application/json)
-
-    + Attributes
-
-        + f1 (file, required) - f1
-        + f2 (string, required) - f2
-            (allow empty)
-
-    + Headers
-
-            Authorization: authorization (header, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    200 Success
-
-    + Attributes (Result)
-
-    + Headers
-
-            Content-Type: content type (string)
-            X-My-Token: my token (string)
-            X-My-Object: my object (UserDto)
-
-    + Body
-
-+ Response 409 (application/json)
-
-    409 Conflict
-
-    + Attributes (string)
 
     + Headers
 

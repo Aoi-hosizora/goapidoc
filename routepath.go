@@ -10,14 +10,16 @@ type RoutePath struct {
 	route   string
 	summary string
 
-	desc       string
-	tags       []string
-	consumes   []string
-	produces   []string
-	securities []string
-	deprecated bool
-	params     []*Param
-	responses  []*Response
+	desc        string
+	operationId string
+	schemas     []string
+	consumes    []string
+	produces    []string
+	tags        []string
+	securities  []string
+	deprecated  bool
+	params      []*Param
+	responses   []*Response
 }
 
 // NewRoutePath creates a default RoutePath with given arguments.
@@ -64,9 +66,11 @@ func (r *RoutePath) GetMethod() string         { return r.method }
 func (r *RoutePath) GetRoute() string          { return r.route }
 func (r *RoutePath) GetSummary() string        { return r.summary }
 func (r *RoutePath) GetDesc() string           { return r.desc }
-func (r *RoutePath) GetTags() []string         { return r.tags }
+func (r *RoutePath) GetOperationId() string    { return r.operationId }
+func (r *RoutePath) GetSchemas() []string      { return r.schemas }
 func (r *RoutePath) GetConsumes() []string     { return r.consumes }
 func (r *RoutePath) GetProduces() []string     { return r.produces }
+func (r *RoutePath) GetTags() []string         { return r.tags }
 func (r *RoutePath) GetSecurities() []string   { return r.securities }
 func (r *RoutePath) GetDeprecated() bool       { return r.deprecated }
 func (r *RoutePath) GetParams() []*Param       { return r.params }
@@ -96,15 +100,21 @@ func (r *RoutePath) Desc(desc string) *RoutePath {
 	return r
 }
 
-// Tags sets the whole tags in RoutePath.
-func (r *RoutePath) Tags(tags ...string) *RoutePath {
-	r.tags = tags
+// OperationId sets the operationId in RoutePath.
+func (r *RoutePath) OperationId(operationId string) *RoutePath {
+	r.operationId = operationId
 	return r
 }
 
-// AddTags adds some tags into RoutePath.
-func (r *RoutePath) AddTags(tags ...string) *RoutePath {
-	r.tags = append(r.tags, tags...)
+// Schemas sets the whole schemas in RoutePath.
+func (r *RoutePath) Schemas(schemas ...string) *RoutePath {
+	r.schemas = schemas
+	return r
+}
+
+// AddSchemas adds some tags schemas into RoutePath.
+func (r *RoutePath) AddSchemas(schemas ...string) *RoutePath {
+	r.schemas = append(r.schemas, schemas...)
 	return r
 }
 
@@ -132,13 +142,25 @@ func (r *RoutePath) AddProduces(produces ...string) *RoutePath {
 	return r
 }
 
-// Securities sets the whole securities in RoutePath.
+// Tags sets the whole tags in RoutePath.
+func (r *RoutePath) Tags(tags ...string) *RoutePath {
+	r.tags = tags
+	return r
+}
+
+// AddTags adds some tags into RoutePath.
+func (r *RoutePath) AddTags(tags ...string) *RoutePath {
+	r.tags = append(r.tags, tags...)
+	return r
+}
+
+// Securities sets the whole security-requirements in RoutePath.
 func (r *RoutePath) Securities(securities ...string) *RoutePath {
 	r.securities = securities
 	return r
 }
 
-// AddSecurities adds some securities into RoutePath.
+// AddSecurities adds some security-requirements into RoutePath.
 func (r *RoutePath) AddSecurities(securities ...string) *RoutePath {
 	r.securities = append(r.securities, securities...)
 	return r
@@ -285,14 +307,20 @@ type Param struct {
 	required bool
 	desc     string
 
-	allowEmpty bool
-	defaul     interface{}
-	example    interface{}
-	enums      []interface{}
-	minLength  int
-	maxLength  int
-	minimum    int
-	maximum    int
+	allowEmpty   bool
+	defaul       interface{}
+	example      interface{}
+	pattern      string
+	enums        []interface{}
+	minLength    int
+	maxLength    int
+	minItems     int
+	maxItems     int
+	uniqueItems  bool
+	minimum      int
+	maximum      int
+	exclusiveMin bool
+	exclusiveMax bool
 }
 
 // NewParam creates a default Param with given arguments.
@@ -326,7 +354,7 @@ func NewHeaderParam(name, typ string, required bool, desc string) *Param {
 }
 
 func (p *Param) GetName() string         { return p.name }
-func (p *Param) GetIn() string           { return p.in }
+func (p *Param) z() string           { return p.in }
 func (p *Param) GetType() string         { return p.typ }
 func (p *Param) GetRequired() bool       { return p.required }
 func (p *Param) GetDesc() string         { return p.desc }
@@ -345,7 +373,7 @@ func (p *Param) Name(name string) *Param {
 	return p
 }
 
-// In sets the in-type in Param.
+// In sets the in-location in Param.
 func (p *Param) In(in string) *Param {
 	p.in = in
 	return p
@@ -387,6 +415,12 @@ func (p *Param) Example(example interface{}) *Param {
 	return p
 }
 
+// Pattern sets the pattern in Param.
+func (p *Param) Pattern(pattern string) *Param {
+	p.pattern = pattern
+	return p
+}
+
 // Enums sets the whole enums in Param.
 // TODO BREAK CHANGES
 func (p *Param) Enums(enums ...interface{}) *Param {
@@ -406,10 +440,36 @@ func (p *Param) MaxLength(max int) *Param {
 	return p
 }
 
-// Length sets the minLength and maxLength in Param.
-func (p *Param) Length(min, max int) *Param {
+// LengthRange sets the minLength and maxLength in Param.
+// TODO BREAK CHANGES
+func (p *Param) LengthRange(min, max int) *Param {
 	p.minLength = min
 	p.maxLength = max
+	return p
+}
+
+// MinItems sets the minItems in Param.
+func (p *Param) MinItems(min int) *Param {
+	p.minItems = min
+	return p
+}
+
+// MaxItems sets the maxItems in Param.
+func (p *Param) MaxItems(max int) *Param {
+	p.maxItems = max
+	return p
+}
+
+// ItemsRange sets the minItems and maxItems in Param.
+func (p *Param) ItemsRange(min, max int) *Param {
+	p.minItems = min
+	p.maxItems = max
+	return p
+}
+
+// UniqueItems sets the uniqueItems in Param.
+func (p *Param) UniqueItems(unique bool) *Param {
+	p.uniqueItems = unique
 	return p
 }
 
@@ -425,9 +485,22 @@ func (p *Param) Maximum(max int) *Param {
 	return p
 }
 
-// MinMaximum sets the minimum and maximum in Param.
-func (p *Param) MinMaximum(min, max int) *Param {
+// ValueRange sets the minimum and maximum in Param.
+// TODO BREAK CHANGES
+func (p *Param) ValueRange(min, max int) *Param {
 	p.minimum = min
 	p.maximum = max
+	return p
+}
+
+// ExclusiveMin sets the exclusiveMin in Param.
+func (p *Param) ExclusiveMin(exclusiveMin bool) *Param {
+	p.exclusiveMin = exclusiveMin
+	return p
+}
+
+// ExclusiveMax sets the exclusiveMax in Param.
+func (p *Param) ExclusiveMax(exclusiveMax bool) *Param {
+	p.exclusiveMax = exclusiveMax
 	return p
 }

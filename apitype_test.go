@@ -271,13 +271,16 @@ func TestPrehandleDefinitionList(t *testing.T) {
 		wantPropNames   [][]string
 		wantPropTypes   [][]string
 	}{
-		{"", []string{""}, false, []string{"UserDto", "ErrorDto"},
+		{"", []string{""}, true, []string{"UserDto", "ErrorDto"},
+			[][]string{{"uid", "name"}, {"type", "detail"}},
+			[][]string{{"integer", "string"}, {"string", "string"}}},
+		{"UserDto, ErrorDto", []string{"UserDto", "ErrorDto"}, false, []string{"UserDto", "ErrorDto"},
 			[][]string{{"uid", "name"}, {"type", "detail"}},
 			[][]string{{"integer", "string"}, {"string", "string"}}},
 		{"integer", []string{"integer"}, false, []string{"UserDto", "ErrorDto"},
 			[][]string{{"uid", "name"}, {"type", "detail"}},
 			[][]string{{"integer", "string"}, {"string", "string"}}},
-		{"Object", []string{"Object"}, false, []string{"UserDto", "ErrorDto"},
+		{"Object", []string{"Object"}, true, []string{"UserDto", "ErrorDto"},
 			[][]string{{"uid", "name"}, {"type", "detail"}},
 			[][]string{{"integer", "string"}, {"string", "string"}}},
 		{"Result<integer>", []string{"Result<integer>"}, false, []string{"UserDto", "ErrorDto", "Result<integer>"},
