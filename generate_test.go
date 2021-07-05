@@ -25,6 +25,8 @@ func TestGetSet(t *testing.T) {
 }
 
 func TestGenerate(t *testing.T) {
+	// https://editor.swagger.io/
+
 	SetDocument(
 		"localhost:65530", "/",
 		NewInfo("goapidoc", "goapidoc test api", "1.0").

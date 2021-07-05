@@ -56,11 +56,11 @@ func buildApibParameter(param *Param) string {
 		options = append(options, fmt.Sprintf("len <= %d", param.maxLength))
 	}
 	if param.maximum != 0 && param.minimum != 0 {
-		options = append(options, fmt.Sprintf("val in \\[%d, %d\\]", param.minimum, param.maximum))
+		options = append(options, fmt.Sprintf("val in \\[%.3f, %.3f\\]", param.minimum, param.maximum))
 	} else if param.minimum != 0 {
-		options = append(options, fmt.Sprintf("val >= %d", param.minimum))
+		options = append(options, fmt.Sprintf("val >= %.3f", param.minimum))
 	} else if param.maximum != 0 {
-		options = append(options, fmt.Sprintf("val <= %d", param.maximum))
+		options = append(options, fmt.Sprintf("val <= %.3f", param.maximum))
 	}
 
 	if len(options) != 0 {
@@ -79,23 +79,6 @@ func buildApibParameter(param *Param) string {
 	}
 
 	return paramStr
-}
-
-func buildApibProperty(prop *Property) string {
-	return buildApibParameter(&Param{
-		name:       prop.name,
-		typ:        prop.typ,
-		required:   prop.required,
-		desc:       prop.desc,
-		allowEmpty: prop.allowEmpty,
-		defaul:     prop.defaul,
-		example:    prop.example,
-		enums:      prop.enums,
-		minLength:  prop.minimum,
-		maxLength:  prop.maxLength,
-		minimum:    prop.minimum,
-		maximum:    prop.maxLength,
-	})
 }
 
 func buildApibPath(securities map[string]*Security, path *RoutePath) string {
@@ -256,7 +239,7 @@ func buildApibGroups(doc *Document) string {
 	}
 
 	// [#, #]
-	groupStrings := make([]string, 0, len(groups.Keys()))
+	groupStrings := make([]string, 0, groups.Length())
 
 	for _, tag := range groups.Keys() {
 		group := groups.MustGet(tag).([]*RoutePath)
@@ -283,13 +266,13 @@ func buildApibGroups(doc *Document) string {
 		}
 
 		// [##, ##]
-		pathStrings := make([]string, 0, len(paths.Keys()))
+		pathStrings := make([]string, 0, paths.Length())
 		for _, pathKey := range paths.Keys() {
 			methods := paths.MustGet(pathKey).(*orderedMap)
 
 			// [###, ###]
-			methodStrings := make([]string, 0, len(methods.Keys()))
-			summaries := make([]string, 0, len(methods.Keys()))
+			methodStrings := make([]string, 0, methods.Length())
+			summaries := make([]string, 0, methods.Length())
 			for _, methodKey := range methods.Keys() {
 				routePath := methods.MustGet(methodKey).(*RoutePath)
 				summaries = append(summaries, routePath.summary)
@@ -318,27 +301,7 @@ func buildApibGroups(doc *Document) string {
 
 func buildApibDefinitions(doc *Document) string {
 	// check and collect type names
-	allSpecTypes := make([]string, 0)
-	for _, path := range doc.paths {
-		for _, param := range path.params {
-			checkTypeName(param.typ)
-			allSpecTypes = append(allSpecTypes, param.typ)
-		}
-		for _, response := range path.responses {
-			checkTypeName(response.typ)
-			allSpecTypes = append(allSpecTypes, response.typ)
-		}
-	}
-	for _, definition := range doc.definitions {
-		for _, property := range definition.properties {
-			checkTypeName(property.typ)
-		}
-		if len(definition.generics) == 0 {
-			for _, property := range definition.properties {
-				allSpecTypes = append(allSpecTypes, property.typ)
-			}
-		}
-	}
+	allSpecTypes := collectAllSpecTypes(doc)
 
 	// prehandle cloned definition list
 	clonedDefinitions := make([]*Definition, 0, len(doc.definitions))
@@ -356,7 +319,7 @@ func buildApibDefinitions(doc *Document) string {
 
 		propertyStrings := make([]string, 0)
 		for _, property := range definition.properties {
-			propertyStr := buildApibProperty(property)
+			propertyStr := buildApibParameter(cloneParamFromProperty(property))
 			propertyStrings = append(propertyStrings, propertyStr)
 		}
 
@@ -405,13 +368,13 @@ func buildApibDocument(doc *Document) []byte {
 	infoString := strings.Join(infoArray, "\n\n")
 	template = fmt.Sprintf(template, infoString, "%s", "%s")
 
-	// route path
-	groupsString := buildApibGroups(doc)
-	template = fmt.Sprintf(template, groupsString, "%s")
-
 	// definition
 	definitionsString := buildApibDefinitions(doc)
-	template = fmt.Sprintf(template, definitionsString)
+	template = fmt.Sprintf(template, "%s", definitionsString)
+
+	// route path
+	groupsString := buildApibGroups(doc)
+	template = fmt.Sprintf(template, groupsString)
 
 	return []byte(template)
 }

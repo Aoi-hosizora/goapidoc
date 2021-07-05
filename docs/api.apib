@@ -13,143 +13,6 @@ goapidoc test api
 
 [Send email to Aoi-hosizora](mailto:a970335605@hotmail.com)
 
-# Group User
-
-user-controller
-
-## Get users [/user{?page,limit}]
-
-### Get users [GET]
-
-`GET /user`
-
-+ Parameters
-
-    + page: `1` (number, optional) - current page
-        (format: int32, val >= 1)
-        + Default: `1`
-    + limit: `20` (number, optional) - page size
-        (format: int32, val >= 15)
-        + Default: `20`
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-            Authorization: Jwt, apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<_Page<UserDto>>)
-
-    + Headers
-
-    + Body
-
-## Get a user [/user/{username}]
-
-### Get a user [GET]
-
-`GET /user/{username}`
-
-+ Parameters
-
-    + username (string, required) - username
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-            Authorization: Jwt, apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (_Result<UserDto>)
-
-    + Headers
-
-    + Body
-
-## Update user [/user/deprecated]
-
-### Update user [PUT]
-
-`PUT /user/deprecated`
-
-Attention: This api is deprecated.
-
-+ Request (application/json)
-
-    + Attributes (UpdateUserParam)
-
-    + Headers
-
-            Authorization: Jwt, apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-## Update user, Delete user [/user]
-
-### Update user [PUT]
-
-`PUT /user`
-
-+ Request (application/json)
-
-    + Attributes (UpdateUserParam)
-
-    + Headers
-
-            Authorization: Jwt, apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
-### Delete user [DELETE]
-
-`DELETE /user`
-
-+ Request (application/json)
-
-    + Attributes
-
-    + Headers
-
-            Authorization: Jwt, apiKey (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    + Attributes (Result)
-
-    + Headers
-
-    + Body
-
 # Group Test
 
 test-controller
@@ -169,7 +32,7 @@ test-controller
             + `1`
             + `2`
     + q2 (number, optional) - q2
-        (format: double, val >= -5)
+        (format: double, val >= -5.000)
     + q3: `example` (string, required) - q3
         (format: password, allow empty)
         + Default: `default`
@@ -301,6 +164,143 @@ Login.
 
     + Body
 
+# Group User
+
+user-controller
+
+## Get users [/user{?page,limit}]
+
+### Get users [GET]
+
+`GET /user`
+
++ Parameters
+
+    + page: `1` (number, optional) - current page
+        (format: int32, val >= 1.000)
+        + Default: `1`
+    + limit: `20` (number, optional) - page size
+        (format: int32, val >= 15.000)
+        + Default: `20`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<_Page<UserDto>>)
+
+    + Headers
+
+    + Body
+
+## Get a user [/user/{username}]
+
+### Get a user [GET]
+
+`GET /user/{username}`
+
++ Parameters
+
+    + username (string, required) - username
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<UserDto>)
+
+    + Headers
+
+    + Body
+
+## Update user [/user/deprecated]
+
+### Update user [PUT]
+
+`PUT /user/deprecated`
+
+Attention: This api is deprecated.
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+## Update user, Delete user [/user]
+
+### Update user [PUT]
+
+`PUT /user`
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+### Delete user [DELETE]
+
+`DELETE /user`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+            Authorization: Jwt, apiKey (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (Result)
+
+    + Headers
+
+    + Body
+
 # Data Structures
 
 ## Result (object)
@@ -331,9 +331,9 @@ Login.
 ## RegisterParam (object)
 
 + username (string, required) - username
-    (len <= 30, val <= 30)
+    (len in \[5, 30\])
 + password (string, required) - password
-    (len <= 30, val <= 30)
+    (len in \[5, 30\])
 
 ## LoginParam (object)
 

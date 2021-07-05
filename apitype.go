@@ -178,14 +178,56 @@ func defaultFormat(typ string) string {
 	return ""
 }
 
-// prehandleDefinition prehandles and returns a cloned Definition with new generic type name.
+// collectAllSpecTypes checks and collects all specific types.
+func collectAllSpecTypes(doc *Document) []string {
+	// check all type names (param, resp, prop)
+	cnt := 0
+	for _, path := range doc.paths {
+		cnt += len(path.params) + len(path.responses)
+		for _, param := range path.params {
+			checkTypeName(param.typ)
+		}
+		for _, resp := range path.responses {
+			checkTypeName(resp.typ)
+		}
+	}
+	for _, def := range doc.definitions {
+		for _, prop := range def.properties {
+			checkTypeName(prop.typ)
+		}
+		if len(def.generics) == 0 {
+			cnt += len(def.properties)
+		}
+	}
+
+	// collect all specific types
+	out := make([]string, 0, cnt)
+	for _, path := range doc.paths {
+		for _, param := range path.params {
+			out = append(out, param.typ)
+		}
+		for _, resp := range path.responses {
+			out = append(out, resp.typ)
+		}
+	}
+	for _, def := range doc.definitions {
+		if len(def.generics) == 0 {
+			for _, prop := range def.properties {
+				out = append(out, prop.typ)
+			}
+		}
+	}
+	return out
+}
+
+// prehandleDefinition deduplicates, checks and prehandles generic names, and returns a new cloned Definition.
 func prehandleDefinition(definition *Definition) *Definition {
-	// check and deduplicate generic names
+	// deduplicate and check generic names
 	generics := make([]string, 0, len(definition.generics))
 	for _, gen := range definition.generics {
 		contained := false
-		for _, newGen := range generics {
-			if newGen == gen {
+		for _, g := range generics {
+			if g == gen {
 				contained = true
 				break
 			}
@@ -206,28 +248,15 @@ func prehandleDefinition(definition *Definition) *Definition {
 		properties: make([]*Property, 0, len(definition.properties)),
 	}
 	for _, prop := range definition.properties {
-		out.properties = append(out.properties, &Property{
-			name:       prop.name,
-			typ:        prop.typ,
-			required:   prop.required,
-			desc:       prop.desc,
-			allowEmpty: prop.allowEmpty,
-			defaul:     prop.defaul,
-			example:    prop.example,
-			enums:      prop.enums,
-			minLength:  prop.minLength,
-			maxLength:  prop.maxLength,
-			minimum:    prop.minimum,
-			maximum:    prop.maximum,
-		})
+		out.properties = append(out.properties, cloneProperty(prop))
 	}
 
 	// update generic type name
 	for idx, gen := range out.generics {
 		newGen := "«" + gen + "»"
-		re := regexp.MustCompile(`(^|[,\s<])` + gen + `([,\s<>\[]|$)`) // {,\s<>[]} => {,\s<} xxx {,\s<>[}
+		re := regexp.MustCompile(`(^|[,\s<])` + gen + `([,\s<>\[]|$)`) // {,\s<} xxx {,\s<>[}
 		for _, prop := range out.properties {
-			for { // replace all
+			for { // replace all property type
 				curr := prop.typ
 				prop.typ = strings.ReplaceAll(prop.typ, " ", "")
 				prop.typ = re.ReplaceAllString(prop.typ, "$1"+newGen+"$2") // T -> «T»
@@ -242,24 +271,27 @@ func prehandleDefinition(definition *Definition) *Definition {
 	return out
 }
 
-// prehandleDefinitionList prehandles and returns final Definition list with given Definition list and type list.
+// prehandleDefinitionList prehandles and returns the final Definition list with given and type list.
 func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []*Definition {
 	// extract generic definitions from given definitions
-	allDefTypes := make(map[string]bool, len(allDefinitions))
-	genericDefs := make(map[string]*Definition)    // generic definitions
-	finalMap := newOrderedMap(len(allDefinitions)) // map[string]*Definition
-	for _, definition := range allDefinitions {
-		allDefTypes[definition.name] = true
-		if len(definition.generics) != 0 {
-			genericDefs[definition.name] = definition
-		} else {
-			finalMap.Set(definition.name, definition) // plain definition
+	allDefMap := make(map[string]*Definition, len(allDefinitions))
+	outMap := newOrderedMap(len(allDefinitions)) // map[string]*Definition
+	for _, def := range allDefinitions {
+		if _, ok := allDefMap[def.name]; ok {
+			panic("Duplicate definition `" + def.name + "`")
+		}
+		allDefMap[def.name] = def
+		if len(def.generics) == 0 {
+			outMap.Set(def.name, def) // definition without generic
 		}
 	}
 
 	// extract more definitions from given types
 	var extractFn func(typ string)
 	extractFn = func(typ string) {
+		if outMap.Has(typ) {
+			return
+		}
 		at := parseApiType(typ)
 		for at.kind == apiArrayKind {
 			at = at.array.item
@@ -267,75 +299,57 @@ func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []
 		if at.kind != apiObjectKind {
 			return
 		}
-		_, ok := allDefTypes[at.object.typ]
+		// `at` belongs to object
+		obj := at.object
+
+		// check object existence and generic parameter
+		genDef, ok := allDefMap[obj.typ]
 		if !ok {
-			panic("Invalid type `" + typ + "`") // object type not found
+			panic("Object type `" + at.name + "` not found")
 		}
-		if len(at.object.generics) == 0 {
+		if len(obj.generics) != len(genDef.generics) {
+			panic("Object type `" + at.name + "`'s generic parameter length is not matched")
+		}
+		if len(obj.generics) == 0 {
 			return
 		}
 
-		// check and get object with generic
-		genDef, ok := genericDefs[at.object.typ]
-		if !ok {
-			panic("Invalid type `" + typ + "`") // object type has no generic defined
-		}
-		if len(at.object.generics) != len(genDef.generics) {
-			panic("Invalid type `" + typ + "`") // generic parameter length not matched
-		}
-
-		// new definition need to be added
-		newDef := &Definition{
+		// specific definition need to be added
+		specDef := &Definition{
 			name:       genDef.name, // TypeName<GenericName, ...>
 			desc:       genDef.desc,
-			generics:   make([]string, 0), // empty
+			generics:   nil, // empty
 			properties: make([]*Property, 0, len(genDef.properties)),
 		}
 		for _, prop := range genDef.properties {
-			newDef.properties = append(newDef.properties, &Property{
-				name:       prop.name,
-				typ:        prop.typ, // << need to extract recurrently
-				required:   prop.required,
-				desc:       prop.desc,
-				allowEmpty: prop.allowEmpty,
-				defaul:     prop.defaul,
-				example:    prop.example,
-				enums:      prop.enums,
-				minLength:  prop.minLength,
-				maxLength:  prop.maxLength,
-				minimum:    prop.minimum,
-				maximum:    prop.maximum,
-			})
+			specDef.properties = append(specDef.properties, cloneProperty(prop)) // << need to extract type recurrently
 		}
-
 		// replace to spec name for new definition
 		specNames := make([]string, 0, len(genDef.generics))
 		for idx, genName := range genDef.generics {
-			specName := at.object.generics[idx].name
+			specName := obj.generics[idx].name
 			specNames = append(specNames, specName)
-			for _, prop := range newDef.properties {
+			for _, prop := range specDef.properties {
 				prop.typ = strings.ReplaceAll(prop.typ, genName, specName) // «T» -> XXX, replace directly
 			}
 		}
-		newDef.name += "<" + strings.Join(specNames, ", ") + ">" // TypeName -> TypeName<GenericName, ...>
+		specDef.name += "<" + strings.Join(specNames, ", ") + ">" // TypeName -> TypeName<GenericName, ...>
 
-		// extract recurrently and append to finalMap
-		for _, prop := range newDef.properties {
-			if !finalMap.Has(prop.typ) {
-				extractFn(prop.typ) // << extract property type recurrently
-			}
+		// extract recurrently and append to outMap
+		for _, prop := range specDef.properties {
+			extractFn(prop.typ) // << extract property type recurrently
 		}
-		finalMap.Set(newDef.name, newDef)
+		outMap.Set(specDef.name, specDef)
 	}
+	// for all types, extract generic parameters to definition list
 	for _, typ := range allTypes {
 		extractFn(typ)
 	}
 
-	// convert ordered-map to definition slice
-	outDefs := make([]*Definition, 0, len(finalMap.Keys()))
-	for _, key := range finalMap.Keys() {
-		def := finalMap.MustGet(key).(*Definition)
-		outDefs = append(outDefs, def)
+	// convert ordered-map to slice
+	outDefs := make([]*Definition, 0, outMap.Length())
+	for _, name := range outMap.Keys() {
+		outDefs = append(outDefs, outMap.MustGet(name).(*Definition))
 	}
 	return outDefs
 }

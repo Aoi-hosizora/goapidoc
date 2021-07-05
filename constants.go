@@ -57,3 +57,11 @@ const (
 	JPEG  = "image/jpeg"                        // JPEG mime data: image/jpeg
 	GIF   = "image/gif"                         // GIF mime data: image/gif
 )
+
+const (
+	CSV   = "csv"   // CSV collection format: foo,bar
+	SSV   = "ssv"   // SSV collection format: foo bar
+	TSV   = "tsv"   // TSV collection format: foo\tbar
+	PIPES = "pipes" // PIPES collection format: foo|bar
+	MULTI = "multi" // MULTI collection format: foo=bar&foo=baz
+)

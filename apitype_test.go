@@ -263,6 +263,14 @@ func TestPrehandleDefinitionList(t *testing.T) {
 		prehandledDefinitions = append(prehandledDefinitions, prehandleDefinition(definition))
 	}
 
+	t.Run("dup definition", func(t *testing.T) {
+		testPanic(t, true, func() {
+			prehandleDefinitionList([]*Definition{{name: "UserDto"}, {name: "UserDto"}}, []string{})
+		}, "prehandleDefinitionList")
+		testPanic(t, true, func() {
+			prehandleDefinitionList([]*Definition{{name: "Result", generics: []string{"T"}}, {name: "Result"}}, []string{})
+		}, "prehandleDefinitionList")
+	})
 	for _, tc := range []struct {
 		name            string
 		giveTypes       []string
@@ -271,16 +279,13 @@ func TestPrehandleDefinitionList(t *testing.T) {
 		wantPropNames   [][]string
 		wantPropTypes   [][]string
 	}{
-		{"", []string{""}, true, []string{"UserDto", "ErrorDto"},
+		{"empty", []string{}, false, []string{"UserDto", "ErrorDto"},
 			[][]string{{"uid", "name"}, {"type", "detail"}},
 			[][]string{{"integer", "string"}, {"string", "string"}}},
 		{"UserDto, ErrorDto", []string{"UserDto", "ErrorDto"}, false, []string{"UserDto", "ErrorDto"},
 			[][]string{{"uid", "name"}, {"type", "detail"}},
 			[][]string{{"integer", "string"}, {"string", "string"}}},
 		{"integer", []string{"integer"}, false, []string{"UserDto", "ErrorDto"},
-			[][]string{{"uid", "name"}, {"type", "detail"}},
-			[][]string{{"integer", "string"}, {"string", "string"}}},
-		{"Object", []string{"Object"}, true, []string{"UserDto", "ErrorDto"},
 			[][]string{{"uid", "name"}, {"type", "detail"}},
 			[][]string{{"integer", "string"}, {"string", "string"}}},
 		{"Result<integer>", []string{"Result<integer>"}, false, []string{"UserDto", "ErrorDto", "Result<integer>"},
@@ -317,18 +322,13 @@ func TestPrehandleDefinitionList(t *testing.T) {
 			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}, {"code", "data", "error"}, {"code", "data"}, {"code", "data"}, {"code", "data"}, {"total", "data"}},
 			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto"}, {"integer", "Result<UserDto>", "ErrorDto"}, {"integer", "UserDto[]"}, {"integer", "Result<UserDto[]>"}, {"integer", "Result<UserDto>"}, {"integer", "Result<Result<UserDto>>[]"}}},
 
-		{"integer<integer>", []string{"integer<integer>"}, true, []string{"UserDto", "ErrorDto"},
-			[][]string{{"uid", "name"}, {"type", "detail"}},
-			[][]string{{"integer", "string"}, {"string", "string"}}},
-		{"UserDto<integer>", []string{"UserDto<integer>"}, true, []string{"UserDto", "ErrorDto"},
-			[][]string{{"uid", "name"}, {"type", "detail"}},
-			[][]string{{"integer", "string"}, {"string", "string"}}},
-		{"Result<UserDto, ErrorDto>", []string{"Result<UserDto, ErrorDto>"}, true, []string{"UserDto", "ErrorDto", "Result<UserDto>"},
-			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}},
-			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto"}}},
-		{"Result2<UserDto>", []string{"Result2<UserDto>"}, true, []string{"UserDto", "ErrorDto"},
-			[][]string{{"uid", "name"}, {"type", "detail"}},
-			[][]string{{"integer", "string"}, {"string", "string"}}},
+		{"blank type", []string{""}, true, nil,nil,nil},
+		{"not found", []string{"xxx"}, true, nil,nil,nil},
+		{"not found sub type", []string{"Result<xxx>"}, true, nil,nil,nil},
+		{"integer<integer>", []string{"integer<integer>"}, true, nil,nil,nil},
+		{"UserDto<integer>", []string{"UserDto<integer>"}, true, nil,nil,nil},
+		{"Result<UserDto, ErrorDto>", []string{"Result<UserDto, ErrorDto>"}, true, nil,nil,nil},
+		{"Result2<UserDto>", []string{"Result2<UserDto>"}, true, nil,nil,nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			testPanic(t, tc.wantPanic, func() {

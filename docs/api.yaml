@@ -39,18 +39,15 @@ paths:
         required: true
         description: login param
         schema:
-          originRef: LoginParam
           $ref: '#/definitions/LoginParam'
       responses:
         "200":
           schema:
-            originRef: _Result<LoginDto>
             $ref: '#/definitions/_Result<LoginDto>'
         "400":
           examples:
             application/json: "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"
           schema:
-            originRef: Result
             $ref: '#/definitions/Result'
   /auth/logout:
     delete:
@@ -63,7 +60,6 @@ paths:
       responses:
         "200":
           schema:
-            originRef: Result
             $ref: '#/definitions/Result'
   /auth/register:
     post:
@@ -78,12 +74,10 @@ paths:
         required: true
         description: register param
         schema:
-          originRef: RegisterParam
           $ref: '#/definitions/RegisterParam'
       responses:
         "200":
           schema:
-            originRef: Result
             $ref: '#/definitions/Result'
   /test/a:
     head:
@@ -150,7 +144,6 @@ paths:
               type: string
               description: my token
           schema:
-            originRef: Result
             $ref: '#/definitions/Result'
         "409":
           description: 409 Conflict
@@ -167,7 +160,6 @@ paths:
       responses:
         "200":
           schema:
-            originRef: Result
             $ref: '#/definitions/Result'
     get:
       summary: Get users
@@ -198,7 +190,6 @@ paths:
       responses:
         "200":
           schema:
-            originRef: _Result<_Page<UserDto>>
             $ref: '#/definitions/_Result<_Page<UserDto>>'
     put:
       summary: Update user
@@ -213,17 +204,15 @@ paths:
         required: true
         description: update user param
         schema:
-          originRef: UpdateUserParam
           $ref: '#/definitions/UpdateUserParam'
       responses:
         "200":
           schema:
-            originRef: Result
             $ref: '#/definitions/Result'
   /user/{username}:
     get:
       summary: Get a user
-      operationId: -user-username-get
+      operationId: -user-:username-get
       tags:
       - User
       security:
@@ -237,7 +226,6 @@ paths:
       responses:
         "200":
           schema:
-            originRef: _Result<UserDto>
             $ref: '#/definitions/_Result<UserDto>'
   /user/deprecated:
     put:
@@ -254,12 +242,10 @@ paths:
         required: true
         description: update user param
         schema:
-          originRef: UpdateUserParam
           $ref: '#/definitions/UpdateUserParam'
       responses:
         "200":
           schema:
-            originRef: Result
             $ref: '#/definitions/Result'
 definitions:
   _Page<UserDto>:
@@ -276,7 +262,6 @@ definitions:
         required: true
         description: response data
         items:
-          originRef: UserDto
           $ref: '#/definitions/UserDto'
       limit:
         type: integer
@@ -309,7 +294,6 @@ definitions:
       data:
         required: true
         description: response data
-        originRef: _Page<UserDto>
         $ref: '#/definitions/_Page<UserDto>'
       message:
         type: string
@@ -331,7 +315,6 @@ definitions:
       data:
         required: true
         description: response data
-        originRef: LoginDto
         $ref: '#/definitions/LoginDto'
       message:
         type: string
@@ -353,7 +336,6 @@ definitions:
       data:
         required: true
         description: response data
-        originRef: UserDto
         $ref: '#/definitions/UserDto'
       message:
         type: string
@@ -373,7 +355,6 @@ definitions:
       user:
         required: true
         description: authorized user
-        originRef: UserDto
         $ref: '#/definitions/UserDto'
   LoginParam:
     type: object

@@ -54,7 +54,6 @@
             "required": true,
             "description": "login param",
             "schema": {
-              "originRef": "LoginParam",
               "$ref": "#/definitions/LoginParam"
             }
           }
@@ -62,7 +61,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "_Result<LoginDto>",
               "$ref": "#/definitions/_Result<LoginDto>"
             }
           },
@@ -71,7 +69,6 @@
               "application/json": "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"
             },
             "schema": {
-              "originRef": "Result",
               "$ref": "#/definitions/Result"
             }
           }
@@ -93,7 +90,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "Result",
               "$ref": "#/definitions/Result"
             }
           }
@@ -115,7 +111,6 @@
             "required": true,
             "description": "register param",
             "schema": {
-              "originRef": "RegisterParam",
               "$ref": "#/definitions/RegisterParam"
             }
           }
@@ -123,7 +118,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "Result",
               "$ref": "#/definitions/Result"
             }
           }
@@ -217,7 +211,6 @@
               }
             },
             "schema": {
-              "originRef": "Result",
               "$ref": "#/definitions/Result"
             }
           },
@@ -245,7 +238,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "Result",
               "$ref": "#/definitions/Result"
             }
           }
@@ -289,7 +281,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "_Result<_Page<UserDto>>",
               "$ref": "#/definitions/_Result<_Page<UserDto>>"
             }
           }
@@ -313,7 +304,6 @@
             "required": true,
             "description": "update user param",
             "schema": {
-              "originRef": "UpdateUserParam",
               "$ref": "#/definitions/UpdateUserParam"
             }
           }
@@ -321,7 +311,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "Result",
               "$ref": "#/definitions/Result"
             }
           }
@@ -348,7 +337,6 @@
             "required": true,
             "description": "update user param",
             "schema": {
-              "originRef": "UpdateUserParam",
               "$ref": "#/definitions/UpdateUserParam"
             }
           }
@@ -356,7 +344,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "Result",
               "$ref": "#/definitions/Result"
             }
           }
@@ -366,7 +353,7 @@
     "/user/{username}": {
       "get": {
         "summary": "Get a user",
-        "operationId": "-user-username-get",
+        "operationId": "-user-:username-get",
         "tags": [
           "User"
         ],
@@ -387,7 +374,6 @@
         "responses": {
           "200": {
             "schema": {
-              "originRef": "_Result<UserDto>",
               "$ref": "#/definitions/_Result<UserDto>"
             }
           }
@@ -407,7 +393,6 @@
         "user": {
           "required": true,
           "description": "authorized user",
-          "originRef": "UserDto",
           "$ref": "#/definitions/UserDto"
         },
         "token": {
@@ -600,7 +585,6 @@
           "required": true,
           "description": "response data",
           "items": {
-            "originRef": "UserDto",
             "$ref": "#/definitions/UserDto"
           }
         }
@@ -629,7 +613,6 @@
         "data": {
           "required": true,
           "description": "response data",
-          "originRef": "LoginDto",
           "$ref": "#/definitions/LoginDto"
         }
       }
@@ -657,7 +640,6 @@
         "data": {
           "required": true,
           "description": "response data",
-          "originRef": "UserDto",
           "$ref": "#/definitions/UserDto"
         }
       }
@@ -685,7 +667,6 @@
         "data": {
           "required": true,
           "description": "response data",
-          "originRef": "_Page\u003cUserDto\u003e",
           "$ref": "#/definitions/_Page\u003cUserDto\u003e"
         }
       }

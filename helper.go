@@ -48,6 +48,10 @@ func newOrderedMap(cap int) *orderedMap {
 	}
 }
 
+func (l *orderedMap) Length() int {
+	return len(l.i)
+}
+
 func (l *orderedMap) Keys() []string {
 	return l.i
 }

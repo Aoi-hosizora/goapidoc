@@ -70,8 +70,8 @@ type Property struct {
 	enums      []interface{}
 	minLength  int
 	maxLength  int
-	minimum    int
-	maximum    int
+	minimum    float64
+	maximum    float64
 }
 
 // NewProperty creates a default Property with given arguments.
@@ -89,8 +89,8 @@ func (p *Property) GetExample() interface{} { return p.example }
 func (p *Property) GetEnums() []interface{} { return p.enums }
 func (p *Property) GetMinLength() int       { return p.minLength }
 func (p *Property) GetMaxLength() int       { return p.maxLength }
-func (p *Property) GetMinimum() int         { return p.minimum }
-func (p *Property) GetMaximum() int         { return p.maximum }
+func (p *Property) GetMinimum() float64     { return p.minimum }
+func (p *Property) GetMaximum() float64     { return p.maximum }
 
 // Name sets the name in Property.
 func (p *Property) Name(name string) *Property {
@@ -161,20 +161,66 @@ func (p *Property) Length(min, max int) *Property {
 }
 
 // Minimum sets the minimum in Property.
-func (p *Property) Minimum(min int) *Property {
+// TODO BREAK CHANGES
+func (p *Property) Minimum(min float64) *Property {
 	p.minimum = min
 	return p
 }
 
 // Maximum sets the maximum in Property.
-func (p *Property) Maximum(max int) *Property {
+// TODO BREAK CHANGES
+func (p *Property) Maximum(max float64) *Property {
 	p.maximum = max
 	return p
 }
 
 // MinMaximum sets the minimum and maximum in Property.
-func (p *Property) MinMaximum(min, max int) *Property {
+// TODO BREAK CHANGES
+func (p *Property) MinMaximum(min, max float64) *Property {
 	p.minimum = min
 	p.maximum = max
 	return p
+}
+
+// cloneProperty clones the given Property.
+func cloneProperty(p *Property) *Property {
+	return &Property{
+		name:       p.name,
+		typ:        p.typ,
+		required:   p.required,
+		desc:       p.desc,
+		allowEmpty: p.allowEmpty,
+		defaul:     p.defaul,
+		example:    p.example,
+		enums:      p.enums,
+		minLength:  p.minLength,
+		maxLength:  p.maxLength,
+		minimum:    p.minimum,
+		maximum:    p.maximum,
+	}
+}
+
+// cloneParamFromProperty clones the given Property to Param.
+func cloneParamFromProperty(p *Property) *Param {
+	return &Param{
+		name: p.name,
+		// in: p.in,
+		typ:        p.typ,
+		required:   p.required,
+		desc:       p.desc,
+		allowEmpty: p.allowEmpty,
+		defaul:     p.defaul,
+		example:    p.example,
+		// pattern: p.pattern,
+		enums:     p.enums,
+		minLength: p.minLength,
+		maxLength: p.maxLength,
+		// minItems: p.minItems,
+		// maxItems: p.maxItems,
+		// uniqueItems: p.uniqueItems,
+		minimum: p.minimum,
+		maximum: p.maximum,
+		// exclusiveMin: p.exclusiveMin,
+		// exclusiveMax: p.exclusiveMax,
+	}
 }

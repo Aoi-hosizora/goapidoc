@@ -353,7 +353,7 @@ func NewBasicSecurity(title string) *Security {
 func (s *Security) GetTitle() string { return s.title }
 func (s *Security) GetType() string  { return s.typ }
 func (s *Security) GetDesc() string  { return s.desc }
-func (s *Security) GetIn() string    { return s.in }
+func (s *Security) GetInLoc() string { return s.in }
 func (s *Security) GetName() string  { return s.name }
 
 // Title sets the title in Security.
@@ -374,8 +374,8 @@ func (s *Security) Desc(desc string) *Security {
 	return s
 }
 
-// In sets the in-location in Security.
-func (s *Security) In(in string) *Security {
+// InLoc sets the in-location in Security.
+func (s *Security) InLoc(in string) *Security {
 	s.in = in
 	return s
 }
