@@ -115,7 +115,7 @@ func TestGenerate(t *testing.T) {
 					Headers(
 						NewHeader("Content-Type", "string", "content type"),
 						NewHeader("X-My-Token", "string", "my token"),
-						NewHeader("X-My-Object", "UserDto", "my object"),
+						NewHeader("X-My-Number", "number", "my number"),
 					),
 				NewResponse(409, "string").Desc("409 Conflict"),
 			),

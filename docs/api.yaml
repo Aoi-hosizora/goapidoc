@@ -42,9 +42,11 @@ paths:
           $ref: '#/definitions/LoginParam'
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/_Result<LoginDto>'
         "400":
+          description: Bad Request
           examples:
             application/json: "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"
           schema:
@@ -59,6 +61,7 @@ paths:
       - Jwt: []
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/Result'
   /auth/register:
@@ -77,6 +80,7 @@ paths:
           $ref: '#/definitions/RegisterParam'
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/Result'
   /test/a:
@@ -91,8 +95,8 @@ paths:
       - name: q1
         in: query
         required: true
-        type: string
         description: q1
+        type: string
         format: date-time
         enum:
         - 0
@@ -101,15 +105,15 @@ paths:
       - name: q2
         in: query
         required: false
-        type: number
         description: q2
+        type: number
         format: double
         minimum: -5
       - name: q3
         in: query
         required: true
-        type: string
         description: q3
+        type: string
         format: password
         allowEmptyValue: true
         default: default
@@ -117,19 +121,19 @@ paths:
       - name: f1
         in: formData
         required: true
-        type: file
         description: f1
+        type: file
       - name: f2
         in: formData
         required: true
-        type: string
         description: f2
+        type: string
         allowEmptyValue: true
       - name: Authorization
         in: header
         required: false
-        type: string
         description: authorization
+        type: string
       responses:
         "200":
           description: 200 Success
@@ -137,9 +141,10 @@ paths:
             Content-Type:
               type: string
               description: content type
-            X-My-Object:
-              type: UserDto
-              description: my object
+            X-My-Number:
+              type: number
+              format: double
+              description: my number
             X-My-Token:
               type: string
               description: my token
@@ -159,6 +164,7 @@ paths:
       - Jwt: []
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/Result'
     get:
@@ -172,8 +178,8 @@ paths:
       - name: page
         in: query
         required: false
-        type: integer
         description: current page
+        type: integer
         format: int32
         default: 1
         example: 1
@@ -181,14 +187,15 @@ paths:
       - name: limit
         in: query
         required: false
-        type: integer
         description: page size
+        type: integer
         format: int32
         default: 20
         example: 20
         minimum: 15
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/_Result<_Page<UserDto>>'
     put:
@@ -207,6 +214,7 @@ paths:
           $ref: '#/definitions/UpdateUserParam'
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/Result'
   /user/{username}:
@@ -221,10 +229,11 @@ paths:
       - name: username
         in: path
         required: true
-        type: string
         description: username
+        type: string
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/_Result<UserDto>'
   /user/deprecated:
@@ -245,6 +254,7 @@ paths:
           $ref: '#/definitions/UpdateUserParam'
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/Result'
 definitions:
@@ -259,25 +269,21 @@ definitions:
     properties:
       data:
         type: array
-        required: true
         description: response data
         items:
           $ref: '#/definitions/UserDto'
       limit:
         type: integer
-        required: true
-        description: page size
         format: int32
+        description: page size
       page:
         type: integer
-        required: true
-        description: current page
         format: int32
+        description: current page
       total:
         type: integer
-        required: true
-        description: total count
         format: int32
+        description: total count
   _Result<_Page<UserDto>>:
     type: object
     required:
@@ -288,16 +294,12 @@ definitions:
     properties:
       code:
         type: integer
-        required: true
-        description: status code
         format: int32
+        description: status code
       data:
-        required: true
-        description: response data
         $ref: '#/definitions/_Page<UserDto>'
       message:
         type: string
-        required: true
         description: status message
   _Result<LoginDto>:
     type: object
@@ -309,16 +311,12 @@ definitions:
     properties:
       code:
         type: integer
-        required: true
-        description: status code
         format: int32
+        description: status code
       data:
-        required: true
-        description: response data
         $ref: '#/definitions/LoginDto'
       message:
         type: string
-        required: true
         description: status message
   _Result<UserDto>:
     type: object
@@ -330,16 +328,12 @@ definitions:
     properties:
       code:
         type: integer
-        required: true
-        description: status code
         format: int32
+        description: status code
       data:
-        required: true
-        description: response data
         $ref: '#/definitions/UserDto'
       message:
         type: string
-        required: true
         description: status message
   LoginDto:
     type: object
@@ -350,11 +344,8 @@ definitions:
     properties:
       token:
         type: string
-        required: true
         description: access token
       user:
-        required: true
-        description: authorized user
         $ref: '#/definitions/UserDto'
   LoginParam:
     type: object
@@ -365,11 +356,9 @@ definitions:
     properties:
       parameter:
         type: string
-        required: true
         description: login parameter
       password:
         type: string
-        required: true
         description: password
   RegisterParam:
     type: object
@@ -380,13 +369,11 @@ definitions:
     properties:
       password:
         type: string
-        required: true
         description: password
         maxLength: 30
         minLength: 5
       username:
         type: string
-        required: true
         description: username
         maxLength: 30
         minLength: 5
@@ -399,13 +386,11 @@ definitions:
     properties:
       code:
         type: integer
-        required: true
-        description: status code
         format: int32
+        description: status code
         example: "200"
       message:
         type: string
-        required: true
         description: status message
         example: success
   UpdateUserParam:
@@ -419,7 +404,6 @@ definitions:
     properties:
       gender:
         type: string
-        required: true
         description: user gender
         enum:
         - secret
@@ -427,16 +411,13 @@ definitions:
         - female
       nickname:
         type: string
-        required: true
         description: nickname
       profile:
         type: string
-        required: true
         description: user profile
         allowEmptyValue: true
       username:
         type: string
-        required: true
         description: username
   UserDto:
     type: object
@@ -450,7 +431,6 @@ definitions:
     properties:
       gender:
         type: string
-        required: true
         description: user gender
         enum:
         - secret
@@ -458,19 +438,15 @@ definitions:
         - female
       nickname:
         type: string
-        required: true
         description: nickname
       profile:
         type: string
-        required: true
         description: user profile
         allowEmptyValue: true
       uid:
         type: integer
-        required: true
-        description: user id
         format: int64
+        description: user id
       username:
         type: string
-        required: true
         description: username

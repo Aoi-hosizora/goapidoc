@@ -264,7 +264,7 @@ func (r *Response) AddHeaders(headers ...*Header) *Response {
 // Header represents a response header information of Response.
 type Header struct {
 	name string
-	typ  string // basic type
+	typ  string // primitive type
 	desc string
 }
 
@@ -303,7 +303,7 @@ func (h *Header) Desc(desc string) *Header {
 type Param struct {
 	name     string
 	in       string
-	typ      string // string number integer boolean array (file)
+	typ      string // string number integer boolean array file
 	required bool
 	desc     string
 

@@ -13,68 +13,6 @@ goapidoc test api
 
 [Send email to Aoi-hosizora](mailto:a970335605@hotmail.com)
 
-# Group Test
-
-test-controller
-
-## Test a [/test/a{?q1,q2,q3}]
-
-### Test a [HEAD]
-
-`HEAD /test/a`
-
-+ Parameters
-
-    + q1 (enum[string], required) - q1
-        (format: date-time)
-        + Members
-            + `0`
-            + `1`
-            + `2`
-    + q2 (number, optional) - q2
-        (format: double, val >= -5.000)
-    + q3: `example` (string, required) - q3
-        (format: password, allow empty)
-        + Default: `default`
-
-+ Request (application/json)
-
-    + Attributes
-
-        + f1 (file, required) - f1
-        + f2 (string, required) - f2
-            (allow empty)
-
-    + Headers
-
-            Authorization: authorization (string, optional)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    200 Success
-
-    + Attributes (Result)
-
-    + Headers
-
-            Content-Type: content type (string)
-            X-My-Token: my token (string)
-            X-My-Object: my object (UserDto)
-
-    + Body
-
-+ Response 409 (application/json)
-
-    409 Conflict
-
-    + Attributes (string)
-
-    + Headers
-
-    + Body
-
 # Group Authorization
 
 auth-controller
@@ -296,6 +234,68 @@ Attention: This api is deprecated.
 + Response 200 (application/json)
 
     + Attributes (Result)
+
+    + Headers
+
+    + Body
+
+# Group Test
+
+test-controller
+
+## Test a [/test/a{?q1,q2,q3}]
+
+### Test a [HEAD]
+
+`HEAD /test/a`
+
++ Parameters
+
+    + q1 (enum[string], required) - q1
+        (format: date-time)
+        + Members
+            + `0`
+            + `1`
+            + `2`
+    + q2 (number, optional) - q2
+        (format: double, val >= -5.000)
+    + q3: `example` (string, required) - q3
+        (format: password, allow empty)
+        + Default: `default`
+
++ Request (application/json)
+
+    + Attributes
+
+        + f1 (file, required) - f1
+        + f2 (string, required) - f2
+            (allow empty)
+
+    + Headers
+
+            Authorization: authorization (string, optional)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 Success
+
+    + Attributes (Result)
+
+    + Headers
+
+            Content-Type: content type (string)
+            X-My-Token: my token (string)
+            X-My-Number: my number (number)
+
+    + Body
+
++ Response 409 (application/json)
+
+    409 Conflict
+
+    + Attributes (string)
 
     + Headers
 

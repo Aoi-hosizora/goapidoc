@@ -319,7 +319,7 @@ func buildApibDefinitions(doc *Document) string {
 
 		propertyStrings := make([]string, 0)
 		for _, property := range definition.properties {
-			propertyStr := buildApibParameter(cloneParamFromProperty(property))
+			propertyStr := buildApibParameter(createParamFromProperty(property))
 			propertyStrings = append(propertyStrings, propertyStr)
 		}
 

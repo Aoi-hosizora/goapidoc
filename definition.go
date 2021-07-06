@@ -60,18 +60,26 @@ func (d *Definition) AddProperties(properties ...*Property) *Definition {
 // Property represents a definition property information of Definition.
 type Property struct {
 	name     string
-	typ      string
+	typ      string // string number integer boolean array
 	required bool
 	desc     string
 
-	allowEmpty bool
-	defaul     interface{}
-	example    interface{}
-	enums      []interface{}
-	minLength  int
-	maxLength  int
-	minimum    float64
-	maximum    float64
+	allowEmpty       bool
+	defaul           interface{}
+	example          interface{}
+	pattern          string
+	enums            []interface{}
+	minLength        int
+	maxLength        int
+	minItems         int
+	maxItems         int
+	uniqueItems      bool
+	collectionFormat string
+	minimum          float64
+	maximum          float64
+	exclusiveMin     bool
+	exclusiveMax     bool
+	multipleOf       float64
 }
 
 // NewProperty creates a default Property with given arguments.
@@ -79,18 +87,25 @@ func NewProperty(name, typ string, required bool, desc string) *Property {
 	return &Property{name: name, typ: typ, required: required, desc: desc}
 }
 
-func (p *Property) GetName() string         { return p.name }
-func (p *Property) GetType() string         { return p.typ }
-func (p *Property) GetRequired() bool       { return p.required }
-func (p *Property) GetDesc() string         { return p.desc }
-func (p *Property) GetAllowEmpty() bool     { return p.allowEmpty }
-func (p *Property) GetDefault() interface{} { return p.defaul }
-func (p *Property) GetExample() interface{} { return p.example }
-func (p *Property) GetEnums() []interface{} { return p.enums }
-func (p *Property) GetMinLength() int       { return p.minLength }
-func (p *Property) GetMaxLength() int       { return p.maxLength }
-func (p *Property) GetMinimum() float64     { return p.minimum }
-func (p *Property) GetMaximum() float64     { return p.maximum }
+func (p *Property) GetName() string             { return p.name }
+func (p *Property) GetType() string             { return p.typ }
+func (p *Property) GetRequired() bool           { return p.required }
+func (p *Property) GetAllowEmpty() bool         { return p.allowEmpty }
+func (p *Property) GetDefault() interface{}     { return p.defaul }
+func (p *Property) GetExample() interface{}     { return p.example }
+func (p *Property) GetPattern() string          { return p.pattern }
+func (p *Property) GetEnums() []interface{}     { return p.enums }
+func (p *Property) GetMinLength() int           { return p.minLength }
+func (p *Property) GetMaxLength() int           { return p.maxLength }
+func (p *Property) GetMinItems() int            { return p.minItems }
+func (p *Property) GetMaxItems() int            { return p.maxItems }
+func (p *Property) GetUniqueItems() bool        { return p.uniqueItems }
+func (p *Property) GetCollectionFormat() string { return p.collectionFormat }
+func (p *Property) GetMinimum() float64         { return p.minimum }
+func (p *Property) GetMaximum() float64         { return p.maximum }
+func (p *Property) GetExclusiveMin() bool       { return p.exclusiveMin }
+func (p *Property) GetExclusiveMax() bool       { return p.exclusiveMax }
+func (p *Property) GetMultipleOf() float64      { return p.multipleOf }
 
 // Name sets the name in Property.
 func (p *Property) Name(name string) *Property {
@@ -134,6 +149,12 @@ func (p *Property) Example(example interface{}) *Property {
 	return p
 }
 
+// Pattern sets the pattern in Property.
+func (p *Property) Pattern(pattern string) *Property {
+	p.pattern = pattern
+	return p
+}
+
 // Enums sets the whole enums in Property.
 // TODO BREAK CHANGES
 func (p *Property) Enums(enums ...interface{}) *Property {
@@ -153,10 +174,42 @@ func (p *Property) MaxLength(max int) *Property {
 	return p
 }
 
-// Length sets the minLength and maxLength in Property.
-func (p *Property) Length(min, max int) *Property {
+// LengthRange sets the minLength and maxLength in Property.
+// TODO BREAK CHANGES
+func (p *Property) LengthRange(min, max int) *Property {
 	p.minLength = min
 	p.maxLength = max
+	return p
+}
+
+// MinItems sets the minItems in Property.
+func (p *Property) MinItems(min int) *Property {
+	p.minItems = min
+	return p
+}
+
+// MaxItems sets the maxItems in Property.
+func (p *Property) MaxItems(max int) *Property {
+	p.maxItems = max
+	return p
+}
+
+// ItemsRange sets the minItems and maxItems in Property.
+func (p *Property) ItemsRange(min, max int) *Property {
+	p.minItems = min
+	p.maxItems = max
+	return p
+}
+
+// UniqueItems sets the uniqueItems in Property.
+func (p *Property) UniqueItems(unique bool) *Property {
+	p.uniqueItems = unique
+	return p
+}
+
+// CollectionFormat sets the collectionFormat in Property.
+func (p *Property) CollectionFormat(collectionFormat string) *Property {
+	p.collectionFormat = collectionFormat
 	return p
 }
 
@@ -174,53 +227,81 @@ func (p *Property) Maximum(max float64) *Property {
 	return p
 }
 
-// MinMaximum sets the minimum and maximum in Property.
+// ValueRange sets the minimum and maximum in Property.
 // TODO BREAK CHANGES
-func (p *Property) MinMaximum(min, max float64) *Property {
+func (p *Property) ValueRange(min, max float64) *Property {
 	p.minimum = min
 	p.maximum = max
+	return p
+}
+
+// ExclusiveMin sets the exclusiveMin in Property.
+func (p *Property) ExclusiveMin(exclusiveMin bool) *Property {
+	p.exclusiveMin = exclusiveMin
+	return p
+}
+
+// ExclusiveMax sets the exclusiveMax in Property.
+func (p *Property) ExclusiveMax(exclusiveMax bool) *Property {
+	p.exclusiveMax = exclusiveMax
+	return p
+}
+
+// MultipleOf sets the multipleOf in Property.
+func (p *Property) MultipleOf(multipleOf float64) *Property {
+	p.multipleOf = multipleOf
 	return p
 }
 
 // cloneProperty clones the given Property.
 func cloneProperty(p *Property) *Property {
 	return &Property{
-		name:       p.name,
-		typ:        p.typ,
-		required:   p.required,
-		desc:       p.desc,
-		allowEmpty: p.allowEmpty,
-		defaul:     p.defaul,
-		example:    p.example,
-		enums:      p.enums,
-		minLength:  p.minLength,
-		maxLength:  p.maxLength,
-		minimum:    p.minimum,
-		maximum:    p.maximum,
+		name:             p.name,
+		typ:              p.typ,
+		required:         p.required,
+		desc:             p.desc,
+		allowEmpty:       p.allowEmpty,
+		defaul:           p.defaul,
+		example:          p.example,
+		pattern:          p.pattern,
+		enums:            p.enums,
+		minLength:        p.minLength,
+		maxLength:        p.maxLength,
+		minItems:         p.minItems,
+		maxItems:         p.maxItems,
+		uniqueItems:      p.uniqueItems,
+		collectionFormat: p.collectionFormat,
+		minimum:          p.minimum,
+		maximum:          p.maximum,
+		exclusiveMin:     p.exclusiveMin,
+		exclusiveMax:     p.exclusiveMax,
+		multipleOf:       p.multipleOf,
 	}
 }
 
-// cloneParamFromProperty clones the given Property to Param.
-func cloneParamFromProperty(p *Property) *Param {
+// createParamFromProperty clones the given Property to Param.
+func createParamFromProperty(p *Property) *Param {
 	return &Param{
 		name: p.name,
 		// in: p.in,
-		typ:        p.typ,
-		required:   p.required,
-		desc:       p.desc,
-		allowEmpty: p.allowEmpty,
-		defaul:     p.defaul,
-		example:    p.example,
-		// pattern: p.pattern,
-		enums:     p.enums,
-		minLength: p.minLength,
-		maxLength: p.maxLength,
-		// minItems: p.minItems,
-		// maxItems: p.maxItems,
-		// uniqueItems: p.uniqueItems,
-		minimum: p.minimum,
-		maximum: p.maximum,
-		// exclusiveMin: p.exclusiveMin,
-		// exclusiveMax: p.exclusiveMax,
+		typ:              p.typ,
+		required:         p.required,
+		desc:             p.desc,
+		allowEmpty:       p.allowEmpty,
+		defaul:           p.defaul,
+		example:          p.example,
+		pattern:          p.pattern,
+		enums:            p.enums,
+		minLength:        p.minLength,
+		maxLength:        p.maxLength,
+		minItems:         p.minItems,
+		maxItems:         p.maxItems,
+		uniqueItems:      p.uniqueItems,
+		collectionFormat: p.collectionFormat,
+		minimum:          p.minimum,
+		maximum:          p.maximum,
+		exclusiveMin:     p.exclusiveMin,
+		exclusiveMax:     p.exclusiveMax,
+		multipleOf:       p.multipleOf,
 	}
 }
