@@ -182,12 +182,12 @@ func defaultFormat(typ string) string {
 func collectAllSpecTypes(doc *Document) []string {
 	// check all type names (param, resp, prop)
 	cnt := 0
-	for _, path := range doc.paths {
-		cnt += len(path.params) + len(path.responses)
-		for _, param := range path.params {
+	for _, op := range doc.operations {
+		cnt += len(op.params) + len(op.responses)
+		for _, param := range op.params {
 			checkTypeName(param.typ)
 		}
-		for _, resp := range path.responses {
+		for _, resp := range op.responses {
 			checkTypeName(resp.typ)
 		}
 	}
@@ -202,11 +202,11 @@ func collectAllSpecTypes(doc *Document) []string {
 
 	// collect all specific types
 	out := make([]string, 0, cnt)
-	for _, path := range doc.paths {
-		for _, param := range path.params {
+	for _, op := range doc.operations {
+		for _, param := range op.params {
 			out = append(out, param.typ)
 		}
-		for _, resp := range path.responses {
+		for _, resp := range op.responses {
 			out = append(out, resp.typ)
 		}
 	}

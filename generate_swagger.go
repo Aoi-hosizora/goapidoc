@@ -16,7 +16,7 @@ type swagDocument struct {
 	Produces    []string                             `yaml:"produces,omitempty"            json:"produces,omitempty"`
 	Tags        []*swagTag                           `yaml:"tags,omitempty"                json:"tags,omitempty"`
 	Securities  map[string]*swagSecurity             `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
-	Paths       map[string]map[string]*swagOperation `yaml:"paths,omitempty"               json:"paths,omitempty"`
+	Operations  map[string]map[string]*swagOperation `yaml:"paths,omitempty"               json:"paths,omitempty"`
 	Definitions map[string]*swagDefinition           `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
 }
 
@@ -473,51 +473,51 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 	}
 }
 
-// ===================
-// paths & definitions
-// ===================
+// ========================
+// operations & definitions
+// ========================
 
-func buildSwaggerPaths(doc *Document) map[string]map[string]*swagOperation {
-	// path - method - operation
+func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation {
+	// route - method - operation
 	out := make(map[string]map[string]*swagOperation)
-	for _, p := range doc.paths {
-		if p.method == "" || p.route == "" {
-			panic("Route path is required in swagger 2.0")
+	for _, op := range doc.operations {
+		if op.method == "" || op.route == "" {
+			panic("Operation method and route path is required in swagger 2.0")
 		}
-		if len(p.responses) == 0 {
-			panic("Empty route path response is not allowed in swagger 2.0")
+		if len(op.responses) == 0 {
+			panic("Empty operation response is not allowed in swagger 2.0")
 		}
-		if !strings.HasPrefix(p.route, "/") {
-			panic("Route path must begin with a slash in swagger 2.0")
+		if !strings.HasPrefix(op.route, "/") {
+			panic("Operation route path must begin with a slash in swagger 2.0")
 		}
 
-		method := strings.ToLower(p.method)
-		operationId := p.operationId
+		method := strings.ToLower(op.method)
+		operationId := op.operationId
 		if operationId == "" {
 			operationId = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
-				p.route, "/", "-"), "{", ":"), "}", "") + "-" + method
+				op.route, "/", "-"), "{", ":"), "}", "") + "-" + method
 		}
-		securities := make([]map[string][]string, 0, len(p.securities))
-		for _, s := range p.securities {
+		securities := make([]map[string][]string, 0, len(op.securities))
+		for _, s := range op.securities {
 			securities = append(securities, map[string][]string{s: {}}) // support apiKey and basic
 		}
 
-		_, ok := out[p.route]
+		_, ok := out[op.route]
 		if !ok {
-			out[p.route] = make(map[string]*swagOperation, 2) // cap defaults to 2
+			out[op.route] = make(map[string]*swagOperation, 2) // cap defaults to 2
 		}
-		out[p.route][method] = &swagOperation{
-			Summary:     p.summary,
-			Description: p.desc,
+		out[op.route][method] = &swagOperation{
+			Summary:     op.summary,
+			Description: op.desc,
 			OperationId: operationId,
-			Schemas:     p.schemas,
-			Consumes:    p.consumes,
-			Produces:    p.produces,
-			Tags:        p.tags,
+			Schemas:     op.schemas,
+			Consumes:    op.consumes,
+			Produces:    op.produces,
+			Tags:        op.tags,
 			Securities:  securities,
-			Deprecated:  p.deprecated,
-			Parameters:  buildSwaggerParams(p.params),
-			Responses:   buildSwaggerResponses(p.responses),
+			Deprecated:  op.deprecated,
+			Parameters:  buildSwaggerParams(op.params),
+			Responses:   buildSwaggerResponses(op.responses),
 		}
 	}
 	return out
@@ -532,7 +532,7 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 	}
 	newDefinitionList := prehandleDefinitionList(clonedDefinitions, allSpecTypes)
 
-	// get result map
+	// return result map
 	out := make(map[string]*swagDefinition, len(newDefinitionList))
 	for _, definition := range newDefinitionList {
 		out[definition.name] = buildSwaggerDefinition(definition)
@@ -558,8 +558,8 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 	if doc.info.version == "" {
 		panic("Info.version is required in swagger 2.0")
 	}
-	if len(doc.paths) == 0 {
-		panic("Empty route paths is not allowed in swagger 2.0")
+	if len(doc.operations) == 0 {
+		panic("Empty operations is not allowed in swagger 2.0")
 	}
 
 	// info
@@ -615,9 +615,9 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 		out.Securities = securities
 	}
 
-	// definitions & paths
+	// definitions & operations
 	out.Definitions = buildSwaggerDefinitions(doc)
-	out.Paths = buildSwaggerPaths(doc)
+	out.Operations = buildSwaggerOperations(doc)
 
 	return out
 }

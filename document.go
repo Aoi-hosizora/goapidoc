@@ -11,7 +11,7 @@ type Document struct {
 	info     *Info
 
 	option      *Option
-	paths       []*RoutePath
+	operations  []*Operation
 	definitions []*Definition
 }
 
@@ -24,7 +24,7 @@ func (d *Document) GetHost() string               { return d.host }
 func (d *Document) GetBasePath() string           { return d.basePath }
 func (d *Document) GetInfo() *Info                { return d.info }
 func (d *Document) GetOption() *Option            { return d.option }
-func (d *Document) GetRoutePaths() []*RoutePath   { return d.paths }
+func (d *Document) GetOperations() []*Operation   { return d.operations }
 func (d *Document) GetDefinitions() []*Definition { return d.definitions }
 
 // Host sets the host in Document.
@@ -51,15 +51,15 @@ func (d *Document) Option(option *Option) *Document {
 	return d
 }
 
-// RoutePaths sets the whole route paths in Document.
-func (d *Document) RoutePaths(paths ...*RoutePath) *Document {
-	d.paths = paths
+// Operations sets the whole operations in Document.
+func (d *Document) Operations(operations ...*Operation) *Document {
+	d.operations = operations
 	return d
 }
 
-// AddRoutePaths adds some route paths into Document.
-func (d *Document) AddRoutePaths(paths ...*RoutePath) *Document {
-	d.paths = append(d.paths, paths...)
+// AddOperations adds some operations into Document.
+func (d *Document) AddOperations(operations ...*Operation) *Document {
+	d.operations = append(d.operations, operations...)
 	return d
 }
 
@@ -402,7 +402,7 @@ func GetHost() string               { return _document.GetHost() }
 func GetBasePath() string           { return _document.GetBasePath() }
 func GetInfo() *Info                { return _document.GetInfo() }
 func GetOption() *Option            { return _document.GetOption() }
-func GetRoutePaths() []*RoutePath   { return _document.GetRoutePaths() }
+func GetOperations() []*Operation   { return _document.GetOperations() }
 func GetDefinitions() []*Definition { return _document.GetDefinitions() }
 
 // SetHost sets the host in global Document.
@@ -425,14 +425,14 @@ func SetOption(option *Option) *Document {
 	return _document.Option(option)
 }
 
-// SetRoutePaths sets the whole route paths in global Document.
-func SetRoutePaths(paths ...*RoutePath) *Document {
-	return _document.RoutePaths(paths...)
+// SetOperations sets the whole operations in global Document.
+func SetOperations(operations ...*Operation) *Document {
+	return _document.Operations(operations...)
 }
 
-// AddRoutePaths adds some route paths into global Document.
-func AddRoutePaths(paths ...*RoutePath) *Document {
-	return _document.AddRoutePaths(paths...)
+// AddOperations adds some operations into global Document.
+func AddOperations(operations ...*Operation) *Document {
+	return _document.AddOperations(operations...)
 }
 
 // SetDefinitions sets the whole definitions in global Document.

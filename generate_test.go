@@ -44,14 +44,14 @@ func TestGenerate(t *testing.T) {
 		),
 	)
 
-	AddRoutePaths(
-		NewRoutePath("POST", "/auth/register", "Register").
+	AddOperations(
+		NewOperation("POST", "/auth/register", "Register").
 			Desc("Register.").
 			Tags("Authorization").
 			Params(NewBodyParam("param", "RegisterParam", true, "register param")).
 			Responses(NewResponse(200, "Result")),
 
-		NewRoutePath("POST", "/auth/login", "Login").
+		NewOperation("POST", "/auth/login", "Login").
 			Desc("Login.").
 			Tags("Authorization").
 			Params(NewBodyParam("param", "LoginParam", true, "login param")).
@@ -60,12 +60,12 @@ func TestGenerate(t *testing.T) {
 				NewResponse(400, "Result").Examples(map[string]string{"application/json": "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"}),
 			),
 
-		NewRoutePath("DELETE", "/auth/logout", "Logout").
+		NewOperation("DELETE", "/auth/logout", "Logout").
 			Tags("Authorization").
 			Securities("Jwt").
 			Responses(NewResponse(200, "Result")),
 
-		NewRoutePath("GET", "/user", "Get users").
+		NewOperation("GET", "/user", "Get users").
 			Tags("User").
 			Securities("Jwt").
 			Params(
@@ -74,31 +74,31 @@ func TestGenerate(t *testing.T) {
 			).
 			Responses(NewResponse(200, "_Result<_Page<UserDto>>")),
 
-		NewRoutePath("GET", "/user/{username}", "Get a user").
+		NewOperation("GET", "/user/{username}", "Get a user").
 			Tags("User").
 			Securities("Jwt").
 			Params(NewPathParam("username", "string", true, "username")).
 			Responses(NewResponse(200, "_Result<UserDto>")),
 
-		NewRoutePath("PUT", "/user/deprecated", "Update user").
+		NewOperation("PUT", "/user/deprecated", "Update user").
 			Tags("User").
 			Securities("Jwt").
 			Deprecated(true).
 			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
 			Responses(NewResponse(200, "Result")),
 
-		NewRoutePath("PUT", "/user", "Update user").
+		NewOperation("PUT", "/user", "Update user").
 			Tags("User").
 			Securities("Jwt").
 			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
 			Responses(NewResponse(200, "Result")),
 
-		NewRoutePath("DELETE", "/user", "Delete user").
+		NewOperation("DELETE", "/user", "Delete user").
 			Tags("User").
 			Securities("Jwt").
 			Responses(NewResponse(200, "Result")),
 
-		NewRoutePath("HEAD", "/test/a", "Test a").
+		NewOperation("HEAD", "/test/a", "Test a").
 			Tags("Test").
 			Securities("WrongSecurity").
 			Params(

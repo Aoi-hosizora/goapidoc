@@ -1,11 +1,12 @@
 package goapidoc
 
 // =========
-// RoutePath
+// Operation
 // =========
 
-// RoutePath represents an api route path information of Document.
-type RoutePath struct {
+// Operation represents an api operation information of Document.
+// TODO BREAK CHANGES
+type Operation struct {
 	method  string
 	route   string
 	summary string
@@ -22,185 +23,185 @@ type RoutePath struct {
 	responses   []*Response
 }
 
-// NewRoutePath creates a default RoutePath with given arguments.
-func NewRoutePath(method, route, summary string) *RoutePath {
-	return &RoutePath{method: method, route: route, summary: summary}
+// NewOperation creates a default Operation with given arguments.
+func NewOperation(method, route, summary string) *Operation {
+	return &Operation{method: method, route: route, summary: summary}
 }
 
-// NewGetRoutePath creates a get RoutePath with given arguments.
-func NewGetRoutePath(route, summary string) *RoutePath {
-	return NewRoutePath(GET, route, summary)
+// NewGetOperation creates a get Operation with given arguments.
+func NewGetOperation(route, summary string) *Operation {
+	return NewOperation(GET, route, summary)
 }
 
-// NewPutRoutePath creates a put RoutePath with given arguments.
-func NewPutRoutePath(route, summary string) *RoutePath {
-	return NewRoutePath(PUT, route, summary)
+// NewPutOperation creates a put Operation with given arguments.
+func NewPutOperation(route, summary string) *Operation {
+	return NewOperation(PUT, route, summary)
 }
 
-// NewPostRoutePath creates a post RoutePath with given arguments.
-func NewPostRoutePath(route, summary string) *RoutePath {
-	return NewRoutePath(POST, route, summary)
+// NewPostOperation creates a post Operation with given arguments.
+func NewPostOperation(route, summary string) *Operation {
+	return NewOperation(POST, route, summary)
 }
 
-// NewDeleteRoutePath creates a delete RoutePath with given arguments.
-func NewDeleteRoutePath(route, summary string) *RoutePath {
-	return NewRoutePath(DELETE, route, summary)
+// NewDeleteOperation creates a delete Operation with given arguments.
+func NewDeleteOperation(route, summary string) *Operation {
+	return NewOperation(DELETE, route, summary)
 }
 
-// NewOptionsRoutePath creates a options RoutePath with given arguments.
-func NewOptionsRoutePath(route, summary string) *RoutePath {
-	return NewRoutePath(OPTIONS, route, summary)
+// NewOptionsOperation creates a options Operation with given arguments.
+func NewOptionsOperation(route, summary string) *Operation {
+	return NewOperation(OPTIONS, route, summary)
 }
 
-// NewHeadRoutePath creates a head RoutePath with given arguments.
-func NewHeadRoutePath(route, summary string) *RoutePath {
-	return NewRoutePath(HEAD, route, summary)
+// NewHeadOperation creates a head Operation with given arguments.
+func NewHeadOperation(route, summary string) *Operation {
+	return NewOperation(HEAD, route, summary)
 }
 
-// NewPatchRoutePath creates a patch RoutePath with given arguments.
-func NewPatchRoutePath(route, summary string) *RoutePath {
-	return NewRoutePath(PATCH, route, summary)
+// NewPatchOperation creates a patch Operation with given arguments.
+func NewPatchOperation(route, summary string) *Operation {
+	return NewOperation(PATCH, route, summary)
 }
 
-func (r *RoutePath) GetMethod() string         { return r.method }
-func (r *RoutePath) GetRoute() string          { return r.route }
-func (r *RoutePath) GetSummary() string        { return r.summary }
-func (r *RoutePath) GetDesc() string           { return r.desc }
-func (r *RoutePath) GetOperationId() string    { return r.operationId }
-func (r *RoutePath) GetSchemas() []string      { return r.schemas }
-func (r *RoutePath) GetConsumes() []string     { return r.consumes }
-func (r *RoutePath) GetProduces() []string     { return r.produces }
-func (r *RoutePath) GetTags() []string         { return r.tags }
-func (r *RoutePath) GetSecurities() []string   { return r.securities }
-func (r *RoutePath) GetDeprecated() bool       { return r.deprecated }
-func (r *RoutePath) GetParams() []*Param       { return r.params }
-func (r *RoutePath) GetResponses() []*Response { return r.responses }
+func (o *Operation) GetMethod() string         { return o.method }
+func (o *Operation) GetRoute() string          { return o.route }
+func (o *Operation) GetSummary() string        { return o.summary }
+func (o *Operation) GetDesc() string           { return o.desc }
+func (o *Operation) GetOperationId() string    { return o.operationId }
+func (o *Operation) GetSchemas() []string      { return o.schemas }
+func (o *Operation) GetConsumes() []string     { return o.consumes }
+func (o *Operation) GetProduces() []string     { return o.produces }
+func (o *Operation) GetTags() []string         { return o.tags }
+func (o *Operation) GetSecurities() []string   { return o.securities }
+func (o *Operation) GetDeprecated() bool       { return o.deprecated }
+func (o *Operation) GetParams() []*Param       { return o.params }
+func (o *Operation) GetResponses() []*Response { return o.responses }
 
-// Method sets the method in RoutePath.
-func (r *RoutePath) Method(method string) *RoutePath {
-	r.method = method
-	return r
+// Method sets the method in Operation.
+func (o *Operation) Method(method string) *Operation {
+	o.method = method
+	return o
 }
 
-// Route sets the route in RoutePath.
-func (r *RoutePath) Route(route string) *RoutePath {
-	r.route = route
-	return r
+// Route sets the route in Operation.
+func (o *Operation) Route(route string) *Operation {
+	o.route = route
+	return o
 }
 
-// Summary sets the summary in RoutePath.
-func (r *RoutePath) Summary(summary string) *RoutePath {
-	r.summary = summary
-	return r
+// Summary sets the summary in Operation.
+func (o *Operation) Summary(summary string) *Operation {
+	o.summary = summary
+	return o
 }
 
-// Desc sets the desc in RoutePath.
-func (r *RoutePath) Desc(desc string) *RoutePath {
-	r.desc = desc
-	return r
+// Desc sets the desc in Operation.
+func (o *Operation) Desc(desc string) *Operation {
+	o.desc = desc
+	return o
 }
 
-// OperationId sets the operationId in RoutePath.
-func (r *RoutePath) OperationId(operationId string) *RoutePath {
-	r.operationId = operationId
-	return r
+// OperationId sets the operationId in Operation.
+func (o *Operation) OperationId(operationId string) *Operation {
+	o.operationId = operationId
+	return o
 }
 
-// Schemas sets the whole schemas in RoutePath.
-func (r *RoutePath) Schemas(schemas ...string) *RoutePath {
-	r.schemas = schemas
-	return r
+// Schemas sets the whole schemas in Operation.
+func (o *Operation) Schemas(schemas ...string) *Operation {
+	o.schemas = schemas
+	return o
 }
 
-// AddSchemas adds some tags schemas into RoutePath.
-func (r *RoutePath) AddSchemas(schemas ...string) *RoutePath {
-	r.schemas = append(r.schemas, schemas...)
-	return r
+// AddSchemas adds some tags schemas into Operation.
+func (o *Operation) AddSchemas(schemas ...string) *Operation {
+	o.schemas = append(o.schemas, schemas...)
+	return o
 }
 
-// Consumes sets the whole consumes in RoutePath.
-func (r *RoutePath) Consumes(consumes ...string) *RoutePath {
-	r.consumes = consumes
-	return r
+// Consumes sets the whole consumes in Operation.
+func (o *Operation) Consumes(consumes ...string) *Operation {
+	o.consumes = consumes
+	return o
 }
 
-// AddConsumes adds some consumes into RoutePath.
-func (r *RoutePath) AddConsumes(consumes ...string) *RoutePath {
-	r.consumes = append(r.consumes, consumes...)
-	return r
+// AddConsumes adds some consumes into Operation.
+func (o *Operation) AddConsumes(consumes ...string) *Operation {
+	o.consumes = append(o.consumes, consumes...)
+	return o
 }
 
-// Produces sets the whole produces in RoutePath.
-func (r *RoutePath) Produces(produces ...string) *RoutePath {
-	r.produces = produces
-	return r
+// Produces sets the whole produces in Operation.
+func (o *Operation) Produces(produces ...string) *Operation {
+	o.produces = produces
+	return o
 }
 
-// AddProduces adds some produces into RoutePath.
-func (r *RoutePath) AddProduces(produces ...string) *RoutePath {
-	r.produces = append(r.produces, produces...)
-	return r
+// AddProduces adds some produces into Operation.
+func (o *Operation) AddProduces(produces ...string) *Operation {
+	o.produces = append(o.produces, produces...)
+	return o
 }
 
-// Tags sets the whole tags in RoutePath.
-func (r *RoutePath) Tags(tags ...string) *RoutePath {
-	r.tags = tags
-	return r
+// Tags sets the whole tags in Operation.
+func (o *Operation) Tags(tags ...string) *Operation {
+	o.tags = tags
+	return o
 }
 
-// AddTags adds some tags into RoutePath.
-func (r *RoutePath) AddTags(tags ...string) *RoutePath {
-	r.tags = append(r.tags, tags...)
-	return r
+// AddTags adds some tags into Operation.
+func (o *Operation) AddTags(tags ...string) *Operation {
+	o.tags = append(o.tags, tags...)
+	return o
 }
 
-// Securities sets the whole security-requirements in RoutePath.
-func (r *RoutePath) Securities(securities ...string) *RoutePath {
-	r.securities = securities
-	return r
+// Securities sets the whole security-requirements in Operation.
+func (o *Operation) Securities(securities ...string) *Operation {
+	o.securities = securities
+	return o
 }
 
-// AddSecurities adds some security-requirements into RoutePath.
-func (r *RoutePath) AddSecurities(securities ...string) *RoutePath {
-	r.securities = append(r.securities, securities...)
-	return r
+// AddSecurities adds some security-requirements into Operation.
+func (o *Operation) AddSecurities(securities ...string) *Operation {
+	o.securities = append(o.securities, securities...)
+	return o
 }
 
-// Deprecated sets the deprecated in RoutePath.
-func (r *RoutePath) Deprecated(deprecated bool) *RoutePath {
-	r.deprecated = deprecated
-	return r
+// Deprecated sets the deprecated in Operation.
+func (o *Operation) Deprecated(deprecated bool) *Operation {
+	o.deprecated = deprecated
+	return o
 }
 
-// Params sets the whole params in RoutePath.
-func (r *RoutePath) Params(params ...*Param) *RoutePath {
-	r.params = params
-	return r
+// Params sets the whole params in Operation.
+func (o *Operation) Params(params ...*Param) *Operation {
+	o.params = params
+	return o
 }
 
-// AddParams adds some params into RoutePath.
-func (r *RoutePath) AddParams(params ...*Param) *RoutePath {
-	r.params = append(r.params, params...)
-	return r
+// AddParams adds some params into Operation.
+func (o *Operation) AddParams(params ...*Param) *Operation {
+	o.params = append(o.params, params...)
+	return o
 }
 
-// Responses sets the whole responses in RoutePath.
-func (r *RoutePath) Responses(responses ...*Response) *RoutePath {
-	r.responses = responses
-	return r
+// Responses sets the whole responses in Operation.
+func (o *Operation) Responses(responses ...*Response) *Operation {
+	o.responses = responses
+	return o
 }
 
-// AddResponses adds some responses into RoutePath.
-func (r *RoutePath) AddResponses(responses ...*Response) *RoutePath {
-	r.responses = append(r.responses, responses...)
-	return r
+// AddResponses adds some responses into Operation.
+func (o *Operation) AddResponses(responses ...*Response) *Operation {
+	o.responses = append(o.responses, responses...)
+	return o
 }
 
 // ========
 // Response
 // ========
 
-// Response represents a route response information of RoutePath.
+// Response represents a operation response information of Operation.
 type Response struct {
 	code int
 	typ  string
@@ -299,7 +300,7 @@ func (h *Header) Desc(desc string) *Header {
 // Param
 // =====
 
-// Param represents a request parameter information of RoutePath.
+// Param represents a request parameter information of Operation.
 type Param struct {
 	name     string
 	in       string

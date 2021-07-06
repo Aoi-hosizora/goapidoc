@@ -1,11 +1,30 @@
 package goapidoc
 
 import (
+	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
+	"text/template"
 )
 
-type apibParam struct {
+type apibDocument struct {
+	Host     string
+	BasePath string
+
+	Title          string
+	Description    string
+	Version        string
+	TermsOfService string
+	License        string
+	ContactUrl     string
+	ContactEmail   string
+
+	GroupsString      string
+	DefinitionsString string
+}
+
+type apibSchema struct {
 	name       string
 	typ        string
 	required   bool
@@ -19,6 +38,10 @@ type apibParam struct {
 	minimum    float64
 	maximum    float64
 }
+
+// =============
+// type & schema
+// =============
 
 func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
@@ -43,19 +66,19 @@ func buildApibType(typ string) (string, *apiType) {
 	}
 }
 
-func buildApibParam(param *apibParam) string {
+func buildApibSchema(schema *apibSchema) string {
 	req := "required"
-	if !param.required {
+	if !schema.required {
 		req = "optional"
 	}
-	typ, at := buildApibType(param.typ)
-	if len(param.enum) != 0 {
+	typ, at := buildApibType(schema.typ)
+	if len(schema.enum) != 0 {
 		typ = "enum[" + typ + "]"
 	}
 
-	paramStr := fmt.Sprintf("+ %s (%s, %s) - %s", param.name, typ, req, param.desc) // center
-	if param.example != nil {
-		paramStr = fmt.Sprintf("+ %s: `%v` (%s, %s) - %s", param.name, param.example, typ, req, param.desc)
+	paramStr := fmt.Sprintf("+ %s (%s, %s) - %s", schema.name, typ, req, schema.desc) // center
+	if schema.example != nil {
+		paramStr = fmt.Sprintf("+ %s: `%v` (%s, %s) - %s", schema.name, schema.example, typ, req, schema.desc)
 	}
 
 	options := make([]string, 0)
@@ -63,35 +86,35 @@ func buildApibParam(param *apibParam) string {
 	if at.kind == apiPrimeKind && at.prime.format != "" {
 		options = append(options, "format: "+at.prime.format)
 	}
-	if param.allowEmpty {
+	if schema.allowEmpty {
 		options = append(options, "allow empty")
 	}
-	if param.maxLength != 0 && param.minLength != 0 {
-		options = append(options, fmt.Sprintf("len in \\[%d, %d\\]", param.minLength, param.maxLength))
-	} else if param.minLength != 0 {
-		options = append(options, fmt.Sprintf("len >= %d", param.minLength))
-	} else if param.maxLength != 0 {
-		options = append(options, fmt.Sprintf("len <= %d", param.maxLength))
+	if schema.maxLength != 0 && schema.minLength != 0 {
+		options = append(options, fmt.Sprintf("len in \\[%d, %d\\]", schema.minLength, schema.maxLength))
+	} else if schema.minLength != 0 {
+		options = append(options, fmt.Sprintf("len >= %d", schema.minLength))
+	} else if schema.maxLength != 0 {
+		options = append(options, fmt.Sprintf("len <= %d", schema.maxLength))
 	}
-	if param.maximum != 0 && param.minimum != 0 {
-		options = append(options, fmt.Sprintf("val in \\[%.3f, %.3f\\]", param.minimum, param.maximum))
-	} else if param.minimum != 0 {
-		options = append(options, fmt.Sprintf("val >= %.3f", param.minimum))
-	} else if param.maximum != 0 {
-		options = append(options, fmt.Sprintf("val <= %.3f", param.maximum))
+	if schema.maximum != 0 && schema.minimum != 0 {
+		options = append(options, fmt.Sprintf("val in \\[%.3f, %.3f\\]", schema.minimum, schema.maximum))
+	} else if schema.minimum != 0 {
+		options = append(options, fmt.Sprintf("val >= %.3f", schema.minimum))
+	} else if schema.maximum != 0 {
+		options = append(options, fmt.Sprintf("val <= %.3f", schema.maximum))
 	}
 
 	if len(options) != 0 {
 		paramStr += fmt.Sprintf("\n    (%s)", strings.Join(options, ", "))
 	}
 
-	if param.defaul != nil {
-		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.defaul)
+	if schema.defaul != nil {
+		paramStr += fmt.Sprintf("\n    + Default: `%v`", schema.defaul)
 	}
 
-	if len(param.enum) != 0 {
+	if len(schema.enum) != 0 {
 		paramStr += "\n    + Members"
-		for _, enum := range param.enum {
+		for _, enum := range schema.enum {
 			paramStr += fmt.Sprintf("\n        + `%v`", enum)
 		}
 	}
@@ -99,26 +122,30 @@ func buildApibParam(param *apibParam) string {
 	return paramStr
 }
 
-func buildApibPath(securities map[string]*Security, path *RoutePath) string {
+// =================================
+// operations & groups & definitions
+// =================================
+
+func buildApibOperation(securities map[string]*Security, op *Operation) string {
 	// meta
-	method := strings.ToUpper(path.method)
-	metaStr := fmt.Sprintf("### %s [%s]\n\n`%s %s`", path.summary, method, method, path.route)
-	if path.desc != "" {
-		metaStr += "\n\n" + path.desc
+	method := strings.ToUpper(op.method)
+	metaStr := fmt.Sprintf("### %s [%s]\n\n`%s %s`", op.summary, method, method, op.route)
+	if op.desc != "" {
+		metaStr += "\n\n" + op.desc
 	}
-	if path.deprecated {
+	if op.deprecated {
 		metaStr += "\n\nAttention: This api is deprecated."
 	}
 
 	// request
 	consume := "application/json"
-	if len(path.consumes) >= 1 {
-		consume = path.consumes[0]
+	if len(op.consumes) >= 1 {
+		consume = op.consumes[0]
 	}
-	params := path.params
+	params := op.params
 	bodyParamString := ""
-	if len(path.securities) >= 1 {
-		securityString := path.securities[0] // only support one authentication
+	if len(op.securities) >= 1 {
+		securityString := op.securities[0] // only support one authentication
 		if security, ok := securities[securityString]; ok {
 			desc := securityString + " (" + security.desc + "), " + security.typ
 			if security.desc == "" {
@@ -135,7 +162,7 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 	attributeStrings := make([]string, 0)
 	headerStrings := make([]string, 0)
 	for _, param := range params {
-		paramStr := buildApibParam(&apibParam{
+		paramStr := buildApibSchema(&apibSchema{
 			name:       param.name,
 			typ:        param.typ,
 			required:   param.required,
@@ -196,11 +223,11 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 
 	// response
 	produce := "application/json"
-	if len(path.produces) >= 1 {
-		produce = path.produces[0]
+	if len(op.produces) >= 1 {
+		produce = op.produces[0]
 	}
 	responseStrings := make([]string, 0)
-	for _, response := range path.responses {
+	for _, response := range op.responses {
 		// + Response <----------------- center
 		responseStr := fmt.Sprintf("+ Response %d (%s)", response.code, produce)
 		if response.desc != "" {
@@ -251,35 +278,35 @@ func buildApibGroups(doc *Document) string {
 		}
 	}
 
-	// tag - RoutePath (route&method)
-	groups := newOrderedMap(len(tags)) // map[string][]*RoutePath{}
+	// tag - Operation (route & method)
+	groups := newOrderedMap(len(tags)) // map[string][]*Operation{}
 	for name := range tags {
-		groups.Set(name, make([]*RoutePath, 0))
+		groups.Set(name, make([]*Operation, 0))
 	}
-	for _, path := range doc.paths {
+	for _, op := range doc.operations {
 		tag := "Default"
-		if len(path.tags) > 0 {
-			tag = path.tags[0]
+		if len(op.tags) > 0 {
+			tag = op.tags[0]
 		}
-		paths, ok := groups.Get(tag)
+		ops, ok := groups.Get(tag)
 		if !ok {
-			paths = make([]*RoutePath, 0)
+			ops = make([]*Operation, 0)
 		}
-		paths = append(paths.([]*RoutePath), path)
-		groups.Set(tag, paths)
+		ops = append(ops.([]*Operation), op)
+		groups.Set(tag, ops)
 	}
 
 	// [#, #]
 	groupStrings := make([]string, 0, groups.Length())
 
 	for _, tag := range groups.Keys() {
-		group := groups.MustGet(tag).([]*RoutePath)
-		// route - method - RoutePath
-		paths := newOrderedMap(len(group)) // map[string]map[string]*RoutePath{}
-		for _, path := range group {
-			route := path.route
+		group := groups.MustGet(tag).([]*Operation)
+		// route - method - Operation
+		operations := newOrderedMap(len(group)) // map[string]map[string]*Operation{}
+		for _, op := range group {
+			route := op.route
 			query := make([]string, 0)
-			for _, param := range path.params {
+			for _, param := range op.params {
 				if param.in == "query" {
 					query = append(query, param.name)
 				}
@@ -288,40 +315,40 @@ func buildApibGroups(doc *Document) string {
 				route += fmt.Sprintf("{?%s}", strings.Join(query, ","))
 			}
 
-			methods, ok := paths.Get(route)
+			methods, ok := operations.Get(route)
 			if !ok {
-				methods = newOrderedMap(0) // map[string]*RoutePath
+				methods = newOrderedMap(0) // map[string]*Operation
 			}
-			methods.(*orderedMap).Set(path.method, path)
-			paths.Set(route, methods)
+			methods.(*orderedMap).Set(op.method, op)
+			operations.Set(route, methods)
 		}
 
 		// [##, ##]
-		pathStrings := make([]string, 0, paths.Length())
-		for _, pathKey := range paths.Keys() {
-			methods := paths.MustGet(pathKey).(*orderedMap)
+		opStrings := make([]string, 0, operations.Length())
+		for _, opKey := range operations.Keys() {
+			methods := operations.MustGet(opKey).(*orderedMap)
 
 			// [###, ###]
 			methodStrings := make([]string, 0, methods.Length())
 			summaries := make([]string, 0, methods.Length())
 			for _, methodKey := range methods.Keys() {
-				routePath := methods.MustGet(methodKey).(*RoutePath)
-				summaries = append(summaries, routePath.summary)
-				methodStr := buildApibPath(securities, routePath)
+				operation := methods.MustGet(methodKey).(*Operation)
+				summaries = append(summaries, operation.summary)
+				methodStr := buildApibOperation(securities, operation)
 				methodStrings = append(methodStrings, methodStr)
 			}
 
 			summary := strings.Join(summaries, ", ")
-			pathStr := fmt.Sprintf("## %s [%s]\n\n%s", summary, pathKey, strings.Join(methodStrings, "\n\n"))
-			pathStrings = append(pathStrings, pathStr)
+			opStr := fmt.Sprintf("## %s [%s]\n\n%s", summary, opKey, strings.Join(methodStrings, "\n\n"))
+			opStrings = append(opStrings, opStr)
 		}
 
 		groupStr := fmt.Sprintf("# Group %s", tag)
 		if tagDesc, ok := tags[tag]; ok {
 			groupStr += fmt.Sprintf("\n\n%s", tagDesc)
 		}
-		if len(pathStrings) > 0 {
-			groupStr += fmt.Sprintf("\n\n%s", strings.Join(pathStrings, "\n\n"))
+		if len(opStrings) > 0 {
+			groupStr += fmt.Sprintf("\n\n%s", strings.Join(opStrings, "\n\n"))
 		}
 
 		groupStrings = append(groupStrings, groupStr)
@@ -331,26 +358,24 @@ func buildApibGroups(doc *Document) string {
 }
 
 func buildApibDefinitions(doc *Document) string {
-	// check and collect type names
+	// prehandle definition list
 	allSpecTypes := collectAllSpecTypes(doc)
-
-	// prehandle cloned definition list
 	clonedDefinitions := make([]*Definition, 0, len(doc.definitions))
 	for _, definition := range doc.definitions {
 		clonedDefinitions = append(clonedDefinitions, prehandleDefinition(definition)) // with generic name checked
 	}
-	newDefinitions := prehandleDefinitionList(clonedDefinitions, allSpecTypes)
+	newDefinitionList := prehandleDefinitionList(clonedDefinitions, allSpecTypes)
 
 	// render result string
 	definitionStrings := make([]string, 0)
-	for _, definition := range newDefinitions {
+	for _, definition := range newDefinitionList {
 		if len(definition.generics) > 0 || len(definition.properties) == 0 {
 			continue
 		}
 
 		propertyStrings := make([]string, 0)
 		for _, property := range definition.properties {
-			propertyStr := buildApibParam(&apibParam{
+			propertyStr := buildApibSchema(&apibSchema{
 				name:       property.name,
 				typ:        property.typ,
 				required:   property.required,
@@ -372,21 +397,33 @@ func buildApibDefinitions(doc *Document) string {
 		definitionStrings = append(definitionStrings, definitionStr)
 	}
 
-	return "# Data Structures\n\n" + strings.Join(definitionStrings, "\n\n")
+	return strings.Join(definitionStrings, "\n\n")
 }
 
+// ========
+// document
+// ========
+
 var apibTemplate = `FORMAT: 1A
-HOST: %s%s
+HOST: {{ .Host }}{{ .BasePath }}
 
-# %s (%s)
+# {{ .Title }} ({{ .Version }})
 
-%s
+{{ if .Description }}{{ .Description }}{{ end }}
 
-%s
+{{ if .TermsOfService }}{{ .TermsOfService }}{{ end }}
 
-%s
+{{ if .License }}{{ .License }}{{ end }}
 
-%s
+{{ if .ContactUrl }}{{ .ContactUrl }}{{ end }}
+
+{{ if .ContactEmail }}{{ .ContactEmail }}{{ end }}
+
+{{ .GroupsString }}
+
+# Data Structures
+
+{{ .DefinitionsString }}
 `
 
 func buildApibDocument(doc *Document) []byte {
@@ -395,30 +432,41 @@ func buildApibDocument(doc *Document) []byte {
 	}
 
 	// header
-	template := fmt.Sprintf(apibTemplate, doc.host, doc.basePath, doc.info.title, doc.info.version, doc.info.desc, "%s", "%s", "%s")
-	infoArray := make([]string, 0, 4)
+	out := &apibDocument{
+		Host:        doc.host,
+		BasePath:    doc.basePath,
+		Title:       doc.info.title,
+		Version:     doc.info.version,
+		Description: doc.info.desc,
+	}
+
+	// info
 	if doc.info.termsOfService != "" {
-		infoArray = append(infoArray, fmt.Sprintf("[Terms of service](%s)", doc.info.termsOfService))
+		out.TermsOfService = fmt.Sprintf("[Terms of service](%s)", doc.info.termsOfService)
 	}
 	if license := doc.info.license; license != nil {
-		infoArray = append(infoArray, fmt.Sprintf("[License: %s](%s)", license.name, license.url))
+		out.License = fmt.Sprintf("[License: %s](%s)", license.name, license.url)
 	}
 	if contact := doc.info.contact; contact != nil {
-		infoArray = append(infoArray, fmt.Sprintf("[%s - Website](%s)", contact.name, contact.url))
+		out.ContactUrl = fmt.Sprintf("[%s - Website](%s)", contact.name, contact.url)
 		if contact.email != "" {
-			infoArray = append(infoArray, fmt.Sprintf("[Send email to %s](mailto:%s)", contact.name, contact.email))
+			out.ContactEmail = fmt.Sprintf("[Send email to %s](mailto:%s)", contact.name, contact.email)
 		}
 	}
-	infoString := strings.Join(infoArray, "\n\n")
-	template = fmt.Sprintf(template, infoString, "%s", "%s")
 
-	// definition
-	definitionsString := buildApibDefinitions(doc)
-	template = fmt.Sprintf(template, "%s", definitionsString)
+	// definition & operation
+	out.DefinitionsString = buildApibDefinitions(doc)
+	out.GroupsString = buildApibGroups(doc)
 
-	// route path
-	groupsString := buildApibGroups(doc)
-	template = fmt.Sprintf(template, groupsString)
+	// execute template
+	t := template.Must(template.New("apibTemplate").Parse(apibTemplate))
+	buf := &bytes.Buffer{}
+	err := t.Execute(buf, out)
+	if err != nil {
+		panic("Internal error: " + err.Error())
+	}
 
-	return []byte(template)
+	// remove extra newlines
+	re := regexp.MustCompile(`\n{3,}`)
+	return re.ReplaceAll(buf.Bytes(), []byte("\n\n"))
 }
