@@ -5,33 +5,51 @@ import (
 	"strings"
 )
 
+type apibParam struct {
+	name       string
+	typ        string
+	required   bool
+	desc       string
+	allowEmpty bool
+	defaul     interface{}
+	example    interface{}
+	enum       []interface{}
+	minLength  int
+	maxLength  int
+	minimum    float64
+	maximum    float64
+}
+
 func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
 	// typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
-	if at.kind == apiPrimeKind {
+	switch at.kind {
+	case apiPrimeKind:
 		t := at.prime.typ
 		if t == "integer" {
 			t = "number"
 		}
 		return t, at
-	} else if at.kind == apiObjectKind {
-		return typ, at
-	} else {
+	case apiArrayKind:
 		item, _ := buildApibType(at.array.item.name)
 		if typ == "integer" {
 			item = "number"
 		}
 		return fmt.Sprintf("array[%s]", item), at
+	case apiObjectKind:
+		return typ, at
+	default:
+		return "", nil
 	}
 }
 
-func buildApibParameter(param *Param) string {
+func buildApibParam(param *apibParam) string {
 	req := "required"
 	if !param.required {
 		req = "optional"
 	}
 	typ, at := buildApibType(param.typ)
-	if len(param.enums) != 0 {
+	if len(param.enum) != 0 {
 		typ = "enum[" + typ + "]"
 	}
 
@@ -71,9 +89,9 @@ func buildApibParameter(param *Param) string {
 		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.defaul)
 	}
 
-	if len(param.enums) != 0 {
+	if len(param.enum) != 0 {
 		paramStr += "\n    + Members"
-		for _, enum := range param.enums {
+		for _, enum := range param.enum {
 			paramStr += fmt.Sprintf("\n        + `%v`", enum)
 		}
 	}
@@ -117,7 +135,20 @@ func buildApibPath(securities map[string]*Security, path *RoutePath) string {
 	attributeStrings := make([]string, 0)
 	headerStrings := make([]string, 0)
 	for _, param := range params {
-		paramStr := buildApibParameter(param)
+		paramStr := buildApibParam(&apibParam{
+			name:       param.name,
+			typ:        param.typ,
+			required:   param.required,
+			desc:       param.desc,
+			allowEmpty: param.allowEmpty,
+			defaul:     param.defaul,
+			example:    param.example,
+			enum:       param.enum,
+			minLength:  param.minLength,
+			maxLength:  param.maxLength,
+			minimum:    param.minimum,
+			maximum:    param.maximum,
+		})
 		paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
 		if param.in == "path" || param.in == "query" {
 			parameterStrings = append(parameterStrings, "    "+paramStr)
@@ -319,7 +350,20 @@ func buildApibDefinitions(doc *Document) string {
 
 		propertyStrings := make([]string, 0)
 		for _, property := range definition.properties {
-			propertyStr := buildApibParameter(createParamFromProperty(property))
+			propertyStr := buildApibParam(&apibParam{
+				name:       property.name,
+				typ:        property.typ,
+				required:   property.required,
+				desc:       property.desc,
+				allowEmpty: property.allowEmpty,
+				defaul:     property.defaul,
+				example:    property.example,
+				enum:       property.enum,
+				minLength:  property.minLength,
+				maxLength:  property.maxLength,
+				minimum:    property.minimum,
+				maximum:    property.maximum,
+			})
 			propertyStrings = append(propertyStrings, propertyStr)
 		}
 

@@ -267,23 +267,23 @@ definitions:
     - data
     description: global page response
     properties:
+      page:
+        type: integer
+        format: int32
+        description: current page
+      limit:
+        type: integer
+        format: int32
+        description: page size
+      total:
+        type: integer
+        format: int32
+        description: total count
       data:
         type: array
         description: response data
         items:
           $ref: '#/definitions/UserDto'
-      limit:
-        type: integer
-        format: int32
-        description: page size
-      page:
-        type: integer
-        format: int32
-        description: current page
-      total:
-        type: integer
-        format: int32
-        description: total count
   _Result<_Page<UserDto>>:
     type: object
     required:
@@ -296,11 +296,11 @@ definitions:
         type: integer
         format: int32
         description: status code
-      data:
-        $ref: '#/definitions/_Page<UserDto>'
       message:
         type: string
         description: status message
+      data:
+        $ref: '#/definitions/_Page<UserDto>'
   _Result<LoginDto>:
     type: object
     required:
@@ -313,11 +313,11 @@ definitions:
         type: integer
         format: int32
         description: status code
-      data:
-        $ref: '#/definitions/LoginDto'
       message:
         type: string
         description: status message
+      data:
+        $ref: '#/definitions/LoginDto'
   _Result<UserDto>:
     type: object
     required:
@@ -330,11 +330,11 @@ definitions:
         type: integer
         format: int32
         description: status code
-      data:
-        $ref: '#/definitions/UserDto'
       message:
         type: string
         description: status message
+      data:
+        $ref: '#/definitions/UserDto'
   LoginDto:
     type: object
     required:
@@ -342,11 +342,11 @@ definitions:
     - token
     description: login response
     properties:
+      user:
+        $ref: '#/definitions/UserDto'
       token:
         type: string
         description: access token
-      user:
-        $ref: '#/definitions/UserDto'
   LoginParam:
     type: object
     required:
@@ -367,14 +367,14 @@ definitions:
     - password
     description: register param
     properties:
-      password:
-        type: string
-        description: password
-        maxLength: 30
-        minLength: 5
       username:
         type: string
         description: username
+        maxLength: 30
+        minLength: 5
+      password:
+        type: string
+        description: password
         maxLength: 30
         minLength: 5
   Result:
@@ -402,13 +402,9 @@ definitions:
     - gender
     description: update user param
     properties:
-      gender:
+      username:
         type: string
-        description: user gender
-        enum:
-        - secret
-        - male
-        - female
+        description: username
       nickname:
         type: string
         description: nickname
@@ -416,9 +412,13 @@ definitions:
         type: string
         description: user profile
         allowEmptyValue: true
-      username:
+      gender:
         type: string
-        description: username
+        description: user gender
+        enum:
+        - secret
+        - male
+        - female
   UserDto:
     type: object
     required:
@@ -429,20 +429,6 @@ definitions:
     - gender
     description: user response
     properties:
-      gender:
-        type: string
-        description: user gender
-        enum:
-        - secret
-        - male
-        - female
-      nickname:
-        type: string
-        description: nickname
-      profile:
-        type: string
-        description: user profile
-        allowEmptyValue: true
       uid:
         type: integer
         format: int64
@@ -450,3 +436,17 @@ definitions:
       username:
         type: string
         description: username
+      nickname:
+        type: string
+        description: nickname
+      profile:
+        type: string
+        description: user profile
+        allowEmptyValue: true
+      gender:
+        type: string
+        description: user gender
+        enum:
+        - secret
+        - male
+        - female

@@ -239,7 +239,7 @@ func (r *Response) Desc(desc string) *Response {
 	return r
 }
 
-// Examples sets the examples in Response.
+// Examples sets the whole examples in Response.
 func (r *Response) Examples(examples map[string]string) *Response {
 	r.examples = examples
 	return r
@@ -311,7 +311,7 @@ type Param struct {
 	defaul           interface{}
 	example          interface{}
 	pattern          string
-	enums            []interface{}
+	enum             []interface{}
 	minLength        int
 	maxLength        int
 	minItems         int
@@ -323,6 +323,7 @@ type Param struct {
 	exclusiveMin     bool
 	exclusiveMax     bool
 	multipleOf       float64
+	itemOption       *ItemOption
 }
 
 // NewParam creates a default Param with given arguments.
@@ -363,7 +364,7 @@ func (p *Param) GetAllowEmpty() bool         { return p.allowEmpty }
 func (p *Param) GetDefault() interface{}     { return p.defaul }
 func (p *Param) GetExample() interface{}     { return p.example }
 func (p *Param) GetPattern() string          { return p.pattern }
-func (p *Param) GetEnums() []interface{}     { return p.enums }
+func (p *Param) GetEnum() []interface{}      { return p.enum }
 func (p *Param) GetMinLength() int           { return p.minLength }
 func (p *Param) GetMaxLength() int           { return p.maxLength }
 func (p *Param) GetMinItems() int            { return p.minItems }
@@ -375,6 +376,7 @@ func (p *Param) GetMaximum() float64         { return p.maximum }
 func (p *Param) GetExclusiveMin() bool       { return p.exclusiveMin }
 func (p *Param) GetExclusiveMax() bool       { return p.exclusiveMax }
 func (p *Param) GetMultipleOf() float64      { return p.multipleOf }
+func (p *Param) GetItemOption() *ItemOption  { return p.itemOption }
 
 // Name sets the name in Param.
 func (p *Param) Name(name string) *Param {
@@ -430,10 +432,9 @@ func (p *Param) Pattern(pattern string) *Param {
 	return p
 }
 
-// Enums sets the whole enums in Param.
-// TODO BREAK CHANGES
-func (p *Param) Enums(enums ...interface{}) *Param {
-	p.enums = enums
+// Enum sets the whole enums in Param.
+func (p *Param) Enum(enums ...interface{}) *Param {
+	p.enum = enums
 	return p
 }
 
@@ -525,5 +526,11 @@ func (p *Param) ExclusiveMax(exclusiveMax bool) *Param {
 // MultipleOf sets the multipleOf in Param.
 func (p *Param) MultipleOf(multipleOf float64) *Param {
 	p.multipleOf = multipleOf
+	return p
+}
+
+// ItemOption sets the itemOption in ItemOption.
+func (p *Param) ItemOption(itemOption *ItemOption) *Param {
+	p.itemOption = itemOption
 	return p
 }

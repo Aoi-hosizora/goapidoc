@@ -102,7 +102,7 @@ func TestGenerate(t *testing.T) {
 			Tags("Test").
 			Securities("WrongSecurity").
 			Params(
-				NewQueryParam("q1", "string#date-time", true, "q1").Enums(0, 1, 2),
+				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
 				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
 				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("example").Default("default"),
 				NewFormParam("f1", "file", true, "f1"),
@@ -151,7 +151,7 @@ func TestGenerate(t *testing.T) {
 				NewProperty("username", "string", true, "username"),
 				NewProperty("nickname", "string", true, "nickname"),
 				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enums("secret", "male", "female"),
+				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
 			),
 
 		NewDefinition("LoginDto", "login response").
@@ -177,7 +177,7 @@ func TestGenerate(t *testing.T) {
 				NewProperty("username", "string", true, "username"),
 				NewProperty("nickname", "string", true, "nickname"),
 				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enums("secret", "male", "female"),
+				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
 			),
 	)
 

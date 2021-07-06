@@ -68,7 +68,7 @@ type Property struct {
 	defaul           interface{}
 	example          interface{}
 	pattern          string
-	enums            []interface{}
+	enum             []interface{}
 	minLength        int
 	maxLength        int
 	minItems         int
@@ -80,6 +80,7 @@ type Property struct {
 	exclusiveMin     bool
 	exclusiveMax     bool
 	multipleOf       float64
+	itemOption       *ItemOption
 }
 
 // NewProperty creates a default Property with given arguments.
@@ -94,7 +95,7 @@ func (p *Property) GetAllowEmpty() bool         { return p.allowEmpty }
 func (p *Property) GetDefault() interface{}     { return p.defaul }
 func (p *Property) GetExample() interface{}     { return p.example }
 func (p *Property) GetPattern() string          { return p.pattern }
-func (p *Property) GetEnums() []interface{}     { return p.enums }
+func (p *Property) GetEnum() []interface{}      { return p.enum }
 func (p *Property) GetMinLength() int           { return p.minLength }
 func (p *Property) GetMaxLength() int           { return p.maxLength }
 func (p *Property) GetMinItems() int            { return p.minItems }
@@ -106,6 +107,7 @@ func (p *Property) GetMaximum() float64         { return p.maximum }
 func (p *Property) GetExclusiveMin() bool       { return p.exclusiveMin }
 func (p *Property) GetExclusiveMax() bool       { return p.exclusiveMax }
 func (p *Property) GetMultipleOf() float64      { return p.multipleOf }
+func (p *Property) GetItemOption() *ItemOption  { return p.itemOption }
 
 // Name sets the name in Property.
 func (p *Property) Name(name string) *Property {
@@ -155,10 +157,9 @@ func (p *Property) Pattern(pattern string) *Property {
 	return p
 }
 
-// Enums sets the whole enums in Property.
-// TODO BREAK CHANGES
-func (p *Property) Enums(enums ...interface{}) *Property {
-	p.enums = enums
+// Enum sets the whole enums in Property.
+func (p *Property) Enum(enums ...interface{}) *Property {
+	p.enum = enums
 	return p
 }
 
@@ -253,6 +254,205 @@ func (p *Property) MultipleOf(multipleOf float64) *Property {
 	return p
 }
 
+// ItemOption sets the itemOption in Property.
+func (p *Property) ItemOption(itemOption *ItemOption) *Property {
+	p.itemOption = itemOption
+	return p
+}
+
+// ItemOption represents an array type's item option for Param and Property.
+type ItemOption struct {
+	allowEmpty       bool
+	defaul           interface{}
+	example          interface{}
+	pattern          string
+	enum             []interface{}
+	minLength        int
+	maxLength        int
+	minItems         int
+	maxItems         int
+	uniqueItems      bool
+	collectionFormat string
+	minimum          float64
+	maximum          float64
+	exclusiveMin     bool
+	exclusiveMax     bool
+	multipleOf       float64
+	itemOption       *ItemOption
+}
+
+// NewItemOption creates a default ItemOption with no option.
+func NewItemOption() *ItemOption {
+	return &ItemOption{}
+}
+
+func (o *ItemOption) GetAllowEmpty() bool         { return o.allowEmpty }
+func (o *ItemOption) GetDefault() interface{}     { return o.defaul }
+func (o *ItemOption) GetExample() interface{}     { return o.example }
+func (o *ItemOption) GetPattern() string          { return o.pattern }
+func (o *ItemOption) GetEnum() []interface{}      { return o.enum }
+func (o *ItemOption) GetMinLength() int           { return o.minLength }
+func (o *ItemOption) GetMaxLength() int           { return o.maxLength }
+func (o *ItemOption) GetMinItems() int            { return o.minItems }
+func (o *ItemOption) GetMaxItems() int            { return o.maxItems }
+func (o *ItemOption) GetUniqueItems() bool        { return o.uniqueItems }
+func (o *ItemOption) GetCollectionFormat() string { return o.collectionFormat }
+func (o *ItemOption) GetMinimum() float64         { return o.minimum }
+func (o *ItemOption) GetMaximum() float64         { return o.maximum }
+func (o *ItemOption) GetExclusiveMin() bool       { return o.exclusiveMin }
+func (o *ItemOption) GetExclusiveMax() bool       { return o.exclusiveMax }
+func (o *ItemOption) GetMultipleOf() float64      { return o.multipleOf }
+func (o *ItemOption) GetItemOption() *ItemOption  { return o.itemOption }
+
+// AllowEmpty sets the allowEmpty in ItemOption.
+func (o *ItemOption) AllowEmpty(allow bool) *ItemOption {
+	o.allowEmpty = allow
+	return o
+}
+
+// Default sets the default in ItemOption.
+func (o *ItemOption) Default(defaul interface{}) *ItemOption {
+	o.defaul = defaul
+	return o
+}
+
+// Example sets the example in ItemOption.
+func (o *ItemOption) Example(example interface{}) *ItemOption {
+	o.example = example
+	return o
+}
+
+// Pattern sets the pattern in ItemOption.
+func (o *ItemOption) Pattern(pattern string) *ItemOption {
+	o.pattern = pattern
+	return o
+}
+
+// Enum sets the whole enums in ItemOption.
+func (o *ItemOption) Enum(enums ...interface{}) *ItemOption {
+	o.enum = enums
+	return o
+}
+
+// MinLength sets the minLength in ItemOption.
+func (o *ItemOption) MinLength(min int) *ItemOption {
+	o.minLength = min
+	return o
+}
+
+// MaxLength sets the maxLength in ItemOption.
+func (o *ItemOption) MaxLength(max int) *ItemOption {
+	o.maxLength = max
+	return o
+}
+
+// LengthRange sets the minLength and maxLength in ItemOption.
+func (o *ItemOption) LengthRange(min, max int) *ItemOption {
+	o.minLength = min
+	o.maxLength = max
+	return o
+}
+
+// MinItems sets the minItems in ItemOption.
+func (o *ItemOption) MinItems(min int) *ItemOption {
+	o.minItems = min
+	return o
+}
+
+// MaxItems sets the maxItems in ItemOption.
+func (o *ItemOption) MaxItems(max int) *ItemOption {
+	o.maxItems = max
+	return o
+}
+
+// ItemsRange sets the minItems and maxItems in ItemOption.
+func (o *ItemOption) ItemsRange(min, max int) *ItemOption {
+	o.minItems = min
+	o.maxItems = max
+	return o
+}
+
+// UniqueItems sets the uniqueItems in ItemOption.
+func (o *ItemOption) UniqueItems(unique bool) *ItemOption {
+	o.uniqueItems = unique
+	return o
+}
+
+// CollectionFormat sets the collectionFormat in ItemOption.
+func (o *ItemOption) CollectionFormat(collectionFormat string) *ItemOption {
+	o.collectionFormat = collectionFormat
+	return o
+}
+
+// Minimum sets the minimum in ItemOption.
+func (o *ItemOption) Minimum(min float64) *ItemOption {
+	o.minimum = min
+	return o
+}
+
+// Maximum sets the maximum in ItemOption.
+func (o *ItemOption) Maximum(max float64) *ItemOption {
+	o.maximum = max
+	return o
+}
+
+// ValueRange sets the minimum and maximum in ItemOption.
+func (o *ItemOption) ValueRange(min, max float64) *ItemOption {
+	o.minimum = min
+	o.maximum = max
+	return o
+}
+
+// ExclusiveMin sets the exclusiveMin in ItemOption.
+func (o *ItemOption) ExclusiveMin(exclusiveMin bool) *ItemOption {
+	o.exclusiveMin = exclusiveMin
+	return o
+}
+
+// ExclusiveMax sets the exclusiveMax in ItemOption.
+func (o *ItemOption) ExclusiveMax(exclusiveMax bool) *ItemOption {
+	o.exclusiveMax = exclusiveMax
+	return o
+}
+
+// MultipleOf sets the multipleOf in ItemOption.
+func (o *ItemOption) MultipleOf(multipleOf float64) *ItemOption {
+	o.multipleOf = multipleOf
+	return o
+}
+
+// ItemOption sets the itemOption in ItemOption.
+func (o *ItemOption) ItemOption(itemOption *ItemOption) *ItemOption {
+	o.itemOption = itemOption
+	return o
+}
+
+// cloneItemOption clones the given ItemOption recursively.
+func cloneItemOption(o *ItemOption) *ItemOption {
+	if o == nil {
+		return nil
+	}
+	return &ItemOption{
+		allowEmpty:       o.allowEmpty,
+		defaul:           o.defaul,
+		example:          o.example,
+		pattern:          o.pattern,
+		enum:             o.enum,
+		minLength:        o.minLength,
+		maxLength:        o.maxLength,
+		minItems:         o.minItems,
+		maxItems:         o.maxItems,
+		uniqueItems:      o.uniqueItems,
+		collectionFormat: o.collectionFormat,
+		minimum:          o.minimum,
+		maximum:          o.maximum,
+		exclusiveMin:     o.exclusiveMin,
+		exclusiveMax:     o.exclusiveMax,
+		multipleOf:       o.multipleOf,
+		itemOption:       cloneItemOption(o),
+	}
+}
+
 // cloneProperty clones the given Property.
 func cloneProperty(p *Property) *Property {
 	return &Property{
@@ -264,7 +464,7 @@ func cloneProperty(p *Property) *Property {
 		defaul:           p.defaul,
 		example:          p.example,
 		pattern:          p.pattern,
-		enums:            p.enums,
+		enum:             p.enum,
 		minLength:        p.minLength,
 		maxLength:        p.maxLength,
 		minItems:         p.minItems,
@@ -276,32 +476,6 @@ func cloneProperty(p *Property) *Property {
 		exclusiveMin:     p.exclusiveMin,
 		exclusiveMax:     p.exclusiveMax,
 		multipleOf:       p.multipleOf,
-	}
-}
-
-// createParamFromProperty clones the given Property to Param.
-func createParamFromProperty(p *Property) *Param {
-	return &Param{
-		name: p.name,
-		// in: p.in,
-		typ:              p.typ,
-		required:         p.required,
-		desc:             p.desc,
-		allowEmpty:       p.allowEmpty,
-		defaul:           p.defaul,
-		example:          p.example,
-		pattern:          p.pattern,
-		enums:            p.enums,
-		minLength:        p.minLength,
-		maxLength:        p.maxLength,
-		minItems:         p.minItems,
-		maxItems:         p.maxItems,
-		uniqueItems:      p.uniqueItems,
-		collectionFormat: p.collectionFormat,
-		minimum:          p.minimum,
-		maximum:          p.maximum,
-		exclusiveMin:     p.exclusiveMin,
-		exclusiveMax:     p.exclusiveMax,
-		multipleOf:       p.multipleOf,
+		itemOption:       cloneItemOption(p.itemOption),
 	}
 }

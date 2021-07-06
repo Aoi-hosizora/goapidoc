@@ -56,11 +56,6 @@ func (l *orderedMap) Keys() []string {
 	return l.i
 }
 
-func (l *orderedMap) Has(key string) bool {
-	_, exist := l.m[key]
-	return exist
-}
-
 func (l *orderedMap) Set(key string, value interface{}) {
 	_, exist := l.m[key]
 	l.m[key] = value
@@ -83,28 +78,27 @@ func (l *orderedMap) MustGet(key string) interface{} {
 }
 
 func (l *orderedMap) MarshalJSON() ([]byte, error) {
-	ov := make([]interface{}, len(l.i))
-	for idx, field := range l.i {
-		ov[idx] = l.m[field]
-	}
-
+	length := len(l.i)
 	buf := &bytes.Buffer{}
 	buf.WriteString("{")
-	for idx, field := range l.i {
-		b, err := json.Marshal(ov[idx])
+	for idx, k := range l.i {
+		b, err := jsonMarshal(l.m[k])
 		if err != nil {
 			return nil, err
 		}
-		buf.WriteString(fmt.Sprintf("  \"%s\": %s", field, string(b)))
-		if idx < len(l.i)-1 {
+		buf.WriteString(fmt.Sprintf("  \"%s\": %s", k, string(b)))
+		if idx < length-1 {
 			buf.WriteString(",")
 		}
 	}
 	buf.WriteString("}")
-
 	return buf.Bytes(), nil
 }
 
 func (l *orderedMap) MarshalYAML() (interface{}, error) {
-	return l.m, nil
+	ms := yaml.MapSlice{}
+	for _, k := range l.i {
+		ms = append(ms, yaml.MapItem{Key: k, Value: l.m[k]})
+	}
+	return ms, nil
 }

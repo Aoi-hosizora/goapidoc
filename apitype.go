@@ -275,21 +275,23 @@ func prehandleDefinition(definition *Definition) *Definition {
 func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []*Definition {
 	// extract generic definitions from given definitions
 	allDefMap := make(map[string]*Definition, len(allDefinitions))
-	outMap := newOrderedMap(len(allDefinitions)) // map[string]*Definition
+	out := make([]*Definition, 0, len(allDefinitions))    // out definition slice
+	outKeys := make(map[string]bool, len(allDefinitions)) // out definition key map
 	for _, def := range allDefinitions {
 		if _, ok := allDefMap[def.name]; ok {
 			panic("Duplicate definition `" + def.name + "`")
 		}
 		allDefMap[def.name] = def
 		if len(def.generics) == 0 {
-			outMap.Set(def.name, def) // definition without generic
+			out = append(out, def) // definition without generic
+			outKeys[def.name] = true
 		}
 	}
 
 	// extract more definitions from given types
 	var extractFn func(typ string)
 	extractFn = func(typ string) {
-		if outMap.Has(typ) {
+		if _, ok := outKeys[typ]; ok {
 			return
 		}
 		at := parseApiType(typ)
@@ -339,17 +341,15 @@ func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []
 		for _, prop := range specDef.properties {
 			extractFn(prop.typ) // << extract property type recurrently
 		}
-		outMap.Set(specDef.name, specDef)
+		out = append(out, specDef)
+		outKeys[specDef.name] = true
 	}
+
 	// for all types, extract generic parameters to definition list
 	for _, typ := range allTypes {
 		extractFn(typ)
 	}
 
-	// convert ordered-map to slice
-	outDefs := make([]*Definition, 0, outMap.Length())
-	for _, name := range outMap.Keys() {
-		outDefs = append(outDefs, outMap.MustGet(name).(*Definition))
-	}
-	return outDefs
+	// return definition slice
+	return out
 }
