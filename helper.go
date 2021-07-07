@@ -8,7 +8,27 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"text/template"
 )
+
+func spaceIndent(indent int, s string) string {
+	spaces := strings.Repeat("    ", indent)
+	return spaces + strings.ReplaceAll(s, "\n", "\n"+spaces)
+}
+
+func renderTemplate(t string, object interface{}) ([]byte, error) {
+	tmpl, err := template.New("template").Parse(t)
+	if err != nil {
+		return nil, err
+	}
+	buf := &bytes.Buffer{}
+	err = tmpl.Execute(buf, object)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
 
 func yamlMarshal(t interface{}) ([]byte, error) {
 	return yaml.Marshal(t)

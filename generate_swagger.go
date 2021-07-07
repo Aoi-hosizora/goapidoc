@@ -479,7 +479,7 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 
 func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation {
 	// route - method - operation
-	out := make(map[string]map[string]*swagOperation)
+	out := make(map[string]map[string]*swagOperation, 2) // cap defaults to 2
 	for _, op := range doc.operations {
 		if op.method == "" || op.route == "" {
 			panic("Operation method and route path is required in swagger 2.0")
@@ -504,7 +504,7 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 
 		_, ok := out[op.route]
 		if !ok {
-			out[op.route] = make(map[string]*swagOperation, 2) // cap defaults to 2
+			out[op.route] = make(map[string]*swagOperation, 4) // cap defaults to 4
 		}
 		out[op.route][method] = &swagOperation{
 			Summary:     op.summary,

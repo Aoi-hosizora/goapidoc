@@ -1,11 +1,9 @@
 package goapidoc
 
 import (
-	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
-	"text/template"
 )
 
 type apibDocument struct {
@@ -22,6 +20,45 @@ type apibDocument struct {
 
 	GroupsString      string
 	DefinitionsString string
+}
+
+type apibGroup struct {
+	Tag         string
+	Description string
+	Routes      []*apibRoute
+}
+
+type apibRoute struct {
+	Route   string
+	Summary string
+	Methods string
+}
+
+type apibMethod struct {
+	Route       string
+	Method      string
+	Summary     string
+	Description string
+	Deprecated  bool
+	Consume     string
+	Produce     string
+
+	Parameters []string
+	Headers    []string
+	Body       string
+	Forms      []string
+
+	Responses []*apibResponse
+}
+
+type apibResponse struct {
+	Code        int
+	Description string
+	Produce     string
+
+	Headers []string
+	Body    string
+	Example string
 }
 
 type apibSchema struct {
@@ -66,7 +103,27 @@ func buildApibType(typ string) (string, *apiType) {
 	}
 }
 
-func buildApibSchema(schema *apibSchema) string {
+func buildApibSchema(schema *apibSchema, in string) string {
+	/*
+		+ <parameter name>: `<example value>` (<type> | enum[<type>], required | optional) - <description>
+		    <additional description>
+		    + Default: `<default value>`
+		    + Members
+		        + `<enumeration value 1>`
+		        + `<enumeration value 2>`
+	*/
+	switch in {
+	case HEADER:
+		req := "required"
+		if !schema.required {
+			req = "optional"
+		}
+		return fmt.Sprintf("%s: %s (%s, %s)", schema.name, schema.desc, schema.typ, req)
+	case BODY:
+		return schema.typ // <<<
+	case PATH, QUERY, FORM:
+		// pass
+	}
 	req := "required"
 	if !schema.required {
 		req = "optional"
@@ -126,43 +183,94 @@ func buildApibSchema(schema *apibSchema) string {
 // operations & groups & definitions
 // =================================
 
-func buildApibOperation(securities map[string]*Security, op *Operation) string {
-	// meta
-	method := strings.ToUpper(op.method)
-	metaStr := fmt.Sprintf("### %s [%s]\n\n`%s %s`", op.summary, method, method, op.route)
-	if op.desc != "" {
-		metaStr += "\n\n" + op.desc
-	}
-	if op.deprecated {
-		metaStr += "\n\nAttention: This api is deprecated."
-	}
+var apibOperationTemplate = `
+### {{ .Summary }} [{{ .Method }}]
 
-	// request
+` + "`{{ .Method }} {{ .Route }}`" + `
+
+{{ if .Description }}> {{ .Description }}{{ end }}
+
+{{ if .Deprecated }}Attention: This api is deprecated.{{ end }}
+
+{{ if .Parameters }}
++ Parameters
+
+{{ range .Parameters }}{{.}}
+{{ end }}
+{{ end }}
+
++ Request ({{ .Consume }})
+
+    + Attributes {{ if .Body }}({{ .Body }}){{ end }}
+
+{{ range .Forms }}{{.}}
+{{ end }}
+
+    + Headers
+
+{{ range .Headers }}{{.}}
+{{ end }}
+
+    + Body
+
+{{ range .Responses }}
+
++ Response {{ .Code }} ({{ .Produce }})
+
+    {{ if .Description }}> {{ .Description }}{{ end }}
+
+    + Attributes {{ if .Body }}({{ .Body }}){{ end }}
+
+    + Headers
+
+{{ range .Headers }}{{.}}
+{{ end }}
+
+    + Body
+
+{{/* {{ .Example }} */}}
+
+{{ end }}
+`
+
+func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
+	// prehandle operation fields
 	consume := "application/json"
 	if len(op.consumes) >= 1 {
 		consume = op.consumes[0]
 	}
+	produce := "application/json"
+	if len(op.produces) >= 1 {
+		produce = op.produces[0]
+	}
 	params := op.params
-	bodyParamString := ""
-	if len(op.securities) >= 1 {
-		securityString := op.securities[0] // only support one authentication
-		if security, ok := securities[securityString]; ok {
-			desc := securityString + " (" + security.desc + "), " + security.typ
-			if security.desc == "" {
-				desc = securityString + ", " + security.typ
+	if len(op.securities) > 0 {
+		name := op.securities[0]
+		if s, ok := securities[name]; ok {
+			desc := fmt.Sprintf("%s, %s", name, s.typ)
+			if s.desc != "" {
+				desc = fmt.Sprintf("%s (%s), %s", name, s.desc, s.typ)
 			}
-			if security.typ == "apiKey" {
-				params = append(params, &Param{name: security.name, in: security.in, typ: "string", desc: desc})
-			} else if security.typ == "basic" {
+			if s.typ == "apiKey" {
+				params = append(params, &Param{name: s.name, in: s.in, typ: "string", desc: desc})
+			} else if s.typ == "basic" {
 				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc})
 			}
 		}
 	}
-	parameterStrings := make([]string, 0)
-	attributeStrings := make([]string, 0)
-	headerStrings := make([]string, 0)
+
+	// render operation to apibMethod
+	out := &apibMethod{
+		Summary:     op.summary,
+		Method:      op.method,
+		Route:       op.route,
+		Description: op.desc,
+		Deprecated:  op.deprecated,
+		Consume:     consume,
+		Produce:     produce,
+	}
 	for _, param := range params {
-		paramStr := buildApibSchema(&apibSchema{
+		s := buildApibSchema(&apibSchema{
 			name:       param.name,
 			typ:        param.typ,
 			required:   param.required,
@@ -175,186 +283,145 @@ func buildApibOperation(securities map[string]*Security, op *Operation) string {
 			maxLength:  param.maxLength,
 			minimum:    param.minimum,
 			maximum:    param.maximum,
+		}, param.in)
+		switch param.in {
+		case PATH, QUERY:
+			out.Parameters = append(out.Parameters, spaceIndent(1, s))
+		case FORM:
+			out.Forms = append(out.Headers, spaceIndent(2, s))
+		case HEADER:
+			out.Headers = append(out.Headers, spaceIndent(3, s))
+		case BODY:
+			out.Body = s
+		}
+	}
+	for _, resp := range op.responses {
+		headers := make([]string, 0, len(resp.headers))
+		for _, h := range resp.headers {
+			s := buildApibSchema(&apibSchema{name: h.name, typ: h.typ, desc: h.desc, required: true}, HEADER)
+			headers = append(headers, spaceIndent(3, s))
+		}
+		example := ""
+		if e, ok := resp.examples[produce]; ok {
+			example = e // <<<
+		}
+		out.Responses = append(out.Responses, &apibResponse{
+			Code:        resp.code,
+			Description: resp.desc,
+			Produce:     produce,
+			Headers:     headers,
+			Body:        buildApibSchema(&apibSchema{typ: resp.typ}, BODY),
+			Example:     example,
 		})
-		paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
-		if param.in == "path" || param.in == "query" {
-			parameterStrings = append(parameterStrings, "    "+paramStr)
-		} else if param.in == "formData" {
-			paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
-			attributeStrings = append(attributeStrings, "        "+paramStr)
-		} else if param.in == "body" {
-			bodyParamString = param.typ // allow one
-		} else if param.in == "header" {
-			req := "required"
-			if !param.required {
-				req = "optional"
-			}
-			headerStr := fmt.Sprintf("            %s: %s (%s, %s)", param.name, param.desc, param.typ, req)
-			headerStrings = append(headerStrings, headerStr)
-		}
 	}
 
-	// + Request <----------------- center
-	requestStr := fmt.Sprintf("+ Request (%s)", consume)
-	// + Parameters
-	if len(parameterStrings) != 0 {
-		parameterStr := strings.Join(parameterStrings, "\n")
-		requestStr = fmt.Sprintf("+ Parameters\n\n%s\n\n%s", parameterStr, requestStr)
+	bs, err := renderTemplate(apibOperationTemplate, out)
+	if err != nil {
+		panic("Internal error: " + err.Error())
 	}
-	// + Attributes (req)
-	requestStr += "\n\n    + Attributes"
-	if bodyParamString != "" && len(attributeStrings) != 0 {
-		attributeStr := strings.Join(attributeStrings, "\n")
-		requestStr += fmt.Sprintf(" (%s)\n\n%s", bodyParamString, attributeStr)
-	} else if len(attributeStrings) != 0 {
-		attributeStr := strings.Join(attributeStrings, "\n")
-		requestStr += fmt.Sprintf("\n\n%s", attributeStr)
-	} else if bodyParamString != "" {
-		requestStr += fmt.Sprintf(" (%s)", bodyParamString)
-	}
-	// + Headers (req)
-	requestStr += "\n\n    + Headers"
-	if len(headerStrings) != 0 {
-		headerStr := strings.Join(headerStrings, "\n")
-		requestStr += fmt.Sprintf("\n\n%s", headerStr)
-	}
-	// + Body (req)
-	requestStr += "\n\n    + Body"
-
-	// response
-	produce := "application/json"
-	if len(op.produces) >= 1 {
-		produce = op.produces[0]
-	}
-	responseStrings := make([]string, 0)
-	for _, response := range op.responses {
-		// + Response <----------------- center
-		responseStr := fmt.Sprintf("+ Response %d (%s)", response.code, produce)
-		if response.desc != "" {
-			responseStr += fmt.Sprintf("\n\n    %s", response.desc)
-		}
-		// + Attributes (resp)
-		responseStr += "\n\n    + Attributes"
-		if response.typ != "" {
-			typ, _ := buildApibType(response.typ)
-			responseStr += fmt.Sprintf(" (%s)", typ)
-		}
-		// + Headers (resp)
-		responseStr += "\n\n    + Headers"
-		headerStrings := make([]string, 0)
-		for _, header := range response.headers {
-			headerStr := fmt.Sprintf("            %s: %s (%s)", header.name, header.desc, header.typ)
-			headerStrings = append(headerStrings, headerStr)
-		}
-		if len(headerStrings) != 0 {
-			headerStr := strings.Join(headerStrings, "\n")
-			responseStr += fmt.Sprintf("\n\n%s", headerStr)
-		}
-		// + Body (resp)
-		responseStr += "\n\n    + Body"
-		if ex, ok := response.examples[produce]; ok {
-			ex = "\n" + ex
-			ex = strings.ReplaceAll(ex, "\n", "\n            ")
-			responseStr += "\n" + ex
-		}
-		responseStrings = append(responseStrings, responseStr)
-	}
-
-	responseStr := strings.Join(responseStrings, "\n\n")
-	return fmt.Sprintf("%s\n\n%s\n\n%s", metaStr, requestStr, responseStr)
+	return bs
 }
 
-func buildApibGroups(doc *Document) string {
-	var tags map[string]string
+var apibGroupsTemplate = `
+{{ range . }}
+# Group {{ .Tag }}
+
+{{ if .Description }}> {{ .Description }}{{ end }}
+
+{{ range .Routes }}
+## {{ .Summary }} [{{ .Route }}]
+
+{{ .Methods }}
+
+{{ end }}
+
+{{ end }}`
+
+func buildApibGroups(doc *Document) []byte {
+	// get tags and securities from document.option
+	var tags []*Tag
 	var securities map[string]*Security
 	if doc.option != nil {
-		tags = make(map[string]string, len(doc.option.tags))
-		for _, tag := range doc.option.tags {
-			tags[tag.name] = tag.desc
-		}
+		tags = doc.option.tags
 		securities = make(map[string]*Security, len(doc.option.securities))
-		for _, security := range doc.option.securities {
-			securities[security.title] = security
+		for _, sec := range doc.option.securities {
+			securities[sec.title] = sec
 		}
 	}
 
-	// tag - Operation (route & method)
-	groups := newOrderedMap(len(tags)) // map[string][]*Operation{}
-	for name := range tags {
-		groups.Set(name, make([]*Operation, 0))
+	// put all operations to trmoMap splitting by tag, route and method
+	// trmo: tag - route - method - Operation
+	trmoMap := newOrderedMap(len(tags)) // map[string]map[string]map[string]*Operation
+	for _, tag := range tags {
+		trmoMap.Set(tag.name, newOrderedMap(2)) // cap defaults to 2
 	}
 	for _, op := range doc.operations {
+		// get and prehandle operation's tag, route, method
 		tag := "Default"
 		if len(op.tags) > 0 {
 			tag = op.tags[0]
 		}
-		ops, ok := groups.Get(tag)
+		queries := make([]string, 0, 3)
+		for _, param := range op.params {
+			if param.in == "query" {
+				queries = append(queries, param.name)
+			}
+		}
+		route := op.route
+		if len(queries) > 0 {
+			route += fmt.Sprintf("{?%s}", strings.Join(queries, ","))
+		}
+		method := strings.ToLower(op.method)
+
+		// rmo: route - method - Operation
+		rmoMap, ok := trmoMap.Get(tag) // map[string]map[string]*Operation
 		if !ok {
-			ops = make([]*Operation, 0)
+			// new tag, need to append
+			rmoMap = newOrderedMap(2)
+			tags = append(tags, &Tag{name: tag})
 		}
-		ops = append(ops.([]*Operation), op)
-		groups.Set(tag, ops)
+		// mo: method - Operation
+		moMap, ok := rmoMap.(*orderedMap).Get(route) // map[string]*Operation
+		if !ok {
+			moMap = newOrderedMap(4) // cap defaults to 4
+		}
+		moMap.(*orderedMap).Set(method, op)
+		rmoMap.(*orderedMap).Set(route, moMap)
+		trmoMap.Set(tag, rmoMap)
 	}
 
-	// [#, #]
-	groupStrings := make([]string, 0, groups.Length())
-
-	for _, tag := range groups.Keys() {
-		group := groups.MustGet(tag).([]*Operation)
-		// route - method - Operation
-		operations := newOrderedMap(len(group)) // map[string]map[string]*Operation{}
-		for _, op := range group {
-			route := op.route
-			query := make([]string, 0)
-			for _, param := range op.params {
-				if param.in == "query" {
-					query = append(query, param.name)
-				}
+	// render operations from trmoMap to apibGroup slice
+	out := make([]*apibGroup, 0, trmoMap.Length())
+	for _, tag := range tags {
+		rmoMap := trmoMap.MustGet(tag.name).(*orderedMap)
+		outRoutes := make([]*apibRoute, 0, rmoMap.Length())
+		for _, route := range rmoMap.Keys() {
+			moMap := rmoMap.MustGet(route).(*orderedMap) // map[string]*Operation
+			summaries := make([]string, 0, moMap.Length())
+			moStrings := make([]string, 0, moMap.Length())
+			for _, method := range moMap.Keys() {
+				op := moMap.MustGet(method).(*Operation)
+				summaries = append(summaries, op.summary)
+				moStrings = append(moStrings, string(buildApibOperation(op, securities)))
 			}
-			if len(query) != 0 {
-				route += fmt.Sprintf("{?%s}", strings.Join(query, ","))
-			}
-
-			methods, ok := operations.Get(route)
-			if !ok {
-				methods = newOrderedMap(0) // map[string]*Operation
-			}
-			methods.(*orderedMap).Set(op.method, op)
-			operations.Set(route, methods)
+			outRoutes = append(outRoutes, &apibRoute{
+				Route:   route,
+				Summary: strings.Join(summaries, ", "),
+				Methods: strings.Join(moStrings, "\n\n"),
+			})
 		}
-
-		// [##, ##]
-		opStrings := make([]string, 0, operations.Length())
-		for _, opKey := range operations.Keys() {
-			methods := operations.MustGet(opKey).(*orderedMap)
-
-			// [###, ###]
-			methodStrings := make([]string, 0, methods.Length())
-			summaries := make([]string, 0, methods.Length())
-			for _, methodKey := range methods.Keys() {
-				operation := methods.MustGet(methodKey).(*Operation)
-				summaries = append(summaries, operation.summary)
-				methodStr := buildApibOperation(securities, operation)
-				methodStrings = append(methodStrings, methodStr)
-			}
-
-			summary := strings.Join(summaries, ", ")
-			opStr := fmt.Sprintf("## %s [%s]\n\n%s", summary, opKey, strings.Join(methodStrings, "\n\n"))
-			opStrings = append(opStrings, opStr)
-		}
-
-		groupStr := fmt.Sprintf("# Group %s", tag)
-		if tagDesc, ok := tags[tag]; ok {
-			groupStr += fmt.Sprintf("\n\n%s", tagDesc)
-		}
-		if len(opStrings) > 0 {
-			groupStr += fmt.Sprintf("\n\n%s", strings.Join(opStrings, "\n\n"))
-		}
-
-		groupStrings = append(groupStrings, groupStr)
+		out = append(out, &apibGroup{
+			Tag:         tag.name,
+			Description: tag.desc,
+			Routes:      outRoutes,
+		})
 	}
 
-	return strings.Join(groupStrings, "\n\n")
+	bs, err := renderTemplate(apibGroupsTemplate, out)
+	if err != nil {
+		panic("Internal error: " + err.Error())
+	}
+	return bs
 }
 
 func buildApibDefinitions(doc *Document) string {
@@ -388,7 +455,7 @@ func buildApibDefinitions(doc *Document) string {
 				maxLength:  property.maxLength,
 				minimum:    property.minimum,
 				maximum:    property.maximum,
-			})
+			}, PATH)
 			propertyStrings = append(propertyStrings, propertyStr)
 		}
 
@@ -404,7 +471,7 @@ func buildApibDefinitions(doc *Document) string {
 // document
 // ========
 
-var apibTemplate = `FORMAT: 1A
+var apibDocumentTemplate = `FORMAT: 1A
 HOST: {{ .Host }}{{ .BasePath }}
 
 # {{ .Title }} ({{ .Version }})
@@ -427,8 +494,21 @@ HOST: {{ .Host }}{{ .BasePath }}
 `
 
 func buildApibDocument(doc *Document) []byte {
+	// check
+	if doc.host == "" {
+		panic("Host is required in api blueprint 1A")
+	}
 	if doc.info == nil {
-		panic("Nil document info")
+		panic("Info is required in api blueprint 1A")
+	}
+	if doc.info.title == "" {
+		panic("Info.title is required in api blueprint 1A")
+	}
+	if doc.info.version == "" {
+		panic("Info.version is required in api blueprint 1A")
+	}
+	if len(doc.operations) == 0 {
+		panic("Empty operations is not allowed in api blueprint 1A")
 	}
 
 	// header
@@ -456,17 +536,16 @@ func buildApibDocument(doc *Document) []byte {
 
 	// definition & operation
 	out.DefinitionsString = buildApibDefinitions(doc)
-	out.GroupsString = buildApibGroups(doc)
+	out.GroupsString = string(buildApibGroups(doc))
 
 	// execute template
-	t := template.Must(template.New("apibTemplate").Parse(apibTemplate))
-	buf := &bytes.Buffer{}
-	err := t.Execute(buf, out)
+	bs, err := renderTemplate(apibDocumentTemplate, out)
 	if err != nil {
 		panic("Internal error: " + err.Error())
 	}
 
 	// remove extra newlines
-	re := regexp.MustCompile(`\n{3,}`)
-	return re.ReplaceAll(buf.Bytes(), []byte("\n\n"))
+	bs = regexp.MustCompile(`[ \t]+\n`).ReplaceAll(bs, []byte("\n"))
+	bs = regexp.MustCompile(`\n{3,}`).ReplaceAll(bs, []byte("\n\n"))
+	return bs
 }
