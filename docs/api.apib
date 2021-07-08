@@ -15,7 +15,7 @@ goapidoc test api
 
 # Group Authorization
 
-auth-controller
+> auth-controller
 
 ## Register [/auth/register]
 
@@ -23,21 +23,19 @@ auth-controller
 
 `POST /auth/register`
 
-Register.
+> Register.
 
 + Request (application/json)
 
     + Attributes (RegisterParam)
 
-    + Headers
-
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (Result)
+    > 200 OK
 
-    + Headers
+    + Attributes (Result)
 
     + Body
 
@@ -47,34 +45,32 @@ Register.
 
 `POST /auth/login`
 
-Login.
+> Login.
 
 + Request (application/json)
 
     + Attributes (LoginParam)
 
-    + Headers
-
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (_Result<LoginDto>)
+    > 200 OK
 
-    + Headers
+    + Attributes (_Result<LoginDto>)
 
     + Body
 
 + Response 400 (application/json)
 
-    + Attributes (Result)
+    > 400 Bad Request
 
-    + Headers
+    + Attributes (Result)
 
     + Body
 
             {
-              "code": 400, 
+              "code": 400,
               "message": "Unauthorized"
             }
 
@@ -86,25 +82,23 @@ Login.
 
 + Request (application/json)
 
-    + Attributes
-
     + Headers
 
-            Authorization: Jwt, apiKey (string, optional)
+            Authorization: (string, optional) - Jwt, apiKey
 
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (Result)
+    > 200 OK
 
-    + Headers
+    + Attributes (Result)
 
     + Body
 
 # Group User
 
-user-controller
+> user-controller
 
 ## Get users [/user{?page,limit}]
 
@@ -115,27 +109,25 @@ user-controller
 + Parameters
 
     + page: `1` (number, optional) - current page
-      (format: int32, val >= 1.000)
+        (format: int32, val >= 1.000)
         + Default: `1`
     + limit: `20` (number, optional) - page size
-      (format: int32, val >= 15.000)
+        (format: int32, val >= 15.000)
         + Default: `20`
 
 + Request (application/json)
 
-    + Attributes
-
     + Headers
 
-            Authorization: Jwt, apiKey (string, optional)
+            Authorization: (string, optional) - Jwt, apiKey
 
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (_Result<_Page<UserDto>>)
+    > 200 OK
 
-    + Headers
+    + Attributes (_Result<_Page<UserDto>>)
 
     + Body
 
@@ -151,19 +143,17 @@ user-controller
 
 + Request (application/json)
 
-    + Attributes
-
     + Headers
 
-            Authorization: Jwt, apiKey (string, optional)
+            Authorization: (string, optional) - Jwt, apiKey
 
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (_Result<UserDto>)
+    > 200 OK
 
-    + Headers
+    + Attributes (_Result<UserDto>)
 
     + Body
 
@@ -177,19 +167,19 @@ Attention: This api is deprecated.
 
 + Request (application/json)
 
-    + Attributes (UpdateUserParam)
-
     + Headers
 
-            Authorization: Jwt, apiKey (string, optional)
+            Authorization: (string, optional) - Jwt, apiKey
+
+    + Attributes (UpdateUserParam)
 
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (Result)
+    > 200 OK
 
-    + Headers
+    + Attributes (Result)
 
     + Body
 
@@ -201,19 +191,19 @@ Attention: This api is deprecated.
 
 + Request (application/json)
 
-    + Attributes (UpdateUserParam)
-
     + Headers
 
-            Authorization: Jwt, apiKey (string, optional)
+            Authorization: (string, optional) - Jwt, apiKey
+
+    + Attributes (UpdateUserParam)
 
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (Result)
+    > 200 OK
 
-    + Headers
+    + Attributes (Result)
 
     + Body
 
@@ -223,25 +213,23 @@ Attention: This api is deprecated.
 
 + Request (application/json)
 
-    + Attributes
-
     + Headers
 
-            Authorization: Jwt, apiKey (string, optional)
+            Authorization: (string, optional) - Jwt, apiKey
 
     + Body
 
 + Response 200 (application/json)
 
-    + Attributes (Result)
+    > 200 OK
 
-    + Headers
+    + Attributes (Result)
 
     + Body
 
 # Group Test
 
-test-controller
+> test-controller
 
 ## Test a [/test/a{?q1,q2,q3}]
 
@@ -252,52 +240,50 @@ test-controller
 + Parameters
 
     + q1 (enum[string], required) - q1
-      (format: date-time)
+        (format: date-time)
         + Members
             + `0`
             + `1`
             + `2`
     + q2 (number, optional) - q2
-      (format: double, val >= -5.000)
+        (format: double, val >= -5.000)
     + q3: `example` (string, required) - q3
-      (format: password, allow empty)
+        (format: password, allow empty value)
         + Default: `default`
 
 + Request (application/json)
 
-    + Attributes
+    + Headers
+
+            Authorization: (string, optional) - authorization
+
+    + Attributes (object)
 
         + f1 (file, required) - f1
         + f2 (string, required) - f2
-          (allow empty)
-
-    + Headers
-
-            Authorization: authorization (string, optional)
+            (allow empty value)
 
     + Body
 
 + Response 200 (application/json)
 
-  200 Success
+    > 200 Success
 
     + Attributes (Result)
 
     + Headers
 
-            Content-Type: content type (string)
-            X-My-Token: my token (string)
-            X-My-Number: my number (number)
+            Content-Type: (string, required) - content type
+            X-My-Token: (string, required) - my token
+            X-My-Number: (number, required) - my number
 
     + Body
 
 + Response 409 (application/json)
 
-  409 Conflict
+    > 409 Conflict
 
     + Attributes (string)
-
-    + Headers
 
     + Body
 
@@ -306,17 +292,17 @@ test-controller
 ## Result (object)
 
 + code: `200` (number, required) - status code
-  (format: int32)
+    (format: int32)
 + message: `success` (string, required) - status message
 
 ## UserDto (object)
 
 + uid (number, required) - user id
-  (format: int64)
+    (format: int64)
 + username (string, required) - username
 + nickname (string, required) - nickname
 + profile (string, required) - user profile
-  (allow empty)
+    (allow empty value)
 + gender (enum[string], required) - user gender
     + Members
         + `secret`
@@ -331,9 +317,9 @@ test-controller
 ## RegisterParam (object)
 
 + username (string, required) - username
-  (len in \[5, 30\])
+    (5 <= len <= 30)
 + password (string, required) - password
-  (len in \[5, 30\])
+    (5 <= len <= 30)
 
 ## LoginParam (object)
 
@@ -345,7 +331,7 @@ test-controller
 + username (string, required) - username
 + nickname (string, required) - nickname
 + profile (string, required) - user profile
-  (allow empty)
+    (allow empty value)
 + gender (enum[string], required) - user gender
     + Members
         + `secret`
@@ -355,30 +341,30 @@ test-controller
 ## _Result<LoginDto> (object)
 
 + code (number, required) - status code
-  (format: int32)
+    (format: int32)
 + message (string, required) - status message
 + data (LoginDto, required) - response data
 
 ## _Page<UserDto> (object)
 
 + page (number, required) - current page
-  (format: int32)
+    (format: int32)
 + limit (number, required) - page size
-  (format: int32)
+    (format: int32)
 + total (number, required) - total count
-  (format: int32)
+    (format: int32)
 + data (array[UserDto], required) - response data
 
 ## _Result<_Page<UserDto>> (object)
 
 + code (number, required) - status code
-  (format: int32)
+    (format: int32)
 + message (string, required) - status message
 + data (_Page<UserDto>, required) - response data
 
 ## _Result<UserDto> (object)
 
 + code (number, required) - status code
-  (format: int32)
+    (format: int32)
 + message (string, required) - status message
 + data (UserDto, required) - response data

@@ -288,21 +288,11 @@ func buildSwaggerSchema(typ string, option *ItemOption) (outType, outFmt, origin
 func buildSwaggerParams(params []*Param) []*swagParam {
 	out := make([]*swagParam, 0, len(params))
 	for _, p := range params {
-		if p.name == "" {
-			panic("Param name is required in swagger 2.0")
-		}
-		if p.in == "" {
-			panic("Param in-location is required in swagger 2.0")
-		}
-		if p.in == PATH && !p.required && !p.allowEmpty {
-			panic("Path param's must be non-optional and non-empty in swagger 2.0")
-		}
-
 		var param *swagParam
 		typ, format, origin, ref, items := buildSwaggerSchema(p.typ, p.itemOption)
 		if p.in != BODY {
 			if ref != "" {
-				panic("Invalid type `" + p.typ + "` used in non-body parameter")
+				panic("Invalid type `" + p.typ + "` used in non-body parameter") // only allowed primitive and array
 			}
 			param = &swagParam{
 				Name:             p.name,
@@ -374,27 +364,15 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 	out := make(map[string]*swagResponse, len(responses))
 	for _, r := range responses {
-		if r.code == 0 {
-			panic("Response code is required in swagger 2.0")
-		}
 		desc := r.desc
 		if desc == "" {
-			desc = http.StatusText(r.code)
-			if desc == "" {
-				panic("Response desc is required in swagger 2.0")
-			}
+			desc = strconv.Itoa(r.code) + " " + http.StatusText(r.code)
 		}
 		headers := make(map[string]*swagHeader, len(r.headers))
 		for _, h := range r.headers {
-			if h.name == "" {
-				panic("Response header field name is required in swagger 2.0")
-			}
-			if h.typ == "" {
-				panic("Response header type is required in swagger 2.0")
-			}
 			typ, format, _, ref, items := buildSwaggerSchema(h.typ, nil)
 			if ref != "" || items != nil {
-				panic("Response header type must be primitive in goapidoc, got `" + h.typ + "`")
+				panic("Invalid type `" + h.typ + "` used in response header") // only allow primitive
 			}
 			headers[h.name] = &swagHeader{
 				Type:        typ,
@@ -481,16 +459,6 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 	// route - method - operation
 	out := make(map[string]map[string]*swagOperation, 2) // cap defaults to 2
 	for _, op := range doc.operations {
-		if op.method == "" || op.route == "" {
-			panic("Operation method and route path is required in swagger 2.0")
-		}
-		if len(op.responses) == 0 {
-			panic("Empty operation response is not allowed in swagger 2.0")
-		}
-		if !strings.HasPrefix(op.route, "/") {
-			panic("Operation route path must begin with a slash in swagger 2.0")
-		}
-
 		method := strings.ToLower(op.method)
 		operationId := op.operationId
 		if operationId == "" {
@@ -546,21 +514,7 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 
 func buildSwaggerDocument(doc *Document) *swagDocument {
 	// check
-	if doc.host == "" {
-		panic("Host is required in swagger 2.0")
-	}
-	if doc.info == nil {
-		panic("Info is required in swagger 2.0")
-	}
-	if doc.info.title == "" {
-		panic("Info.title is required in swagger 2.0")
-	}
-	if doc.info.version == "" {
-		panic("Info.version is required in swagger 2.0")
-	}
-	if len(doc.operations) == 0 {
-		panic("Empty operations is not allowed in swagger 2.0")
-	}
+	checkDocument(doc)
 
 	// info
 	out := &swagDocument{
@@ -585,23 +539,11 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 	if doc.option != nil {
 		tags := make([]*swagTag, 0, len(doc.option.tags))
 		for _, t := range doc.option.tags {
-			if t.name == "" {
-				panic("Tag name is required in swagger 2.0")
-			}
 			tags = append(tags, &swagTag{Name: t.name, Description: t.desc})
 		}
 		securities := make(map[string]*swagSecurity, len(doc.option.securities))
 		for _, s := range doc.option.securities {
 			if s.typ == "apiKey" {
-				if s.title == "" {
-					panic("Security title is required in swagger 2.0")
-				}
-				if s.name == "" {
-					panic("Security name is required in swagger 2.0")
-				}
-				if s.in == "" {
-					panic("Security in-location is required in swagger 2.0")
-				}
 				securities[s.title] = &swagSecurity{Type: "apiKey", Description: s.desc, Name: s.name, In: s.in}
 			} else if s.typ == "basic" {
 				securities[s.title] = &swagSecurity{Type: "basic", Description: s.desc}

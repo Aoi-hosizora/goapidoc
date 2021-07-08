@@ -42,11 +42,11 @@ paths:
           $ref: '#/definitions/LoginParam'
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/_Result<LoginDto>'
         "400":
-          description: Bad Request
+          description: 400 Bad Request
           examples:
             application/json: "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"
           schema:
@@ -61,7 +61,7 @@ paths:
       - Jwt: []
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/Result'
   /auth/register:
@@ -80,7 +80,7 @@ paths:
           $ref: '#/definitions/RegisterParam'
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/Result'
   /test/a:
@@ -164,7 +164,7 @@ paths:
       - Jwt: []
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/Result'
     get:
@@ -195,7 +195,7 @@ paths:
         minimum: 15
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/_Result<_Page<UserDto>>'
     put:
@@ -214,7 +214,7 @@ paths:
           $ref: '#/definitions/UpdateUserParam'
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/Result'
   /user/{username}:
@@ -233,7 +233,7 @@ paths:
         type: string
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/_Result<UserDto>'
   /user/deprecated:
@@ -254,7 +254,7 @@ paths:
           $ref: '#/definitions/UpdateUserParam'
       responses:
         "200":
-          description: OK
+          description: 200 OK
           schema:
             $ref: '#/definitions/Result'
 definitions:

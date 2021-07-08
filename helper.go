@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"unsafe"
 )
 
 func spaceIndent(indent int, s string) string {
@@ -17,17 +18,22 @@ func spaceIndent(indent int, s string) string {
 	return spaces + strings.ReplaceAll(s, "\n", "\n"+spaces)
 }
 
-func renderTemplate(t string, object interface{}) ([]byte, error) {
+func fastBtos(bs []byte) string {
+	// unsafe !!!
+	return *(*string)(unsafe.Pointer(&bs))
+}
+
+func renderTemplate(t string, object interface{}) []byte {
 	tmpl, err := template.New("template").Parse(t)
 	if err != nil {
-		return nil, err
+		panic("Template rendering error: " + err.Error())
 	}
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, object)
 	if err != nil {
-		return nil, err
+		panic("Template rendering error: " + err.Error())
 	}
-	return buf.Bytes(), nil
+	return buf.Bytes()
 }
 
 func yamlMarshal(t interface{}) ([]byte, error) {

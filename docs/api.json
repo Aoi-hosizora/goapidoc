@@ -60,13 +60,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/_Result<LoginDto>"
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "400 Bad Request",
             "examples": {
               "application/json": "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"
             },
@@ -91,7 +91,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/Result"
             }
@@ -120,7 +120,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/Result"
             }
@@ -242,7 +242,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/Result"
             }
@@ -286,7 +286,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/_Result<_Page<UserDto>>"
             }
@@ -317,7 +317,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/Result"
             }
@@ -351,7 +351,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/Result"
             }
@@ -382,7 +382,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/_Result<UserDto>"
             }

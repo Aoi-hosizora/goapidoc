@@ -1,20 +1,126 @@
 package goapidoc
 
-// TODO BREAK CHANGES
+import (
+	"strings"
+)
+
+func checkDocument(doc *Document) {
+	if doc.host == "" {
+		panic("Host is required")
+	}
+	if doc.info == nil {
+		panic("Info is required")
+	}
+	if doc.info.title == "" {
+		panic("Info.title is required")
+	}
+	if doc.info.version == "" {
+		panic("Info.version is required")
+	}
+
+	if doc.option != nil {
+		for _, t := range doc.option.tags {
+			if t.name == "" {
+				panic("Tag name is required")
+			}
+		}
+		for _, s := range doc.option.securities {
+			if s.typ == "apiKey" {
+				if s.title == "" {
+					panic("Security title is required")
+				}
+				if s.name == "" {
+					panic("Security name is required")
+				}
+				if s.in == "" {
+					panic("Security in-location is required")
+				}
+			} else if s.typ == "basic" {
+				// pass
+			} else {
+				panic("Security type `" + s.typ + "` is not supported")
+			}
+		}
+	}
+
+	if len(doc.operations) == 0 {
+		panic("Empty operations is not allowed")
+	}
+	for _, op := range doc.operations {
+		if op.method == "" || op.route == "" {
+			panic("Operation method and route path is required")
+		}
+		if !strings.HasPrefix(op.route, "/") {
+			panic("Operation route path must begin with a slash")
+		}
+		if op.summary == "" {
+			panic("Operation summary is required")
+		}
+
+		for _, p := range op.params {
+			if p.name == "" {
+				panic("Request param name is required")
+			}
+			if p.in == "" {
+				panic("Request param in-location is required")
+			}
+			if p.in == PATH && !p.required && !p.allowEmpty {
+				panic("Path param's must be non-optional and non-empty")
+			}
+			if p.typ == "" {
+				panic("Request param type is required")
+			}
+		}
+
+		if len(op.responses) == 0 {
+			panic("Empty operation response is not allowed")
+		}
+		for _, r := range op.responses {
+			if r.code == 0 {
+				panic("Response code is required")
+			}
+			for _, h := range r.headers {
+				if h.name == "" {
+					panic("Response header field name is required")
+				}
+				if h.typ == "" {
+					panic("Response header type is required")
+				}
+			}
+		}
+	}
+
+	for _, def := range doc.definitions {
+		if def.name == "" {
+			panic("Definition name is required")
+		}
+		for _, p := range def.properties {
+			if p.name == "" {
+				panic("Definition property name is required")
+			}
+			if p.typ == "" {
+				panic("Definition property type is required")
+			}
+		}
+	}
+}
 
 // GenerateSwaggerYaml generates swagger yaml script and returns byte array.
+// TODO BREAK CHANGES
 func (d *Document) GenerateSwaggerYaml() ([]byte, error) {
 	swagDoc := buildSwaggerDocument(d)
 	return yamlMarshal(swagDoc)
 }
 
 // GenerateSwaggerJson generates swagger json script and returns byte array.
+// TODO BREAK CHANGES
 func (d *Document) GenerateSwaggerJson() ([]byte, error) {
 	swagDoc := buildSwaggerDocument(d)
 	return jsonMarshal(swagDoc)
 }
 
 // GenerateApib generates apib script and returns byte array.
+// TODO BREAK CHANGES
 func (d *Document) GenerateApib() ([]byte, error) {
 	doc := buildApibDocument(d)
 	return doc, nil
