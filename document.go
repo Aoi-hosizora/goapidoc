@@ -342,12 +342,12 @@ func NewSecurity(title string, typ string) *Security {
 
 // NewApiKeySecurity creates an apiKey authentication Security with given arguments.
 func NewApiKeySecurity(title, in, name string) *Security {
-	return &Security{title: title, typ: "apiKey", in: in, name: name}
+	return &Security{title: title, typ: APIKEY, in: in, name: name}
 }
 
 // NewBasicSecurity creates a basic authentication Security with given arguments.
 func NewBasicSecurity(title string) *Security {
-	return &Security{title: title, typ: "basic"}
+	return &Security{title: title, typ: BASIC}
 }
 
 func (s *Security) GetTitle() string { return s.title }

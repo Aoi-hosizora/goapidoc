@@ -313,14 +313,14 @@ type Param struct {
 	example          interface{}
 	pattern          string
 	enum             []interface{}
-	minLength        int
-	maxLength        int
-	minItems         int
-	maxItems         int
+	minLength        *int
+	maxLength        *int
+	minItems         *int
+	maxItems         *int
 	uniqueItems      bool
 	collectionFormat string
-	minimum          float64
-	maximum          float64
+	minimum          *float64
+	maximum          *float64
 	exclusiveMin     bool
 	exclusiveMax     bool
 	multipleOf       float64
@@ -366,14 +366,14 @@ func (p *Param) GetDefault() interface{}     { return p.defaul }
 func (p *Param) GetExample() interface{}     { return p.example }
 func (p *Param) GetPattern() string          { return p.pattern }
 func (p *Param) GetEnum() []interface{}      { return p.enum }
-func (p *Param) GetMinLength() int           { return p.minLength }
-func (p *Param) GetMaxLength() int           { return p.maxLength }
-func (p *Param) GetMinItems() int            { return p.minItems }
-func (p *Param) GetMaxItems() int            { return p.maxItems }
+func (p *Param) GetMinLength() *int          { return p.minLength }
+func (p *Param) GetMaxLength() *int          { return p.maxLength }
+func (p *Param) GetMinItems() *int           { return p.minItems }
+func (p *Param) GetMaxItems() *int           { return p.maxItems }
 func (p *Param) GetUniqueItems() bool        { return p.uniqueItems }
 func (p *Param) GetCollectionFormat() string { return p.collectionFormat }
-func (p *Param) GetMinimum() float64         { return p.minimum }
-func (p *Param) GetMaximum() float64         { return p.maximum }
+func (p *Param) GetMinimum() *float64        { return p.minimum }
+func (p *Param) GetMaximum() *float64        { return p.maximum }
 func (p *Param) GetExclusiveMin() bool       { return p.exclusiveMin }
 func (p *Param) GetExclusiveMax() bool       { return p.exclusiveMax }
 func (p *Param) GetMultipleOf() float64      { return p.multipleOf }
@@ -441,40 +441,40 @@ func (p *Param) Enum(enums ...interface{}) *Param {
 
 // MinLength sets the minLength in Param.
 func (p *Param) MinLength(min int) *Param {
-	p.minLength = min
+	p.minLength = &min
 	return p
 }
 
 // MaxLength sets the maxLength in Param.
 func (p *Param) MaxLength(max int) *Param {
-	p.maxLength = max
+	p.maxLength = &max
 	return p
 }
 
 // LengthRange sets the minLength and maxLength in Param.
 // TODO BREAK CHANGES
 func (p *Param) LengthRange(min, max int) *Param {
-	p.minLength = min
-	p.maxLength = max
+	p.minLength = &min
+	p.maxLength = &max
 	return p
 }
 
 // MinItems sets the minItems in Param.
 func (p *Param) MinItems(min int) *Param {
-	p.minItems = min
+	p.minItems = &min
 	return p
 }
 
 // MaxItems sets the maxItems in Param.
 func (p *Param) MaxItems(max int) *Param {
-	p.maxItems = max
+	p.maxItems = &max
 	return p
 }
 
 // ItemsRange sets the minItems and maxItems in Param.
 func (p *Param) ItemsRange(min, max int) *Param {
-	p.minItems = min
-	p.maxItems = max
+	p.minItems = &min
+	p.maxItems = &max
 	return p
 }
 
@@ -493,22 +493,22 @@ func (p *Param) CollectionFormat(collectionFormat string) *Param {
 // Minimum sets the minimum in Param.
 // TODO BREAK CHANGES
 func (p *Param) Minimum(min float64) *Param {
-	p.minimum = min
+	p.minimum = &min
 	return p
 }
 
 // Maximum sets the maximum in Param.
 // TODO BREAK CHANGES
 func (p *Param) Maximum(max float64) *Param {
-	p.maximum = max
+	p.maximum = &max
 	return p
 }
 
 // ValueRange sets the minimum and maximum in Param.
 // TODO BREAK CHANGES
 func (p *Param) ValueRange(min, max float64) *Param {
-	p.minimum = min
-	p.maximum = max
+	p.minimum = &min
+	p.maximum = &max
 	return p
 }
 

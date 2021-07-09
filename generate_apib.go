@@ -78,14 +78,14 @@ type apibSchema struct {
 	example          interface{}
 	pattern          string
 	enum             []interface{}
-	minLength        int
-	maxLength        int
-	minItems         int
-	maxItems         int
+	minLength        *int
+	maxLength        *int
+	minItems         *int
+	maxItems         *int
 	uniqueItems      bool
 	collectionFormat string
-	minimum          float64
-	maximum          float64
+	minimum          *float64
+	maximum          *float64
 	exclusiveMin     bool
 	exclusiveMax     bool
 	multipleOf       float64
@@ -101,18 +101,19 @@ func buildApibType(typ string) (string, *apiType) {
 	case apiPrimeKind:
 		t := at.prime.typ
 		if t == FILE {
-			panic("File type is no allowed in api blueprint 1A")
+			fmt.Println("Warning: using file type for api blueprint 1A, use formData instead.")
+			// panic("File type is no allowed in api blueprint 1A")
 		}
-		if t == "integer" {
-			t = "number"
+		if t == INTEGER {
+			t = NUMBER
 		}
 		return t, at
 	case apiArrayKind:
-		item, _ := buildApibType(at.array.item.name)
-		if typ == "integer" {
-			item = "number"
+		t, _ := buildApibType(at.array.item.name)
+		if t == INTEGER {
+			t = NUMBER
 		}
-		return fmt.Sprintf("array[%s]", item), at
+		return fmt.Sprintf("array[%s]", t), at
 	case apiObjectKind:
 		return typ, at
 	default:
@@ -145,14 +146,13 @@ func buildApibSchema(schema *apibSchema, in string) string {
 	*/
 	out := strings.Builder{}
 	if len(schema.enum) != 0 {
-		typ = "enum[" + typ + "]"
+		typ = fmt.Sprintf("enum[%s]", typ)
 	}
 	if schema.example != nil {
 		out.WriteString(fmt.Sprintf("+ %s: `%v` (%s, %s) - %s", schema.name, schema.example, typ, req, schema.desc))
 	} else {
 		out.WriteString(fmt.Sprintf("+ %s (%s, %s) - %s", schema.name, typ, req, schema.desc))
 	}
-
 	options := make([]string, 0, 4) // cap defaults to 4
 	if at.kind == apiPrimeKind && at.prime.format != "" {
 		options = append(options, fmt.Sprintf("format: %s", at.prime.format))
@@ -163,19 +163,19 @@ func buildApibSchema(schema *apibSchema, in string) string {
 	if schema.pattern != "" {
 		options = append(options, fmt.Sprintf("pattern: /%s/", schema.pattern))
 	}
-	if schema.maxLength != 0 && schema.minLength != 0 {
-		options = append(options, fmt.Sprintf("%d <= len <= %d", schema.minLength, schema.maxLength))
-	} else if schema.minLength != 0 {
-		options = append(options, fmt.Sprintf("len >= %d", schema.minLength))
-	} else if schema.maxLength != 0 {
-		options = append(options, fmt.Sprintf("len <= %d", schema.maxLength))
+	if schema.maxLength != nil && schema.minLength != nil {
+		options = append(options, fmt.Sprintf("%d <= len <= %d", *schema.minLength, *schema.maxLength))
+	} else if schema.minLength != nil {
+		options = append(options, fmt.Sprintf("len >= %d", *schema.minLength))
+	} else if schema.maxLength != nil {
+		options = append(options, fmt.Sprintf("len <= %d", *schema.maxLength))
 	}
-	if schema.maxItems != 0 && schema.minItems != 0 {
-		options = append(options, fmt.Sprintf("%d <= #items <= %d", schema.minItems, schema.maxItems))
-	} else if schema.minItems != 0 {
-		options = append(options, fmt.Sprintf("#items >= %d", schema.minItems))
-	} else if schema.maxItems != 0 {
-		options = append(options, fmt.Sprintf("#items <= %d", schema.maxItems))
+	if schema.maxItems != nil && schema.minItems != nil {
+		options = append(options, fmt.Sprintf("%d <= #items <= %d", *schema.minItems, *schema.maxItems))
+	} else if schema.minItems != nil {
+		options = append(options, fmt.Sprintf("#items >= %d", *schema.minItems))
+	} else if schema.maxItems != nil {
+		options = append(options, fmt.Sprintf("#items <= %d", *schema.maxItems))
 	}
 	if schema.uniqueItems {
 		options = append(options, "items must be unique")
@@ -190,12 +190,12 @@ func buildApibSchema(schema *apibSchema, in string) string {
 	if schema.exclusiveMax {
 		gtSign, gtSignR = ">", "<"
 	}
-	if schema.maximum != 0 && schema.minimum != 0 {
-		options = append(options, fmt.Sprintf("%.3f %s val %s %.3f", schema.minimum, gtSignR, ltSign, schema.maximum))
-	} else if schema.minimum != 0 {
-		options = append(options, fmt.Sprintf("val %s %.3f", gtSign, schema.minimum))
-	} else if schema.maximum != 0 {
-		options = append(options, fmt.Sprintf("val %s %.3f", ltSign, schema.maximum))
+	if schema.maximum != nil && schema.minimum != nil {
+		options = append(options, fmt.Sprintf("%.3f %s val %s %.3f", *schema.minimum, gtSignR, ltSign, *schema.maximum))
+	} else if schema.minimum != nil {
+		options = append(options, fmt.Sprintf("val %s %.3f", gtSign, *schema.minimum))
+	} else if schema.maximum != nil {
+		options = append(options, fmt.Sprintf("val %s %.3f", ltSign, *schema.maximum))
 	}
 	if schema.collectionFormat != "" {
 		options = append(options, fmt.Sprintf("collection format: %s", schema.collectionFormat))
@@ -299,9 +299,9 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 			if s.desc != "" {
 				desc = fmt.Sprintf("%s (%s), %s", name, s.desc, s.typ)
 			}
-			if s.typ == "apiKey" {
+			if s.typ == APIKEY {
 				params = append(params, &Param{name: s.name, in: s.in, typ: "string", desc: desc})
-			} else if s.typ == "basic" {
+			} else if s.typ == BASIC {
 				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc})
 			}
 		}
@@ -402,10 +402,10 @@ var apibGroupsTemplate = `
 
 func buildApibGroups(doc *Document) []byte {
 	// get tags and securities from document.option
-	var tags []*Tag
+	var allTags []*Tag
 	var securities map[string]*Security
 	if doc.option != nil {
-		tags = doc.option.tags
+		allTags = doc.option.tags
 		securities = make(map[string]*Security, len(doc.option.securities))
 		for _, sec := range doc.option.securities {
 			securities[sec.title] = sec
@@ -414,8 +414,8 @@ func buildApibGroups(doc *Document) []byte {
 
 	// put all operations to trmoMap splitting by tag, route and method
 	// trmo: tag - route - method - Operation
-	trmoMap := newOrderedMap(len(tags)) // map[string]map[string]map[string]*Operation
-	for _, tag := range tags {
+	trmoMap := newOrderedMap(len(allTags)) // map[string]map[string]map[string]*Operation
+	for _, tag := range allTags {
 		trmoMap.Set(tag.name, newOrderedMap(2)) // cap defaults to 2
 	}
 	for _, op := range doc.operations {
@@ -441,7 +441,7 @@ func buildApibGroups(doc *Document) []byte {
 		if !ok {
 			// new tag, need to append
 			rmoMap = newOrderedMap(2)
-			tags = append(tags, &Tag{name: tag})
+			allTags = append(allTags, &Tag{name: tag})
 		}
 		// mo: method - Operation
 		moMap, ok := rmoMap.(*orderedMap).Get(route) // map[string]*Operation
@@ -455,7 +455,7 @@ func buildApibGroups(doc *Document) []byte {
 
 	// render operations from trmoMap to apibGroup slice
 	out := make([]*apibGroup, 0, trmoMap.Length())
-	for _, tag := range tags {
+	for _, tag := range allTags {
 		rmoMap := trmoMap.MustGet(tag.name).(*orderedMap)
 		outRoutes := make([]*apibRoute, 0, rmoMap.Length())
 		for _, route := range rmoMap.Keys() {
@@ -473,11 +473,7 @@ func buildApibGroups(doc *Document) []byte {
 				Methods: strings.Join(moStrings, "\n\n"),
 			})
 		}
-		out = append(out, &apibGroup{
-			Tag:         tag.name,
-			Description: tag.desc,
-			Routes:      outRoutes,
-		})
+		out = append(out, &apibGroup{Tag: tag.name, Description: tag.desc, Routes: outRoutes})
 	}
 
 	return renderTemplate(apibGroupsTemplate, out)

@@ -1,5 +1,12 @@
 package goapidoc
 
+// security type
+const (
+	BASIC  = "basic"  // BASIC security type: basic authentication
+	APIKEY = "apiKey" // APIKEY security type: api key authentication
+	OAUTH2 = "oauth2" // OAUTH2 security type: oauth2 authentication
+)
+
 // type
 const (
 	INTEGER = "integer" // INTEGER type: integer, long

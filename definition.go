@@ -69,14 +69,14 @@ type Property struct {
 	example          interface{}
 	pattern          string
 	enum             []interface{}
-	minLength        int
-	maxLength        int
-	minItems         int
-	maxItems         int
+	minLength        *int
+	maxLength        *int
+	minItems         *int
+	maxItems         *int
 	uniqueItems      bool
 	collectionFormat string
-	minimum          float64
-	maximum          float64
+	minimum          *float64
+	maximum          *float64
 	exclusiveMin     bool
 	exclusiveMax     bool
 	multipleOf       float64
@@ -96,14 +96,14 @@ func (p *Property) GetDefault() interface{}     { return p.defaul }
 func (p *Property) GetExample() interface{}     { return p.example }
 func (p *Property) GetPattern() string          { return p.pattern }
 func (p *Property) GetEnum() []interface{}      { return p.enum }
-func (p *Property) GetMinLength() int           { return p.minLength }
-func (p *Property) GetMaxLength() int           { return p.maxLength }
-func (p *Property) GetMinItems() int            { return p.minItems }
-func (p *Property) GetMaxItems() int            { return p.maxItems }
+func (p *Property) GetMinLength() *int          { return p.minLength }
+func (p *Property) GetMaxLength() *int          { return p.maxLength }
+func (p *Property) GetMinItems() *int           { return p.minItems }
+func (p *Property) GetMaxItems() *int           { return p.maxItems }
 func (p *Property) GetUniqueItems() bool        { return p.uniqueItems }
 func (p *Property) GetCollectionFormat() string { return p.collectionFormat }
-func (p *Property) GetMinimum() float64         { return p.minimum }
-func (p *Property) GetMaximum() float64         { return p.maximum }
+func (p *Property) GetMinimum() *float64        { return p.minimum }
+func (p *Property) GetMaximum() *float64        { return p.maximum }
 func (p *Property) GetExclusiveMin() bool       { return p.exclusiveMin }
 func (p *Property) GetExclusiveMax() bool       { return p.exclusiveMax }
 func (p *Property) GetMultipleOf() float64      { return p.multipleOf }
@@ -165,40 +165,40 @@ func (p *Property) Enum(enums ...interface{}) *Property {
 
 // MinLength sets the minLength in Property.
 func (p *Property) MinLength(min int) *Property {
-	p.minLength = min
+	p.minLength = &min
 	return p
 }
 
 // MaxLength sets the maxLength in Property.
 func (p *Property) MaxLength(max int) *Property {
-	p.maxLength = max
+	p.maxLength = &max
 	return p
 }
 
 // LengthRange sets the minLength and maxLength in Property.
 // TODO BREAK CHANGES
 func (p *Property) LengthRange(min, max int) *Property {
-	p.minLength = min
-	p.maxLength = max
+	p.minLength = &min
+	p.maxLength = &max
 	return p
 }
 
 // MinItems sets the minItems in Property.
 func (p *Property) MinItems(min int) *Property {
-	p.minItems = min
+	p.minItems = &min
 	return p
 }
 
 // MaxItems sets the maxItems in Property.
 func (p *Property) MaxItems(max int) *Property {
-	p.maxItems = max
+	p.maxItems = &max
 	return p
 }
 
 // ItemsRange sets the minItems and maxItems in Property.
 func (p *Property) ItemsRange(min, max int) *Property {
-	p.minItems = min
-	p.maxItems = max
+	p.minItems = &min
+	p.maxItems = &max
 	return p
 }
 
@@ -217,22 +217,22 @@ func (p *Property) CollectionFormat(collectionFormat string) *Property {
 // Minimum sets the minimum in Property.
 // TODO BREAK CHANGES
 func (p *Property) Minimum(min float64) *Property {
-	p.minimum = min
+	p.minimum = &min
 	return p
 }
 
 // Maximum sets the maximum in Property.
 // TODO BREAK CHANGES
 func (p *Property) Maximum(max float64) *Property {
-	p.maximum = max
+	p.maximum = &max
 	return p
 }
 
 // ValueRange sets the minimum and maximum in Property.
 // TODO BREAK CHANGES
 func (p *Property) ValueRange(min, max float64) *Property {
-	p.minimum = min
-	p.maximum = max
+	p.minimum = &min
+	p.maximum = &max
 	return p
 }
 
@@ -267,14 +267,14 @@ type ItemOption struct {
 	example          interface{}
 	pattern          string
 	enum             []interface{}
-	minLength        int
-	maxLength        int
-	minItems         int
-	maxItems         int
+	minLength        *int
+	maxLength        *int
+	minItems         *int
+	maxItems         *int
 	uniqueItems      bool
 	collectionFormat string
-	minimum          float64
-	maximum          float64
+	minimum          *float64
+	maximum          *float64
 	exclusiveMin     bool
 	exclusiveMax     bool
 	multipleOf       float64
@@ -291,14 +291,14 @@ func (o *ItemOption) GetDefault() interface{}     { return o.defaul }
 func (o *ItemOption) GetExample() interface{}     { return o.example }
 func (o *ItemOption) GetPattern() string          { return o.pattern }
 func (o *ItemOption) GetEnum() []interface{}      { return o.enum }
-func (o *ItemOption) GetMinLength() int           { return o.minLength }
-func (o *ItemOption) GetMaxLength() int           { return o.maxLength }
-func (o *ItemOption) GetMinItems() int            { return o.minItems }
-func (o *ItemOption) GetMaxItems() int            { return o.maxItems }
+func (o *ItemOption) GetMinLength() *int          { return o.minLength }
+func (o *ItemOption) GetMaxLength() *int          { return o.maxLength }
+func (o *ItemOption) GetMinItems() *int           { return o.minItems }
+func (o *ItemOption) GetMaxItems() *int           { return o.maxItems }
 func (o *ItemOption) GetUniqueItems() bool        { return o.uniqueItems }
 func (o *ItemOption) GetCollectionFormat() string { return o.collectionFormat }
-func (o *ItemOption) GetMinimum() float64         { return o.minimum }
-func (o *ItemOption) GetMaximum() float64         { return o.maximum }
+func (o *ItemOption) GetMinimum() *float64        { return o.minimum }
+func (o *ItemOption) GetMaximum() *float64        { return o.maximum }
 func (o *ItemOption) GetExclusiveMin() bool       { return o.exclusiveMin }
 func (o *ItemOption) GetExclusiveMax() bool       { return o.exclusiveMax }
 func (o *ItemOption) GetMultipleOf() float64      { return o.multipleOf }
@@ -336,39 +336,39 @@ func (o *ItemOption) Enum(enums ...interface{}) *ItemOption {
 
 // MinLength sets the minLength in ItemOption.
 func (o *ItemOption) MinLength(min int) *ItemOption {
-	o.minLength = min
+	o.minLength = &min
 	return o
 }
 
 // MaxLength sets the maxLength in ItemOption.
 func (o *ItemOption) MaxLength(max int) *ItemOption {
-	o.maxLength = max
+	o.maxLength = &max
 	return o
 }
 
 // LengthRange sets the minLength and maxLength in ItemOption.
 func (o *ItemOption) LengthRange(min, max int) *ItemOption {
-	o.minLength = min
-	o.maxLength = max
+	o.minLength = &min
+	o.maxLength = &max
 	return o
 }
 
 // MinItems sets the minItems in ItemOption.
 func (o *ItemOption) MinItems(min int) *ItemOption {
-	o.minItems = min
+	o.minItems = &min
 	return o
 }
 
 // MaxItems sets the maxItems in ItemOption.
 func (o *ItemOption) MaxItems(max int) *ItemOption {
-	o.maxItems = max
+	o.maxItems = &max
 	return o
 }
 
 // ItemsRange sets the minItems and maxItems in ItemOption.
 func (o *ItemOption) ItemsRange(min, max int) *ItemOption {
-	o.minItems = min
-	o.maxItems = max
+	o.minItems = &min
+	o.maxItems = &max
 	return o
 }
 
@@ -386,20 +386,20 @@ func (o *ItemOption) CollectionFormat(collectionFormat string) *ItemOption {
 
 // Minimum sets the minimum in ItemOption.
 func (o *ItemOption) Minimum(min float64) *ItemOption {
-	o.minimum = min
+	o.minimum = &min
 	return o
 }
 
 // Maximum sets the maximum in ItemOption.
 func (o *ItemOption) Maximum(max float64) *ItemOption {
-	o.maximum = max
+	o.maximum = &max
 	return o
 }
 
 // ValueRange sets the minimum and maximum in ItemOption.
 func (o *ItemOption) ValueRange(min, max float64) *ItemOption {
-	o.minimum = min
-	o.maximum = max
+	o.minimum = &min
+	o.maximum = &max
 	return o
 }
 

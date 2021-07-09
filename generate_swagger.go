@@ -78,14 +78,14 @@ type swagParam struct {
 	Example          interface{}   `yaml:"example,omitempty"          json:"example,omitempty"` // ?
 	Pattern          string        `yaml:"pattern,omitempty"          json:"pattern,omitempty"`
 	Enum             []interface{} `yaml:"enum,omitempty"             json:"enum,omitempty"`
-	MaxLength        int           `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
-	MinLength        int           `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
-	MaxItems         int           `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
-	MinItems         int           `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
+	MaxLength        *int          `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
+	MinLength        *int          `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
+	MaxItems         *int          `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
+	MinItems         *int          `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
 	UniqueItems      bool          `yaml:"uniqueItems,omitempty"      json:"uniqueItems,omitempty"`
 	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"`
-	Maximum          float64       `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
-	Minimum          float64       `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
+	Minimum          *float64      `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
 	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
@@ -132,14 +132,14 @@ type swagSchema struct {
 	Example          interface{}   `yaml:"example,omitempty"          json:"example,omitempty"`
 	Pattern          string        `yaml:"pattern,omitempty"          json:"pattern,omitempty"`
 	Enum             []interface{} `yaml:"enum,omitempty"             json:"enum,omitempty"`
-	MaxLength        int           `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
-	MinLength        int           `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
-	MaxItems         int           `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
-	MinItems         int           `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
+	MaxLength        *int          `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
+	MinLength        *int          `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
+	MaxItems         *int          `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
+	MinItems         *int          `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
 	UniqueItems      bool          `yaml:"uniqueItems,omitempty"      json:"uniqueItems,omitempty"`
 	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"` // ?
-	Maximum          float64       `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
-	Minimum          float64       `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
+	Minimum          *float64      `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
 	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
@@ -157,14 +157,14 @@ type swagItems struct {
 	Example          interface{}   `yaml:"example,omitempty"          json:"example,omitempty"` // ?
 	Pattern          string        `yaml:"pattern,omitempty"          json:"pattern,omitempty"`
 	Enum             []interface{} `yaml:"enum,omitempty"             json:"enum,omitempty"`
-	MaxLength        int           `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
-	MinLength        int           `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
-	MaxItems         int           `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
-	MinItems         int           `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
+	MaxLength        *int          `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
+	MinLength        *int          `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
+	MaxItems         *int          `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
+	MinItems         *int          `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
 	UniqueItems      bool          `yaml:"uniqueItems,omitempty"      json:"uniqueItems,omitempty"`
 	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"`
-	Maximum          float64       `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
-	Minimum          float64       `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
+	Minimum          *float64      `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
 	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
@@ -352,7 +352,7 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 					ExclusiveMax:     p.exclusiveMax,
 					MultipleOf:       p.multipleOf,
 					Items:            items,
-				} // TODO schema
+				}
 			}
 		}
 
@@ -438,7 +438,7 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 				ExclusiveMax:     p.exclusiveMax,
 				MultipleOf:       p.multipleOf,
 				Items:            items,
-			} // TODO schema
+			}
 		}
 		properties.Set(p.name, schema)
 	}
@@ -543,10 +543,10 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 		}
 		securities := make(map[string]*swagSecurity, len(doc.option.securities))
 		for _, s := range doc.option.securities {
-			if s.typ == "apiKey" {
-				securities[s.title] = &swagSecurity{Type: "apiKey", Description: s.desc, Name: s.name, In: s.in}
-			} else if s.typ == "basic" {
-				securities[s.title] = &swagSecurity{Type: "basic", Description: s.desc}
+			if s.typ == APIKEY {
+				securities[s.title] = &swagSecurity{Type: APIKEY, Description: s.desc, Name: s.name, In: s.in}
+			} else if s.typ == BASIC {
+				securities[s.title] = &swagSecurity{Type: BASIC, Description: s.desc}
 			}
 		}
 

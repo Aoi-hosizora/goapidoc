@@ -12,10 +12,26 @@ func checkDocument(doc *Document) {
 		panic("Info is required")
 	}
 	if doc.info.title == "" {
-		panic("Info.title is required")
+		panic("Info title is required")
 	}
 	if doc.info.version == "" {
-		panic("Info.version is required")
+		panic("Info version is required")
+	}
+	if doc.info.license != nil {
+		if doc.info.license.name == "" {
+			panic("License name is required")
+		}
+		if doc.info.license.url == "" {
+			panic("License url is required")
+		}
+	}
+	if doc.info.contact != nil {
+		if doc.info.contact.name == "" {
+			panic("Contact name is required")
+		}
+		if doc.info.contact.url == "" {
+			panic("Contact url is required")
+		}
 	}
 
 	if doc.option != nil {
@@ -25,7 +41,7 @@ func checkDocument(doc *Document) {
 			}
 		}
 		for _, s := range doc.option.securities {
-			if s.typ == "apiKey" {
+			if s.typ == APIKEY {
 				if s.title == "" {
 					panic("Security title is required")
 				}
@@ -35,7 +51,7 @@ func checkDocument(doc *Document) {
 				if s.in == "" {
 					panic("Security in-location is required")
 				}
-			} else if s.typ == "basic" {
+			} else if s.typ == BASIC {
 				// pass
 			} else {
 				panic("Security type `" + s.typ + "` is not supported")
