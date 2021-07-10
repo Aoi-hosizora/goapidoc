@@ -242,7 +242,13 @@ func (r *Response) Desc(desc string) *Response {
 
 // Examples sets the whole examples in Response.
 func (r *Response) Examples(examples map[string]string) *Response {
-	r.examples = examples
+	r.examples = examples // <<<
+	return r
+}
+
+// AddExample add an example into Response.
+func (r *Response) AddExample(mime string, example string) *Response {
+	r.examples[mime] = example // <<<
 	return r
 }
 
@@ -361,6 +367,7 @@ func (p *Param) GetName() string             { return p.name }
 func (p *Param) GetInLoc() string            { return p.in }
 func (p *Param) GetType() string             { return p.typ }
 func (p *Param) GetRequired() bool           { return p.required }
+func (p *Param) GetDesc() string             { return p.desc }
 func (p *Param) GetAllowEmpty() bool         { return p.allowEmpty }
 func (p *Param) GetDefault() interface{}     { return p.defaul }
 func (p *Param) GetExample() interface{}     { return p.example }

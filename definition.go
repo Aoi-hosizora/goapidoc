@@ -14,8 +14,8 @@ type Definition struct {
 }
 
 // NewDefinition creates a default Definition with given arguments.
-func NewDefinition(title, desc string) *Definition {
-	return &Definition{name: title, desc: desc}
+func NewDefinition(name, desc string) *Definition {
+	return &Definition{name: name, desc: desc}
 }
 
 func (d *Definition) GetName() string            { return d.name }
@@ -91,6 +91,7 @@ func NewProperty(name, typ string, required bool, desc string) *Property {
 func (p *Property) GetName() string             { return p.name }
 func (p *Property) GetType() string             { return p.typ }
 func (p *Property) GetRequired() bool           { return p.required }
+func (p *Property) GetDesc() string             { return p.desc }
 func (p *Property) GetAllowEmpty() bool         { return p.allowEmpty }
 func (p *Property) GetDefault() interface{}     { return p.defaul }
 func (p *Property) GetExample() interface{}     { return p.example }
@@ -449,7 +450,7 @@ func cloneItemOption(o *ItemOption) *ItemOption {
 		exclusiveMin:     o.exclusiveMin,
 		exclusiveMax:     o.exclusiveMax,
 		multipleOf:       o.multipleOf,
-		itemOption:       cloneItemOption(o),
+		itemOption:       cloneItemOption(o.itemOption),
 	}
 }
 
