@@ -13,7 +13,7 @@ type Operation struct {
 
 	desc        string
 	operationId string
-	schemas     []string
+	schemes     []string
 	consumes    []string
 	produces    []string
 	tags        []string
@@ -68,7 +68,7 @@ func (o *Operation) GetRoute() string          { return o.route }
 func (o *Operation) GetSummary() string        { return o.summary }
 func (o *Operation) GetDesc() string           { return o.desc }
 func (o *Operation) GetOperationId() string    { return o.operationId }
-func (o *Operation) GetSchemas() []string      { return o.schemas }
+func (o *Operation) GetSchemes() []string      { return o.schemes }
 func (o *Operation) GetConsumes() []string     { return o.consumes }
 func (o *Operation) GetProduces() []string     { return o.produces }
 func (o *Operation) GetTags() []string         { return o.tags }
@@ -107,15 +107,15 @@ func (o *Operation) OperationId(operationId string) *Operation {
 	return o
 }
 
-// Schemas sets the whole schemas in Operation.
-func (o *Operation) Schemas(schemas ...string) *Operation {
-	o.schemas = schemas
+// Schemes sets the whole schemes in Operation.
+func (o *Operation) Schemes(schemes ...string) *Operation {
+	o.schemes = schemes
 	return o
 }
 
-// AddSchemas adds some tags schemas into Operation.
-func (o *Operation) AddSchemas(schemas ...string) *Operation {
-	o.schemas = append(o.schemas, schemas...)
+// AddSchemes adds some tags schemes into Operation.
+func (o *Operation) AddSchemes(schemes ...string) *Operation {
+	o.schemes = append(o.schemes, schemes...)
 	return o
 }
 
@@ -240,6 +240,8 @@ func (r *Response) Desc(desc string) *Response {
 	return r
 }
 
+// TODO EXAMPLE
+
 // Examples sets the whole examples in Response.
 func (r *Response) Examples(examples map[string]string) *Response {
 	r.examples = examples // <<<
@@ -248,6 +250,9 @@ func (r *Response) Examples(examples map[string]string) *Response {
 
 // AddExample add an example into Response.
 func (r *Response) AddExample(mime string, example string) *Response {
+	if r.examples == nil {
+		r.examples = make(map[string]string)
+	}
 	r.examples[mime] = example // <<<
 	return r
 }

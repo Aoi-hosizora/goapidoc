@@ -21,17 +21,6 @@ func checkDocument(doc *Document) {
 		if doc.info.license.name == "" {
 			panic("License name is required")
 		}
-		if doc.info.license.url == "" {
-			panic("License url is required")
-		}
-	}
-	if doc.info.contact != nil {
-		if doc.info.contact.name == "" {
-			panic("Contact name is required")
-		}
-		if doc.info.contact.url == "" {
-			panic("Contact url is required")
-		}
 	}
 
 	if doc.option != nil {

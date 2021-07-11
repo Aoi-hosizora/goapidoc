@@ -1,207 +1,127 @@
 package goapidoc
 
 import (
-	"log"
+	"fmt"
 	"testing"
 )
 
-func TestGenerate(t *testing.T) {
+func TestGenerate1(t *testing.T) {
 	// https://editor.swagger.io/
 
-	SetDocument(
-		"localhost:65530", "/",
-		NewInfo("goapidoc", "goapidoc test api", "1.0").
-			TermsOfService("https://github.com/Aoi-hosizora").
-			License(NewLicense("MIT", "https://github.com/Aoi-hosizora")).
-			Contact(NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "a970335605@hotmail.com")),
+	t.Cleanup(func() { CleanupDocument() })
+	SetDocument("petstore.swagger.io", "/v2",
+		NewInfo("Swagger Petstore", "This is a sample server Petstore server.", "1.0.0").
+			TermsOfService("http://swagger.io/terms/").
+			Contact(NewContact("", "", "apiteam@swagger.io")).
+			License(NewLicense("Apache 2.0", "http://www.apache.org/licenses/LICENSE-2.0.html")),
 	)
-	SetOption(
-		NewOption().Tags(
-			NewTag("Authorization", "auth-controller"),
-			NewTag("User", "user-controller"),
-			NewTag("Test", "test-controller"),
-		).Securities(
-			NewApiKeySecurity("Jwt", "header", "Authorization"),
+	SetOption(NewOption().
+		Schemes("https", "http").
+		Tags(
+			NewTag("pet", "Everything about your Pets"),
+			NewTag("store", "Access to Petstore orders"),
+			NewTag("user", "Operations about user"),
+		).
+		Securities(
+			NewApiKeySecurity("api_key", HEADER, "api_key"),
+			NewBasicSecurity("b"),
 		),
 	)
-
 	AddOperations(
-		NewOperation("POST", "/auth/register", "Register").
-			Desc("Register.").
-			Tags("Authorization").
-			Params(NewBodyParam("param", "RegisterParam", true, "register param")).
-			Responses(NewResponse(200, "Result")),
-
-		NewOperation("POST", "/auth/login", "Login").
-			Desc("Login.").
-			Tags("Authorization").
-			Params(NewBodyParam("param", "LoginParam", true, "login param")).
+		NewPostOperation("/pet", "Add a new pet to the store").
+			Tags("pet").
+			OperationId("addPet").
+			Consumes(JSON, XML).
+			Produces(XML, JSON).
+			Params(NewBodyParam("body", "Pet[]", true, "Pet object that needs to be added to the store")).
+			Responses(NewResponse(405, "").Desc("Invalid input")).
+			Securities("b"),
+		NewPutOperation("/pet", "Update an existing pet").
+			Tags("pet").
+			OperationId("updatePet").
+			Consumes(JSON, XML).
+			Produces(XML, JSON).
+			Params(NewBodyParam("body", "Pet[]", true, "Pet object that needs to be added to the store")).
 			Responses(
-				NewResponse(200, "_Result<LoginDto>"),
-				NewResponse(400, "Result").Examples(map[string]string{"application/json": "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"}),
-			),
-
-		NewOperation("DELETE", "/auth/logout", "Logout").
-			Tags("Authorization").
-			Securities("Jwt").
-			Responses(NewResponse(200, "Result")),
-
-		NewOperation("GET", "/user", "Get users").
-			Tags("User").
-			Securities("Jwt").
+				NewResponse(400, "string").Desc("Invalid ID supplied"),
+				NewResponse(404, "string").Desc("Pet not found"),
+				NewResponse(405, "string").Desc("Validation exception"),
+			), // oauth2
+		NewGetOperation("/pet/findByStatus", "Finds Pets by status").
+			Tags("pet").
+			Desc("Multiple status values can be provided with comma separated strings").
+			OperationId("findPetsByStatus").
+			Produces(JSON).
 			Params(
-				NewQueryParam("page", "integer#int32", false, "current page").Default(1).Example(1).Minimum(1),
-				NewQueryParam("limit", "integer#int32", false, "page size").Default(20).Example(20).Minimum(15),
-			).
-			Responses(NewResponse(200, "_Result<_Page<UserDto>>")),
-
-		NewOperation("GET", "/user/{username}", "Get a user").
-			Tags("User").
-			Securities("Jwt").
-			Params(NewPathParam("username", "string", true, "username")).
-			Responses(NewResponse(200, "_Result<UserDto>")),
-
-		NewOperation("PUT", "/user/deprecated", "Update user").
-			Tags("User").
-			Securities("Jwt").
-			Deprecated(true).
-			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
-			Responses(NewResponse(200, "Result")),
-
-		NewOperation("PUT", "/user", "Update user").
-			Tags("User").
-			Securities("Jwt").
-			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
-			Responses(NewResponse(200, "Result")),
-
-		NewOperation("DELETE", "/user", "Delete user").
-			Tags("User").
-			Securities("Jwt").
-			Responses(NewResponse(200, "Result")),
-
-		NewOperation("HEAD", "/test/a", "Test a").
-			Tags("Test").
-			Securities("WrongSecurity").
-			Params(
-				NewQueryParam("q1", "string#date-time", true, "q1").Enum(0, 1, 2),
-				NewQueryParam("q2", "number", false, "q2").Minimum(-5),
-				NewQueryParam("q3", "string#password", true, "q3").AllowEmpty(true).Example("example").Default("default"),
-				NewFormParam("f1", "file", true, "f1"),
-				NewFormParam("f2", "string", true, "f2").AllowEmpty(true),
-				NewHeaderParam("Authorization", "string", false, "authorization"),
+				NewQueryParam("status", "string[]", true, "Status values that need to be considered for filter").CollectionFormat(MULTI).
+					ItemOption(NewItemOption().Enum("available", "pending", "sold").Default("available")),
 			).
 			Responses(
-				NewResponse(200, "Result").
-					Desc("200 Success").
-					Headers(
-						NewHeader("Content-Type", "string", "content type"),
-						NewHeader("X-My-Token", "string", "my token"),
-						NewHeader("X-My-Number", "number", "my number"),
-					),
-				NewResponse(409, "string").Desc("409 Conflict"),
-			),
+				NewResponse(200, "Pet[]").Desc("successful operation").AddExample(JSON, "a"),
+				NewResponse(400, "").Desc("Invalid status value"),
+			), // oauth2
+		NewGetOperation("/pet/findByTags", "Finds Pets by tags").
+			Tags("pet").
+			Desc("Multiple tags can be provided with comma separated strings.").
+			OperationId("findPetsByTags").
+			Produces(XML, JSON).
+			Params(NewQueryParam("tags", "string[]", true, "Tags to filter by").CollectionFormat(MULTI)).
+			Responses(
+				NewResponse(200, "Pet[]").Desc("successful operation").AddExample(JSON, "a"),
+				NewResponse(400, "").Desc("Invalid status value"),
+			).
+			Deprecated(true), // oauth2
 	)
-
 	AddDefinitions(
-		NewDefinition("Result", "global response").
+		NewDefinition("Pet", "").
 			Properties(
-				NewProperty("code", "integer#int32", true, "status code").Example("200"),
-				NewProperty("message", "string", true, "status message").Example("success"),
+				NewProperty("id", "integer#int64", false, ""),
+				NewProperty("category", "Category", false, ""),
+				NewProperty("name", "string", true, "").Example("doggie"),
+				NewProperty("photoUrls", "string[]", true, "").ItemOption(NewItemOption().Pattern("^[123]*$")),
+				NewProperty("tags", "Tag[]", false, ""),
+				NewProperty("status", "string", false, "pet status in the store").Enum("available", "pending", "sold"),
 			),
-
-		NewDefinition("_Result", "global response").
-			Generics("T").
+		NewDefinition("Category", "").
 			Properties(
-				NewProperty("code", "integer#int32", true, "status code"),
-				NewProperty("message", "string", true, "status message"),
-				NewProperty("data", "T", true, "response data"),
+				NewProperty("id", "integer#int64", false, ""),
+				NewProperty("name", "string", false, ""),
 			),
-
-		NewDefinition("_Page", "global page response").
-			Generics("T").
+		NewDefinition("Tag", "").
 			Properties(
-				NewProperty("page", "integer#int32", true, "current page"),
-				NewProperty("limit", "integer#int32", true, "page size"),
-				NewProperty("total", "integer#int32", true, "total count"),
-				NewProperty("data", "T[]", true, "response data"),
-			),
-
-		NewDefinition("UserDto", "user response").
-			Properties(
-				NewProperty("uid", "integer#int64", true, "user id"),
-				NewProperty("username", "string", true, "username"),
-				NewProperty("nickname", "string", true, "nickname"),
-				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
-			),
-
-		NewDefinition("LoginDto", "login response").
-			Properties(
-				NewProperty("user", "UserDto", true, "authorized user"),
-				NewProperty("token", "string", true, "access token"),
-			),
-
-		NewDefinition("RegisterParam", "register param").
-			Properties(
-				NewProperty("username", "string", true, "username").MinLength(5).MaxLength(30),
-				NewProperty("password", "string", true, "password").MinLength(5).MaxLength(30),
-			),
-
-		NewDefinition("LoginParam", "login param").
-			Properties(
-				NewProperty("parameter", "string", true, "login parameter"),
-				NewProperty("password", "string", true, "password"),
-			),
-
-		NewDefinition("UpdateUserParam", "update user param").
-			Properties(
-				NewProperty("username", "string", true, "username"),
-				NewProperty("nickname", "string", true, "nickname"),
-				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+				NewProperty("id", "integer#int64", false, ""),
+				NewProperty("name", "string", false, ""),
 			),
 	)
 
-	_, err := GenerateSwaggerYaml()
-	if err != nil {
-		log.Println(err)
-		t.Fatal("yaml")
+	if _, err := GenerateSwaggerYaml(); err != nil {
+		failNow(t, fmt.Sprintf("GenerateSwaggerYaml error: %v", err))
+	}
+	if _, err := GenerateSwaggerJson(); err != nil {
+		failNow(t, fmt.Sprintf("GenerateSwaggerJson error: %v", err))
+	}
+	if _, err := GenerateApib(); err != nil {
+		failNow(t, fmt.Sprintf("GenerateApib error: %v", err))
+	}
+	if _, err := SaveSwaggerYaml("./docs/api.yaml"); err != nil {
+		failNow(t, fmt.Sprintf("SaveSwaggerYaml error: %v", err))
+	}
+	if _, err := SaveSwaggerJson("./docs/api.json"); err != nil {
+		failNow(t, fmt.Sprintf("SaveSwaggerJson error: %v", err))
+	}
+	if _, err := SaveApib("./docs/api.apib"); err != nil {
+		failNow(t, fmt.Sprintf("SaveApib error: %v", err))
 	}
 
-	_, err = GenerateSwaggerJson()
-	if err != nil {
-		log.Println(err)
-		t.Fatal("json")
-	}
+	// if _document.definitions[1].GetGenerics()[0] != "T" {
+	// 	t.Fatal(`GetDefinitions()[1].GetGenerics()[0] != "T"`)
+	// }
+	// if _document.definitions[1].GetProperties()[2].GetType() != "T" {
+	// 	t.Fatal(`GetDefinitions()[1].GetProperties()[2].GetType() != "T"`)
+	// }
+}
 
-	_, err = GenerateApib()
-	if err != nil {
-		log.Println(err)
-		t.Fatal("apib")
-	}
-
-	_, err = SaveSwaggerYaml("./docs/api.yaml")
-	if err != nil {
-		log.Println(err)
-		t.Fatal("yaml")
-	}
-
-	_, err = SaveSwaggerJson("./docs/api.json")
-	if err != nil {
-		log.Println(err)
-		t.Fatal("json")
-	}
-
-	_, err = SaveApib("./docs/api.apib")
-	if err != nil {
-		log.Println(err)
-		t.Fatal("apib")
-	}
-
-	if _document.definitions[1].GetGenerics()[0] != "T" {
-		t.Fatal(`GetDefinitions()[1].GetGenerics()[0] != "T"`)
-	}
-	if _document.definitions[1].GetProperties()[2].GetType() != "T" {
-		t.Fatal(`GetDefinitions()[1].GetProperties()[2].GetType() != "T"`)
-	}
+func TestGenerate2(t *testing.T) {
+	// https://github.com/apiaryio/api-blueprint/blob/master/examples/Gist%20Fox%20API%20%2B%20Auth.md
+	// https://editor.docs.apiary.io/
 }

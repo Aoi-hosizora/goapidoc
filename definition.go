@@ -4,6 +4,8 @@ package goapidoc
 // Definition
 // ==========
 
+// TODO XML
+
 // Definition represents an api definition information of Document.
 type Definition struct {
 	name string

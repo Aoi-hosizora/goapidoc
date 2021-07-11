@@ -55,7 +55,7 @@ const (
 const (
 	ALL   = "*/*"                               // ALL mime data: */*
 	JSON  = "application/json"                  // JSON mime data: application/json
-	XML   = "text/xml"                          // XML mime data: text/xml
+	XML   = "application/xml"                   // XML mime data: application/xml
 	PLAIN = "text/plain"                        // PLAIN mime data: text/plain
 	HTML  = "text/html"                         // HTML mime data: text/html
 	MPFD  = "multipart/form-data"               // MPFD mime data: multipart/form-data

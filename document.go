@@ -27,6 +27,17 @@ func (d *Document) GetOption() *Option            { return d.option }
 func (d *Document) GetOperations() []*Operation   { return d.operations }
 func (d *Document) GetDefinitions() []*Definition { return d.definitions }
 
+// Cleanup cleans up Document.
+func (d *Document) Cleanup() *Document {
+	d.host = ""
+	d.basePath = ""
+	d.info = nil
+	d.option = nil
+	d.operations = nil
+	d.definitions = nil
+	return d
+}
+
 // Host sets the host in Document.
 func (d *Document) Host(host string) *Document {
 	d.host = host
@@ -213,7 +224,7 @@ func (c *Contact) Email(email string) *Contact {
 // Option represents an extra options of Document.
 // TODO BREAK CHANGES
 type Option struct {
-	schemas    []string
+	schemes    []string
 	consumes   []string
 	produces   []string
 	tags       []*Tag
@@ -225,21 +236,21 @@ func NewOption() *Option {
 	return &Option{}
 }
 
-func (o *Option) GetSchemas() []string       { return o.schemas }
+func (o *Option) GetSchemes() []string       { return o.schemes }
 func (o *Option) GetConsumes() []string      { return o.consumes }
 func (o *Option) GetProduces() []string      { return o.produces }
 func (o *Option) GetTags() []*Tag            { return o.tags }
 func (o *Option) GetSecurities() []*Security { return o.securities }
 
-// Schemas sets the whole schemas in Option.
-func (o *Option) Schemas(schemas ...string) *Option {
-	o.schemas = schemas
+// Schemes sets the whole schemes in Option.
+func (o *Option) Schemes(schemes ...string) *Option {
+	o.schemes = schemes
 	return o
 }
 
-// AddSchemas adds some tags schemas into Option.
-func (o *Option) AddSchemas(schemas ...string) *Option {
-	o.schemas = append(o.schemas, schemas...)
+// AddSchemes adds some tags schemes into Option.
+func (o *Option) AddSchemes(schemes ...string) *Option {
+	o.schemes = append(o.schemes, schemes...)
 	return o
 }
 
@@ -325,6 +336,8 @@ func (t *Tag) Desc(desc string) *Tag {
 // Security
 // ========
 
+// TODO oauth2
+
 // Security represents an api security definition information of Document.
 type Security struct {
 	title string
@@ -395,7 +408,10 @@ var _document = NewDocument("", "", nil)
 
 // SetDocument sets the basic information for global Document.
 func SetDocument(host, basePath string, info *Info) *Document {
-	return _document.Host(host).BasePath(basePath).Info(info)
+	_document.host = host
+	_document.basePath = basePath
+	_document.info = info
+	return _document
 }
 
 func GetHost() string               { return _document.GetHost() }
@@ -404,6 +420,11 @@ func GetInfo() *Info                { return _document.GetInfo() }
 func GetOption() *Option            { return _document.GetOption() }
 func GetOperations() []*Operation   { return _document.GetOperations() }
 func GetDefinitions() []*Definition { return _document.GetDefinitions() }
+
+// CleanupDocument cleans up Document.
+func CleanupDocument() *Document {
+	return _document.Cleanup()
+}
 
 // SetHost sets the host in global Document.
 func SetHost(host string) *Document {

@@ -1,370 +1,184 @@
 FORMAT: 1A
-HOST: localhost:65530/
+HOST: petstore.swagger.io/v2
 
-# goapidoc (1.0)
+# Swagger Petstore (1.0.0)
 
-goapidoc test api
+This is a sample server Petstore server.
 
-[Terms of service](https://github.com/Aoi-hosizora)
+[Terms of service](http://swagger.io/terms/)
 
-[License: MIT](https://github.com/Aoi-hosizora)
+[License: Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
 
-[Aoi-hosizora - Website](https://github.com/Aoi-hosizora)
+[Send email to the developer](mailto:apiteam@swagger.io)
 
-[Send email to Aoi-hosizora](mailto:a970335605@hotmail.com)
+Securities defined:
+- api_key: apiKey (name: api_key, in: header)
+- b: basic
 
-# Group Authorization
+Supported schemes:
+- https
+- http
 
-> auth-controller
+# Group pet
 
-## Register [/auth/register]
+> Everything about your Pets
 
-### Register [POST]
+## Add a new pet to the store, Update an existing pet [/pet]
 
-`POST /auth/register`
+### Add a new pet to the store [post]
 
-> Register.
+`post /pet`
 
-+ Request (application/json)
-
-    + Attributes (RegisterParam)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    > 200 OK
-
-    + Attributes (Result)
-
-    + Body
-
-## Login [/auth/login]
-
-### Login [POST]
-
-`POST /auth/login`
-
-> Login.
-
-+ Request (application/json)
-
-    + Attributes (LoginParam)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    > 200 OK
-
-    + Attributes (_Result<LoginDto>)
-
-    + Body
-
-+ Response 400 (application/json)
-
-    > 400 Bad Request
-
-    + Attributes (Result)
-
-    + Body
-
-            {
-              "code": 400,
-              "message": "Unauthorized"
-            }
-
-## Logout [/auth/logout]
-
-### Logout [DELETE]
-
-`DELETE /auth/logout`
+Security: b
 
 + Request (application/json)
 
     + Headers
 
-            Authorization: (string, optional) - Jwt, apiKey
+            Authorization: (string, optional) - b, basic
+
+    + Attributes (array[Pet])
 
     + Body
 
-+ Response 200 (application/json)
++ Response 405 (application/xml)
 
-    > 200 OK
-
-    + Attributes (Result)
+    > Invalid input
 
     + Body
 
-# Group User
+### Update an existing pet [put]
 
-> user-controller
-
-## Get users [/user{?page,limit}]
-
-### Get users [GET]
-
-`GET /user`
-
-+ Parameters
-
-    + page: `1` (number, optional) - current page
-        (format: int32, val >= 1.000)
-        + Default: `1`
-    + limit: `20` (number, optional) - page size
-        (format: int32, val >= 15.000)
-        + Default: `20`
+`put /pet`
 
 + Request (application/json)
 
-    + Headers
-
-            Authorization: (string, optional) - Jwt, apiKey
+    + Attributes (array[Pet])
 
     + Body
 
-+ Response 200 (application/json)
++ Response 400 (application/xml)
 
-    > 200 OK
-
-    + Attributes (_Result<_Page<UserDto>>)
-
-    + Body
-
-## Get a user [/user/{username}]
-
-### Get a user [GET]
-
-`GET /user/{username}`
-
-+ Parameters
-
-    + username (string, required) - username
-
-+ Request (application/json)
-
-    + Headers
-
-            Authorization: (string, optional) - Jwt, apiKey
-
-    + Body
-
-+ Response 200 (application/json)
-
-    > 200 OK
-
-    + Attributes (_Result<UserDto>)
-
-    + Body
-
-## Update user [/user/deprecated]
-
-### Update user [PUT]
-
-`PUT /user/deprecated`
-
-Attention: This api is deprecated.
-
-+ Request (application/json)
-
-    + Headers
-
-            Authorization: (string, optional) - Jwt, apiKey
-
-    + Attributes (UpdateUserParam)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    > 200 OK
-
-    + Attributes (Result)
-
-    + Body
-
-## Update user, Delete user [/user]
-
-### Update user [PUT]
-
-`PUT /user`
-
-+ Request (application/json)
-
-    + Headers
-
-            Authorization: (string, optional) - Jwt, apiKey
-
-    + Attributes (UpdateUserParam)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    > 200 OK
-
-    + Attributes (Result)
-
-    + Body
-
-### Delete user [DELETE]
-
-`DELETE /user`
-
-+ Request (application/json)
-
-    + Headers
-
-            Authorization: (string, optional) - Jwt, apiKey
-
-    + Body
-
-+ Response 200 (application/json)
-
-    > 200 OK
-
-    + Attributes (Result)
-
-    + Body
-
-# Group Test
-
-> test-controller
-
-## Test a [/test/a{?q1,q2,q3}]
-
-### Test a [HEAD]
-
-`HEAD /test/a`
-
-+ Parameters
-
-    + q1 (enum[string], required) - q1
-        (format: date-time)
-        + Members
-            + `0`
-            + `1`
-            + `2`
-    + q2 (number, optional) - q2
-        (format: double, val >= -5.000)
-    + q3: `example` (string, required) - q3
-        (format: password, allow empty value)
-        + Default: `default`
-
-+ Request (application/json)
-
-    + Headers
-
-            Authorization: (string, optional) - authorization
-
-    + Attributes (object)
-
-        + f1 (file, required) - f1
-        + f2 (string, required) - f2
-            (allow empty value)
-
-    + Body
-
-+ Response 200 (application/json)
-
-    > 200 Success
-
-    + Attributes (Result)
-
-    + Headers
-
-            Content-Type: (string, required) - content type
-            X-My-Token: (string, required) - my token
-            X-My-Number: (number, required) - my number
-
-    + Body
-
-+ Response 409 (application/json)
-
-    > 409 Conflict
+    > Invalid ID supplied
 
     + Attributes (string)
 
     + Body
 
++ Response 404 (application/xml)
+
+    > Pet not found
+
+    + Attributes (string)
+
+    + Body
+
++ Response 405 (application/xml)
+
+    > Validation exception
+
+    + Attributes (string)
+
+    + Body
+
+## Finds Pets by status [/pet/findByStatus{?status}]
+
+### Finds Pets by status [get]
+
+`get /pet/findByStatus`
+
+> Multiple status values can be provided with comma separated strings
+
++ Parameters
+
+    + status (array[string], required) - Status values that need to be considered for filter
+        (collection format: multi, collection format: multi)
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    > successful operation
+
+    + Attributes (array[Pet])
+
+    + Body
+
+            a
+
++ Response 400 (application/json)
+
+    > Invalid status value
+
+    + Body
+
+## Finds Pets by tags [/pet/findByTags{?tags}]
+
+### Finds Pets by tags [get]
+
+`get /pet/findByTags`
+
+> Multiple tags can be provided with comma separated strings.
+
+Attention: This api is deprecated.
+
++ Parameters
+
+    + tags (array[string], required) - Tags to filter by
+        (collection format: multi, collection format: multi)
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (array[Pet])
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid status value
+
+    + Body
+
+# Group store
+
+> Access to Petstore orders
+
+# Group user
+
+> Operations about user
+
 # Data Structures
 
-## Result (object)
+## Pet (object)
 
-+ code: `200` (number, required) - status code
-    (format: int32)
-+ message: `success` (string, required) - status message
-
-## UserDto (object)
-
-+ uid (number, required) - user id
++ id (number, optional)
     (format: int64)
-+ username (string, required) - username
-+ nickname (string, required) - nickname
-+ profile (string, required) - user profile
-    (allow empty value)
-+ gender (enum[string], required) - user gender
++ category (Category, optional)
++ name: `doggie` (string, required)
++ photoUrls (array[string], required)
++ tags (array[Tag], optional)
++ status (enum[string], optional) - pet status in the store
     + Members
-        + `secret`
-        + `male`
-        + `female`
+        + `available`
+        + `pending`
+        + `sold`
 
-## LoginDto (object)
+## Category (object)
 
-+ user (UserDto, required) - authorized user
-+ token (string, required) - access token
++ id (number, optional)
+    (format: int64)
++ name (string, optional)
 
-## RegisterParam (object)
+## Tag (object)
 
-+ username (string, required) - username
-    (5 <= len <= 30)
-+ password (string, required) - password
-    (5 <= len <= 30)
-
-## LoginParam (object)
-
-+ parameter (string, required) - login parameter
-+ password (string, required) - password
-
-## UpdateUserParam (object)
-
-+ username (string, required) - username
-+ nickname (string, required) - nickname
-+ profile (string, required) - user profile
-    (allow empty value)
-+ gender (enum[string], required) - user gender
-    + Members
-        + `secret`
-        + `male`
-        + `female`
-
-## _Result<LoginDto> (object)
-
-+ code (number, required) - status code
-    (format: int32)
-+ message (string, required) - status message
-+ data (LoginDto, required) - response data
-
-## _Page<UserDto> (object)
-
-+ page (number, required) - current page
-    (format: int32)
-+ limit (number, required) - page size
-    (format: int32)
-+ total (number, required) - total count
-    (format: int32)
-+ data (array[UserDto], required) - response data
-
-## _Result<_Page<UserDto>> (object)
-
-+ code (number, required) - status code
-    (format: int32)
-+ message (string, required) - status message
-+ data (_Page<UserDto>, required) - response data
-
-## _Result<UserDto> (object)
-
-+ code (number, required) - status code
-    (format: int32)
-+ message (string, required) - status message
-+ data (UserDto, required) - response data
++ id (number, optional)
+    (format: int64)
++ name (string, optional)

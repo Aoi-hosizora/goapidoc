@@ -6,12 +6,14 @@ import (
 	"strings"
 )
 
+// TODO omitempty
+
 type swagDocument struct {
 	Swagger     string                               `yaml:"swagger"                       json:"swagger"`
 	Host        string                               `yaml:"host"                          json:"host"`
 	BasePath    string                               `yaml:"basePath"                      json:"basePath"`
 	Info        *swagInfo                            `yaml:"info"                          json:"info"`
-	Schemas     []string                             `yaml:"schemas,omitempty"             json:"schemas,omitempty"`
+	Schemes     []string                             `yaml:"schemes,omitempty"             json:"schemes,omitempty"`
 	Consumes    []string                             `yaml:"consumes,omitempty"            json:"consumes,omitempty"`
 	Produces    []string                             `yaml:"produces,omitempty"            json:"produces,omitempty"`
 	Tags        []*swagTag                           `yaml:"tags,omitempty"                json:"tags,omitempty"`
@@ -22,7 +24,7 @@ type swagDocument struct {
 
 type swagInfo struct {
 	Title          string       `yaml:"title"                    json:"title"`
-	Description    string       `yaml:"description"              json:"description"`
+	Description    string       `yaml:"description,omitempty"    json:"description,omitempty"`
 	Version        string       `yaml:"version"                  json:"version"`
 	TermsOfService string       `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
 	License        *swagLicense `yaml:"license,omitempty"        json:"license,omitempty"`
@@ -35,7 +37,7 @@ type swagLicense struct {
 }
 
 type swagContact struct {
-	Name  string `yaml:"name"            json:"name"`
+	Name  string `yaml:"name,omitempty"  json:"name,omitempty"`
 	Url   string `yaml:"url,omitempty"   json:"url,omitempty"`
 	Email string `yaml:"email,omitempty" json:"email,omitempty"`
 }
@@ -48,15 +50,15 @@ type swagTag struct {
 type swagSecurity struct {
 	Type        string `yaml:"type"                  json:"type"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
-	Name        string `yaml:"name"                  json:"name"`
-	In          string `yaml:"in"                    json:"in"`
+	Name        string `yaml:"name,omitempty"        json:"name,omitempty"`
+	In          string `yaml:"in,omitempty"          json:"in,omitempty"`
 }
 
 type swagOperation struct {
 	Summary     string                   `yaml:"summary"               json:"summary"`
 	Description string                   `yaml:"description,omitempty" json:"description,omitempty"`
 	OperationId string                   `yaml:"operationId"           json:"operationId"`
-	Schemas     []string                 `yaml:"schemas,omitempty"     json:"schemas,omitempty"`
+	Schemes     []string                 `yaml:"schemes,omitempty"     json:"schemes,omitempty"`
 	Consumes    []string                 `yaml:"consumes,omitempty"    json:"consumes,omitempty"`
 	Produces    []string                 `yaml:"produces,omitempty"    json:"produces,omitempty"`
 	Tags        []string                 `yaml:"tags,omitempty"        json:"tags,omitempty"`
@@ -102,7 +104,7 @@ type swagResponse struct {
 }
 
 type swagHeader struct {
-	Type        string `yaml:"type,omitempty"        json:"type,omitempty"`
+	Type        string `yaml:"type"                  json:"type"`
 	Format      string `yaml:"format,omitempty"      json:"format,omitempty"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 }
@@ -117,7 +119,7 @@ type swagResponseSchema struct {
 
 type swagDefinition struct {
 	Type        string      `yaml:"type"                  json:"type"`
-	Required    []string    `yaml:"required"              json:"required"`
+	Required    []string    `yaml:"required,omitempty"    json:"required,omitempty"`
 	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
 	Properties  *orderedMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
 }
@@ -333,8 +335,6 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 				param.Schema = &swagSchema{
 					Type:             typ,
 					Format:           format,
-					Required:         p.required,
-					Description:      p.desc,
 					AllowEmpty:       p.allowEmpty, // ?
 					Default:          p.defaul,
 					Example:          p.example,
@@ -478,7 +478,7 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 			Summary:     op.summary,
 			Description: op.desc,
 			OperationId: operationId,
-			Schemas:     op.schemas,
+			Schemes:     op.schemes,
 			Consumes:    op.consumes,
 			Produces:    op.produces,
 			Tags:        op.tags,
@@ -550,7 +550,7 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 			}
 		}
 
-		out.Schemas = doc.option.schemas
+		out.Schemes = doc.option.schemes
 		out.Consumes = doc.option.consumes
 		out.Produces = doc.option.produces
 		out.Tags = tags

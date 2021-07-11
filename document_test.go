@@ -5,11 +5,8 @@ import (
 )
 
 func TestSetGet(t *testing.T) {
-	t.Cleanup(func() {
-		SetDocument("", "", nil)
-		SetOperations()
-		SetDefinitions()
-	})
+	t.Cleanup(func() { CleanupDocument() })
+
 	t.Run("Set and get in document.go", func(t *testing.T) {
 		SetDocument("", "", nil)
 		SetHost("localhost:12334")
@@ -27,8 +24,8 @@ func TestSetGet(t *testing.T) {
 				Url("https://github.com/Aoi-hosizora").
 				Email("a970335605@hotmail.com")))
 		SetOption(NewOption().
-			Schemas("http").
-			AddSchemas("https", "ws", "wss").
+			Schemes("http").
+			AddSchemes("https", "ws", "wss").
 			Consumes("application/json").
 			AddConsumes("multipart/form-data", "application/protobuf").
 			Produces("application/json").
@@ -86,8 +83,8 @@ func TestSetGet(t *testing.T) {
 		if GetInfo().GetContact().GetEmail() != "a970335605@hotmail.com" {
 			failNow(t, "Info.Contact.Email has a wrong behavior")
 		}
-		if s := GetOption().GetSchemas(); s[0] != "http" || s[1] != "https" || s[2] != "ws" || s[3] != "wss" {
-			failNow(t, "Option.Schemas or Option.AddSchemas has a wrong behavior")
+		if s := GetOption().GetSchemes(); s[0] != "http" || s[1] != "https" || s[2] != "ws" || s[3] != "wss" {
+			failNow(t, "Option.Schemes or Option.AddSchemes has a wrong behavior")
 		}
 		if c := GetOption().GetConsumes(); c[0] != "application/json" || c[1] != "multipart/form-data" || c[2] != "application/protobuf" {
 			failNow(t, "Option.Consumes or Option.AddConsumes has a wrong behavior")
@@ -109,6 +106,11 @@ func TestSetGet(t *testing.T) {
 		if len(GetDefinitions()) != 2 {
 			failNow(t, "AddDefinitions or SetDefinitions has a wrong behavior")
 		}
+
+		CleanupDocument()
+		if GetHost() != "" || GetBasePath() != "" || GetInfo() != nil || GetOption() != nil || len(GetOperations()) != 0 || len(GetDefinitions()) != 0{
+			failNow(t, "CleanupDocument has a wrong behavior")
+		}
 	})
 
 	t.Run("Set and get in operation.go", func(t *testing.T) {
@@ -126,8 +128,8 @@ func TestSetGet(t *testing.T) {
 			Summary("Get user information").
 			Desc("Query a specific user with id's information").
 			OperationId("-user-:id").
-			Schemas("http").
-			AddSchemas("https", "ws", "wss").
+			Schemes("http").
+			AddSchemes("https", "ws", "wss").
 			Consumes("application/json").
 			AddConsumes("multipart/form-data", "application/protobuf").
 			Produces("application/json").
@@ -211,8 +213,8 @@ func TestSetGet(t *testing.T) {
 		if op.GetOperationId() != "-user-:id" {
 			failNow(t, "Operation.OperationId has a wrong behavior")
 		}
-		if s := op.GetSchemas(); s[0] != "http" || s[1] != "https" || s[2] != "ws" || s[3] != "wss" {
-			failNow(t, "Operation.Schemas or Operation.AddSchemas has a wrong behavior")
+		if s := op.GetSchemes(); s[0] != "http" || s[1] != "https" || s[2] != "ws" || s[3] != "wss" {
+			failNow(t, "Operation.Schemes or Operation.AddSchemes has a wrong behavior")
 		}
 		if c := op.GetConsumes(); c[0] != "application/json" || c[1] != "multipart/form-data" || c[2] != "application/protobuf" {
 			failNow(t, "Operation.Consumes or Option.AddConsumes has a wrong behavior")

@@ -1,452 +1,202 @@
 swagger: "2.0"
-host: localhost:65530
-basePath: /
+host: petstore.swagger.io
+basePath: /v2
 info:
-  title: goapidoc
-  description: goapidoc test api
-  version: "1.0"
-  termsOfService: https://github.com/Aoi-hosizora
+  title: Swagger Petstore
+  description: This is a sample server Petstore server.
+  version: 1.0.0
+  termsOfService: http://swagger.io/terms/
   license:
-    name: MIT
-    url: https://github.com/Aoi-hosizora
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
   contact:
-    name: Aoi-hosizora
-    url: https://github.com/Aoi-hosizora
-    email: a970335605@hotmail.com
+    email: apiteam@swagger.io
+schemes:
+  - https
+  - http
 tags:
-- name: Authorization
-  description: auth-controller
-- name: User
-  description: user-controller
-- name: Test
-  description: test-controller
+  - name: pet
+    description: Everything about your Pets
+  - name: store
+    description: Access to Petstore orders
+  - name: user
+    description: Operations about user
 securityDefinitions:
-  Jwt:
+  api_key:
     type: apiKey
-    name: Authorization
+    name: api_key
     in: header
+  b:
+    type: basic
 paths:
-  /auth/login:
+  /pet:
     post:
-      summary: Login
-      description: Login.
-      operationId: -auth-login-post
+      summary: Add a new pet to the store
+      operationId: addPet
+      consumes:
+        - application/json
+        - application/xml
+      produces:
+        - application/xml
+        - application/json
       tags:
-      - Authorization
+        - pet
+      security:
+        - b: [ ]
       parameters:
-      - name: param
-        in: body
-        required: true
-        description: login param
-        schema:
-          $ref: '#/definitions/LoginParam'
-      responses:
-        "200":
-          description: 200 OK
+        - name: body
+          in: body
+          required: true
+          description: Pet object that needs to be added to the store
           schema:
-            $ref: '#/definitions/_Result<LoginDto>'
+            type: array
+            items:
+              $ref: '#/definitions/Pet'
+      responses:
+        "405":
+          description: Invalid input
+    put:
+      summary: Update an existing pet
+      operationId: updatePet
+      consumes:
+        - application/json
+        - application/xml
+      produces:
+        - application/xml
+        - application/json
+      tags:
+        - pet
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: Pet object that needs to be added to the store
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Pet'
+      responses:
         "400":
-          description: 400 Bad Request
-          examples:
-            application/json: "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"
-          schema:
-            $ref: '#/definitions/Result'
-  /auth/logout:
-    delete:
-      summary: Logout
-      operationId: -auth-logout-delete
-      tags:
-      - Authorization
-      security:
-      - Jwt: []
-      responses:
-        "200":
-          description: 200 OK
-          schema:
-            $ref: '#/definitions/Result'
-  /auth/register:
-    post:
-      summary: Register
-      description: Register.
-      operationId: -auth-register-post
-      tags:
-      - Authorization
-      parameters:
-      - name: param
-        in: body
-        required: true
-        description: register param
-        schema:
-          $ref: '#/definitions/RegisterParam'
-      responses:
-        "200":
-          description: 200 OK
-          schema:
-            $ref: '#/definitions/Result'
-  /test/a:
-    head:
-      summary: Test a
-      operationId: -test-a-head
-      tags:
-      - Test
-      security:
-      - WrongSecurity: []
-      parameters:
-      - name: q1
-        in: query
-        required: true
-        description: q1
-        type: string
-        format: date-time
-        enum:
-        - 0
-        - 1
-        - 2
-      - name: q2
-        in: query
-        required: false
-        description: q2
-        type: number
-        format: double
-        minimum: -5
-      - name: q3
-        in: query
-        required: true
-        description: q3
-        type: string
-        format: password
-        allowEmptyValue: true
-        default: default
-        example: example
-      - name: f1
-        in: formData
-        required: true
-        description: f1
-        type: file
-      - name: f2
-        in: formData
-        required: true
-        description: f2
-        type: string
-        allowEmptyValue: true
-      - name: Authorization
-        in: header
-        required: false
-        description: authorization
-        type: string
-      responses:
-        "200":
-          description: 200 Success
-          headers:
-            Content-Type:
-              type: string
-              description: content type
-            X-My-Number:
-              type: number
-              format: double
-              description: my number
-            X-My-Token:
-              type: string
-              description: my token
-          schema:
-            $ref: '#/definitions/Result'
-        "409":
-          description: 409 Conflict
+          description: Invalid ID supplied
           schema:
             type: string
-  /user:
-    delete:
-      summary: Delete user
-      operationId: -user-delete
-      tags:
-      - User
-      security:
-      - Jwt: []
-      responses:
-        "200":
-          description: 200 OK
+        "404":
+          description: Pet not found
           schema:
-            $ref: '#/definitions/Result'
+            type: string
+        "405":
+          description: Validation exception
+          schema:
+            type: string
+  /pet/findByStatus:
     get:
-      summary: Get users
-      operationId: -user-get
+      summary: Finds Pets by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findPetsByStatus
+      produces:
+        - application/json
       tags:
-      - User
-      security:
-      - Jwt: []
+        - pet
       parameters:
-      - name: page
-        in: query
-        required: false
-        description: current page
-        type: integer
-        format: int32
-        default: 1
-        example: 1
-        minimum: 1
-      - name: limit
-        in: query
-        required: false
-        description: page size
-        type: integer
-        format: int32
-        default: 20
-        example: 20
-        minimum: 15
+        - name: status
+          in: query
+          required: true
+          description: Status values that need to be considered for filter
+          type: array
+          collectionFormat: multi
+          items:
+            type: string
+            default: available
+            enum:
+              - available
+              - pending
+              - sold
       responses:
         "200":
-          description: 200 OK
+          description: successful operation
+          examples:
+            application/json: a
           schema:
-            $ref: '#/definitions/_Result<_Page<UserDto>>'
-    put:
-      summary: Update user
-      operationId: -user-put
-      tags:
-      - User
-      security:
-      - Jwt: []
-      parameters:
-      - name: param
-        in: body
-        required: true
-        description: update user param
-        schema:
-          $ref: '#/definitions/UpdateUserParam'
-      responses:
-        "200":
-          description: 200 OK
-          schema:
-            $ref: '#/definitions/Result'
-  /user/{username}:
+            type: array
+            items:
+              $ref: '#/definitions/Pet'
+        "400":
+          description: Invalid status value
+  /pet/findByTags:
     get:
-      summary: Get a user
-      operationId: -user-:username-get
+      summary: Finds Pets by tags
+      description: Multiple tags can be provided with comma separated strings.
+      operationId: findPetsByTags
+      produces:
+        - application/xml
+        - application/json
       tags:
-      - User
-      security:
-      - Jwt: []
-      parameters:
-      - name: username
-        in: path
-        required: true
-        description: username
-        type: string
-      responses:
-        "200":
-          description: 200 OK
-          schema:
-            $ref: '#/definitions/_Result<UserDto>'
-  /user/deprecated:
-    put:
-      summary: Update user
-      operationId: -user-deprecated-put
-      tags:
-      - User
-      security:
-      - Jwt: []
+        - pet
       deprecated: true
       parameters:
-      - name: param
-        in: body
-        required: true
-        description: update user param
-        schema:
-          $ref: '#/definitions/UpdateUserParam'
+        - name: tags
+          in: query
+          required: true
+          description: Tags to filter by
+          type: array
+          collectionFormat: multi
+          items:
+            type: string
       responses:
         "200":
-          description: 200 OK
+          description: successful operation
+          examples:
+            application/json: a
           schema:
-            $ref: '#/definitions/Result'
+            type: array
+            items:
+              $ref: '#/definitions/Pet'
+        "400":
+          description: Invalid status value
 definitions:
-  _Page<UserDto>:
+  Category:
     type: object
-    required:
-    - page
-    - limit
-    - total
-    - data
-    description: global page response
     properties:
-      page:
-        type: integer
-        format: int32
-        description: current page
-      limit:
-        type: integer
-        format: int32
-        description: page size
-      total:
-        type: integer
-        format: int32
-        description: total count
-      data:
-        type: array
-        description: response data
-        items:
-          $ref: '#/definitions/UserDto'
-  _Result<_Page<UserDto>>:
-    type: object
-    required:
-    - code
-    - message
-    - data
-    description: global response
-    properties:
-      code:
-        type: integer
-        format: int32
-        description: status code
-      message:
-        type: string
-        description: status message
-      data:
-        $ref: '#/definitions/_Page<UserDto>'
-  _Result<LoginDto>:
-    type: object
-    required:
-    - code
-    - message
-    - data
-    description: global response
-    properties:
-      code:
-        type: integer
-        format: int32
-        description: status code
-      message:
-        type: string
-        description: status message
-      data:
-        $ref: '#/definitions/LoginDto'
-  _Result<UserDto>:
-    type: object
-    required:
-    - code
-    - message
-    - data
-    description: global response
-    properties:
-      code:
-        type: integer
-        format: int32
-        description: status code
-      message:
-        type: string
-        description: status message
-      data:
-        $ref: '#/definitions/UserDto'
-  LoginDto:
-    type: object
-    required:
-    - user
-    - token
-    description: login response
-    properties:
-      user:
-        $ref: '#/definitions/UserDto'
-      token:
-        type: string
-        description: access token
-  LoginParam:
-    type: object
-    required:
-    - parameter
-    - password
-    description: login param
-    properties:
-      parameter:
-        type: string
-        description: login parameter
-      password:
-        type: string
-        description: password
-  RegisterParam:
-    type: object
-    required:
-    - username
-    - password
-    description: register param
-    properties:
-      username:
-        type: string
-        description: username
-        maxLength: 30
-        minLength: 5
-      password:
-        type: string
-        description: password
-        maxLength: 30
-        minLength: 5
-  Result:
-    type: object
-    required:
-    - code
-    - message
-    description: global response
-    properties:
-      code:
-        type: integer
-        format: int32
-        description: status code
-        example: "200"
-      message:
-        type: string
-        description: status message
-        example: success
-  UpdateUserParam:
-    type: object
-    required:
-    - username
-    - nickname
-    - profile
-    - gender
-    description: update user param
-    properties:
-      username:
-        type: string
-        description: username
-      nickname:
-        type: string
-        description: nickname
-      profile:
-        type: string
-        description: user profile
-        allowEmptyValue: true
-      gender:
-        type: string
-        description: user gender
-        enum:
-        - secret
-        - male
-        - female
-  UserDto:
-    type: object
-    required:
-    - uid
-    - username
-    - nickname
-    - profile
-    - gender
-    description: user response
-    properties:
-      uid:
+      id:
         type: integer
         format: int64
-        description: user id
-      username:
+      name:
         type: string
-        description: username
-      nickname:
+  Pet:
+    type: object
+    required:
+      - name
+      - photoUrls
+    properties:
+      id:
+        type: integer
+        format: int64
+      category:
+        $ref: '#/definitions/Category'
+      name:
         type: string
-        description: nickname
-      profile:
+        example: doggie
+      photoUrls:
+        type: array
+        items:
+          type: string
+          pattern: ^[123]*$
+      tags:
+        type: array
+        items:
+          $ref: '#/definitions/Tag'
+      status:
         type: string
-        description: user profile
-        allowEmptyValue: true
-      gender:
-        type: string
-        description: user gender
+        description: pet status in the store
         enum:
-        - secret
-        - male
-        - female
+          - available
+          - pending
+          - sold
+  Tag:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string

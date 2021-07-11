@@ -20,6 +20,11 @@ type apibDocument struct {
 	ContactUrl     string
 	ContactEmail   string
 
+	Securities []string
+	Schemes    []string
+	Consumes   []string
+	Produces   []string
+
 	GroupsString      string
 	DefinitionsString string
 }
@@ -41,6 +46,7 @@ type apibMethod struct {
 	Method      string
 	Summary     string
 	Description string
+	Security    string
 	Deprecated  bool
 	Consume     string
 	Produce     string
@@ -131,6 +137,9 @@ func buildApibSchema(schema *apibSchema, in string) string {
 	case BODY:
 		return typ
 	case HEADER:
+		if schema.desc == "" {
+			return fmt.Sprintf("%s: (%s, %s)", schema.name, typ, req)
+		}
 		return fmt.Sprintf("%s: (%s, %s) - %s", schema.name, typ, req, schema.desc)
 	case PATH, QUERY, FORM:
 		// pass
@@ -149,9 +158,12 @@ func buildApibSchema(schema *apibSchema, in string) string {
 		typ = fmt.Sprintf("enum[%s]", typ)
 	}
 	if schema.example != nil {
-		out.WriteString(fmt.Sprintf("+ %s: `%v` (%s, %s) - %s", schema.name, schema.example, typ, req, schema.desc))
+		out.WriteString(fmt.Sprintf("+ %s: `%v` (%s, %s)", schema.name, schema.example, typ, req))
 	} else {
-		out.WriteString(fmt.Sprintf("+ %s (%s, %s) - %s", schema.name, typ, req, schema.desc))
+		out.WriteString(fmt.Sprintf("+ %s (%s, %s)", schema.name, typ, req))
+	}
+	if schema.desc != "" {
+		out.WriteString(fmt.Sprintf(" - %s", schema.desc))
 	}
 	options := make([]string, 0, 4) // cap defaults to 4
 	if at.kind == apiPrimeKind && at.prime.format != "" {
@@ -230,6 +242,8 @@ var apibOperationTemplate = `
 
 {{ if .Description }}> {{ .Description }}{{ end }}
 
+{{ if .Security }}Security: {{ .Security }}{{ end }}
+
 {{ if .Deprecated }}Attention: This api is deprecated.{{ end }}
 
 {{ if .Parameters }}
@@ -292,8 +306,10 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 		produce = op.produces[0]
 	}
 	params := op.params
+	secName := ""
 	if len(op.securities) > 0 {
-		name := op.securities[0]
+		name := op.securities[0] // only support single security
+		secName = name
 		if s, ok := securities[name]; ok {
 			desc := fmt.Sprintf("%s, %s", name, s.typ)
 			if s.desc != "" {
@@ -314,6 +330,7 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 		Summary:     op.summary,
 		Description: op.desc,
 		Deprecated:  op.deprecated,
+		Security:    secName,
 		Consume:     consume,
 		Produce:     produce,
 		Parameters:  make([]string, 0, 2),
@@ -553,6 +570,22 @@ HOST: {{ .Host }}{{ .BasePath }}
 
 {{ if .ContactEmail }}{{ .ContactEmail }}{{ end }}
 
+{{ if .Securities }}Securities defined:
+{{ range .Securities }}- {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Schemes }}Supported schemes:
+{{ range .Schemes }}- {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Consumes }}Available consumes:
+{{ range .Consumes }}- {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Produces }}Available produces:
+{{ range .Produces }}- {{ . }}
+{{ end }}{{ end }}
+
 {{ .GroupsString }}
 
 {{ .DefinitionsString }}
@@ -574,13 +607,44 @@ func buildApibDocument(doc *Document) []byte {
 		out.TermsOfService = fmt.Sprintf("[Terms of service](%s)", doc.info.termsOfService)
 	}
 	if license := doc.info.license; license != nil {
-		out.License = fmt.Sprintf("[License: %s](%s)", license.name, license.url)
+		if license.url == "" {
+			out.License = fmt.Sprintf("License: %s", license.name)
+		} else {
+			out.License = fmt.Sprintf("[License: %s](%s)", license.name, license.url)
+		}
 	}
 	if contact := doc.info.contact; contact != nil {
-		out.ContactUrl = fmt.Sprintf("[%s - Website](%s)", contact.name, contact.url)
-		if contact.email != "" {
-			out.ContactEmail = fmt.Sprintf("[Send email to %s](mailto:%s)", contact.name, contact.email)
+		name := contact.name
+		if name == "" {
+			name = "the developer"
 		}
+		if contact.url != "" {
+			out.ContactUrl = fmt.Sprintf("[%s - Website](%s)", name, contact.url)
+		}
+		if contact.email != "" {
+			out.ContactEmail = fmt.Sprintf("[Send email to %s](mailto:%s)", name, contact.email)
+		}
+	}
+	if opt := doc.option; opt != nil {
+		arr := make([]string, 0, len(opt.securities))
+		for _, sec := range opt.securities {
+			s := ""
+			if sec.typ == APIKEY {
+				s = fmt.Sprintf("%s: apiKey (name: %s, in: %s)", sec.title, sec.name, sec.in)
+			} else if sec.typ == BASIC {
+				s = fmt.Sprintf("%s: basic", sec.title)
+			}
+			if sec.desc != "" {
+				s += fmt.Sprintf(" - %s", sec.desc)
+			}
+			if s != "" {
+				arr = append(arr, s)
+			}
+		}
+		out.Securities = arr
+		out.Schemes = opt.schemes
+		out.Consumes = opt.consumes
+		out.Produces = opt.produces
 	}
 
 	// definitions & operations

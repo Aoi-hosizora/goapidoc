@@ -188,7 +188,9 @@ func collectAllSpecTypes(doc *Document) []string {
 			checkTypeName(param.typ)
 		}
 		for _, resp := range op.responses {
-			checkTypeName(resp.typ)
+			if resp.typ != "" {
+				checkTypeName(resp.typ)
+			}
 		}
 	}
 	for _, def := range doc.definitions {
@@ -207,7 +209,9 @@ func collectAllSpecTypes(doc *Document) []string {
 			out = append(out, param.typ)
 		}
 		for _, resp := range op.responses {
-			out = append(out, resp.typ)
+			if resp.typ != "" {
+				out = append(out, resp.typ)
+			}
 		}
 	}
 	for _, def := range doc.definitions {
