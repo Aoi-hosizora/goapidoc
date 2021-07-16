@@ -4,13 +4,12 @@ package goapidoc
 // Definition
 // ==========
 
-// TODO XML
-
 // Definition represents an api definition information of Document.
 type Definition struct {
 	name string
 	desc string
 
+	xmlRepr    *XMLRepr
 	generics   []string
 	properties []*Property
 }
@@ -22,6 +21,7 @@ func NewDefinition(name, desc string) *Definition {
 
 func (d *Definition) GetName() string            { return d.name }
 func (d *Definition) GetDesc() string            { return d.desc }
+func (d *Definition) GetXMLRepr() *XMLRepr       { return d.xmlRepr }
 func (d *Definition) GetGenerics() []string      { return d.generics }
 func (d *Definition) GetProperties() []*Property { return d.properties }
 
@@ -34,6 +34,12 @@ func (d *Definition) Name(name string) *Definition {
 // Desc sets the desc in Definition.
 func (d *Definition) Desc(desc string) *Definition {
 	d.desc = desc
+	return d
+}
+
+// XMLRepr sets the xml repr in Definition.
+func (d *Definition) XMLRepr(repr *XMLRepr) *Definition {
+	d.xmlRepr = repr
 	return d
 }
 
@@ -53,6 +59,60 @@ func (d *Definition) Properties(properties ...*Property) *Definition {
 func (d *Definition) AddProperties(properties ...*Property) *Definition {
 	d.properties = append(d.properties, properties...)
 	return d
+}
+
+// =======
+// XMLRepr
+// =======
+
+// XMLRepr represents a xml representation format of Definition.
+type XMLRepr struct {
+	name      string
+	namespace string
+	prefix    string
+	attribute bool
+	wrapped   bool
+}
+
+// NewXMLRepr creates a default XMLRepr with given arguments.
+func NewXMLRepr(name string) *XMLRepr {
+	return &XMLRepr{name: name}
+}
+
+func (x *XMLRepr) GetName() string      { return x.name }
+func (x *XMLRepr) GetNamespace() string { return x.namespace }
+func (x *XMLRepr) GetPrefix() string    { return x.prefix }
+func (x *XMLRepr) GetAttribute() bool   { return x.attribute }
+func (x *XMLRepr) GetWrapped() bool     { return x.wrapped }
+
+// Name sets the name in XMLRepr.
+func (x *XMLRepr) Name(name string) *XMLRepr {
+	x.name = name
+	return x
+}
+
+// Namespace sets the namespace in XMLRepr.
+func (x *XMLRepr) Namespace(namespace string) *XMLRepr {
+	x.namespace = namespace
+	return x
+}
+
+// Prefix sets the prefix in XMLRepr.
+func (x *XMLRepr) Prefix(prefix string) *XMLRepr {
+	x.prefix = prefix
+	return x
+}
+
+// Attribute sets the attribute in XMLRepr.
+func (x *XMLRepr) Attribute(attribute bool) *XMLRepr {
+	x.attribute = attribute
+	return x
+}
+
+// Wrapped sets the wrapped in XMLRepr.
+func (x *XMLRepr) Wrapped(wrapped bool) *XMLRepr {
+	x.wrapped = wrapped
+	return x
 }
 
 // ========

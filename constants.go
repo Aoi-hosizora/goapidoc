@@ -7,6 +7,14 @@ const (
 	OAUTH2 = "oauth2" // OAUTH2 security type: oauth2 authentication
 )
 
+// oauth2 flow
+const (
+	IMPLICIT_FLOW    = "implicit"    // IMPLICIT_FLOW oauth2 flow: implicit
+	PASSWORD_FLOW    = "password"    // PASSWORD_FLOW oauth2 flow: password
+	APPLICATION_FLOW = "application" // APPLICATION_FLOW oauth2 flow: application
+	ACCESSCODE_FLOW  = "accessCode"  // ACCESSCODE_FLOW oauth2 flow: accessCode
+)
+
 // type
 const (
 	INTEGER = "integer" // INTEGER type: integer, long

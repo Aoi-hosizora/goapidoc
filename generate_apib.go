@@ -20,19 +20,21 @@ type apibDocument struct {
 	ContactUrl     string
 	ContactEmail   string
 
-	Securities []string
-	Schemes    []string
-	Consumes   []string
-	Produces   []string
+	Securities   []string
+	Schemes      []string
+	Consumes     []string
+	Produces     []string
+	ExternalDocs string
 
 	GroupsString      string
 	DefinitionsString string
 }
 
 type apibGroup struct {
-	Tag         string
-	Description string
-	Routes      []*apibRoute
+	Tag          string
+	Description  string
+	ExternalDocs string
+	Routes       []*apibRoute
 }
 
 type apibRoute struct {
@@ -42,14 +44,15 @@ type apibRoute struct {
 }
 
 type apibMethod struct {
-	Route       string
-	Method      string
-	Summary     string
-	Description string
-	Security    string
-	Deprecated  bool
-	Consume     string
-	Produce     string
+	Route        string
+	Method       string
+	Summary      string
+	Description  string
+	Security     string
+	Deprecated   bool
+	Consume      string
+	Produce      string
+	ExternalDocs string
 
 	Parameters []string
 	Headers    []string
@@ -107,7 +110,7 @@ func buildApibType(typ string) (string, *apiType) {
 	case apiPrimeKind:
 		t := at.prime.typ
 		if t == FILE {
-			fmt.Println("Warning: using file type for api blueprint 1A, use formData instead.")
+			fmt.Println("Warning: using file type for api blueprint 1A.")
 			// panic("File type is no allowed in api blueprint 1A")
 		}
 		if t == INTEGER {
@@ -246,6 +249,8 @@ var apibOperationTemplate = `
 
 {{ if .Deprecated }}Attention: This api is deprecated.{{ end }}
 
+{{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
+
 {{ if .Parameters }}
 + Parameters
 
@@ -319,26 +324,38 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 				params = append(params, &Param{name: s.name, in: s.in, typ: "string", desc: desc})
 			} else if s.typ == BASIC {
 				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc})
+			} else if s.typ == OAUTH2 {
+				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc}) // <<<
 			}
 		}
 	}
 
 	// render operation to apibMethod
 	out := &apibMethod{
-		Route:       op.route,
-		Method:      op.method,
-		Summary:     op.summary,
-		Description: op.desc,
-		Deprecated:  op.deprecated,
-		Security:    secName,
-		Consume:     consume,
-		Produce:     produce,
-		Parameters:  make([]string, 0, 2),
-		Headers:     make([]string, 0, 2),
-		AttrBody:    "",
-		Forms:       make([]string, 0),
-		Responses:   make([]*apibResponse, 0, 1),
+		Route:        op.route,
+		Method:       op.method,
+		Summary:      op.summary,
+		Description:  op.desc,
+		Deprecated:   op.deprecated,
+		Security:     secName,
+		Consume:      consume,
+		Produce:      produce,
+		ExternalDocs: "",
+		Parameters:   make([]string, 0, 2),
+		Headers:      make([]string, 0, 2),
+		AttrBody:     "",
+		Forms:        make([]string, 0),
+		Responses:    make([]*apibResponse, 0, 1),
 	}
+	externalDocs := ""
+	if e := op.externalDocs; e != nil {
+		if e.desc == "" {
+			externalDocs = fmt.Sprintf("[%s](%s)", e.url, e.url)
+		} else {
+			externalDocs = fmt.Sprintf("[%s](%s)", e.desc, e.url)
+		}
+	}
+	out.ExternalDocs = externalDocs
 	for _, p := range params {
 		s := buildApibSchema(&apibSchema{
 			name:     p.name,
@@ -387,7 +404,22 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 		}
 		example := ""
 		if e, ok := r.examples[produce]; ok {
-			example = spaceIndent(3, e) // <<<
+			var str string
+			var err error
+			switch produce {
+			case JSON:
+				str, err = bsErrToStrErr(jsonMarshal(e))
+			case XML:
+				str, err = bsErrToStrErr(xmlMarshal(e))
+			case PLAIN, HTML:
+				str = fmt.Sprintf("%v", e)
+			default:
+				str = fmt.Sprintf("<unsupported mime> %v", e)
+			}
+			if err != nil {
+				panic(err)
+			}
+			example = spaceIndent(3, str)
 		}
 		out.Responses = append(out.Responses, &apibResponse{
 			Code:        r.code,
@@ -407,6 +439,8 @@ var apibGroupsTemplate = `
 # Group {{ .Tag }}
 
 {{ if .Description }}> {{ .Description }}{{ end }}
+
+{{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
 
 {{ range .Routes }}
 ## {{ .Summary }} [{{ .Route }}]
@@ -490,7 +524,15 @@ func buildApibGroups(doc *Document) []byte {
 				Methods: strings.Join(moStrings, "\n\n"),
 			})
 		}
-		out = append(out, &apibGroup{Tag: tag.name, Description: tag.desc, Routes: outRoutes})
+		externalDocs := ""
+		if e := tag.externalDocs; e != nil {
+			if e.desc == "" {
+				externalDocs = fmt.Sprintf("[%s](%s)", e.url, e.url)
+			} else {
+				externalDocs = fmt.Sprintf("[%s](%s)", e.desc, e.url)
+			}
+		}
+		out = append(out, &apibGroup{Tag: tag.name, Description: tag.desc, ExternalDocs: externalDocs, Routes: outRoutes})
 	}
 
 	return renderTemplate(apibGroupsTemplate, out)
@@ -586,6 +628,8 @@ HOST: {{ .Host }}{{ .BasePath }}
 {{ range .Produces }}- {{ . }}
 {{ end }}{{ end }}
 
+{{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
+
 {{ .GroupsString }}
 
 {{ .DefinitionsString }}
@@ -630,9 +674,16 @@ func buildApibDocument(doc *Document) []byte {
 		for _, sec := range opt.securities {
 			s := ""
 			if sec.typ == APIKEY {
-				s = fmt.Sprintf("%s: apiKey (name: %s, in: %s)", sec.title, sec.name, sec.in)
+				s = fmt.Sprintf("%s: apiKey (name: '%s', in: '%s')", sec.title, sec.name, sec.in)
 			} else if sec.typ == BASIC {
 				s = fmt.Sprintf("%s: basic", sec.title)
+			} else if sec.typ == OAUTH2 {
+				scopes := make([]string, 0, len(sec.scopes))
+				for k, v := range sec.scopes {
+					scopes = append(scopes, fmt.Sprintf("%s - %s", k, v))
+				}
+				s = fmt.Sprintf("%s: oauth2 (flow: '%s', authorizationUrl: '%s', tokenUrl: '%s', scopes: (%s))",
+					sec.title, sec.flow, sec.authorizationUrl, sec.tokenUrl, strings.Join(scopes, ", "))
 			}
 			if sec.desc != "" {
 				s += fmt.Sprintf(" - %s", sec.desc)
@@ -641,10 +692,20 @@ func buildApibDocument(doc *Document) []byte {
 				arr = append(arr, s)
 			}
 		}
+		externalDocs := ""
+		if e := opt.externalDocs; e != nil {
+			if e.desc == "" {
+				externalDocs = fmt.Sprintf("[%s](%s)", e.url, e.url)
+			} else {
+				externalDocs = fmt.Sprintf("[%s](%s)", e.desc, e.url)
+			}
+		}
+
 		out.Securities = arr
 		out.Schemes = opt.schemes
 		out.Consumes = opt.consumes
 		out.Produces = opt.produces
+		out.ExternalDocs = externalDocs
 	}
 
 	// definitions & operations

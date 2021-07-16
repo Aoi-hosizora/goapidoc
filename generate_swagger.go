@@ -9,17 +9,18 @@ import (
 // TODO omitempty
 
 type swagDocument struct {
-	Swagger     string                               `yaml:"swagger"                       json:"swagger"`
-	Host        string                               `yaml:"host"                          json:"host"`
-	BasePath    string                               `yaml:"basePath"                      json:"basePath"`
-	Info        *swagInfo                            `yaml:"info"                          json:"info"`
-	Schemes     []string                             `yaml:"schemes,omitempty"             json:"schemes,omitempty"`
-	Consumes    []string                             `yaml:"consumes,omitempty"            json:"consumes,omitempty"`
-	Produces    []string                             `yaml:"produces,omitempty"            json:"produces,omitempty"`
-	Tags        []*swagTag                           `yaml:"tags,omitempty"                json:"tags,omitempty"`
-	Securities  map[string]*swagSecurity             `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
-	Operations  map[string]map[string]*swagOperation `yaml:"paths,omitempty"               json:"paths,omitempty"`
-	Definitions map[string]*swagDefinition           `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
+	Swagger      string                               `yaml:"swagger"                       json:"swagger"`
+	Host         string                               `yaml:"host"                          json:"host"`
+	BasePath     string                               `yaml:"basePath"                      json:"basePath"`
+	Info         *swagInfo                            `yaml:"info"                          json:"info"`
+	Schemes      []string                             `yaml:"schemes,omitempty"             json:"schemes,omitempty"`
+	Consumes     []string                             `yaml:"consumes,omitempty"            json:"consumes,omitempty"`
+	Produces     []string                             `yaml:"produces,omitempty"            json:"produces,omitempty"`
+	Tags         []*swagTag                           `yaml:"tags,omitempty"                json:"tags,omitempty"`
+	Securities   map[string]*swagSecurity             `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
+	ExternalDocs *swagExternalDocs                    `yaml:"externalDocs,omitempty"        json:"externalDocs,omitempty"`
+	Operations   map[string]map[string]*swagOperation `yaml:"paths,omitempty"               json:"paths,omitempty"`
+	Definitions  map[string]*swagDefinition           `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
 }
 
 type swagInfo struct {
@@ -43,29 +44,40 @@ type swagContact struct {
 }
 
 type swagTag struct {
-	Name        string `yaml:"name"                  json:"name"`
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Name         string            `yaml:"name"                   json:"name"`
+	Description  string            `yaml:"description,omitempty"  json:"description,omitempty"`
+	ExternalDocs *swagExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type swagSecurity struct {
-	Type        string `yaml:"type"                  json:"type"`
+	Type             string            `yaml:"type"                       json:"type"`
+	Description      string            `yaml:"description,omitempty"      json:"description,omitempty"`
+	Name             string            `yaml:"name,omitempty"             json:"name,omitempty"`
+	In               string            `yaml:"in,omitempty"               json:"in,omitempty"`
+	Flow             string            `yaml:"flow,omitempty"             json:"flow,omitempty"`
+	AuthorizationUrl string            `yaml:"authorizationUrl,omitempty" json:"authorizationUrl,omitempty"`
+	TokenUrl         string            `yaml:"tokenUrl,omitempty"         json:"tokenUrl,omitempty"`
+	Scopes           map[string]string `yaml:"scopes,omitempty"           json:"scopes,omitempty"`
+}
+
+type swagExternalDocs struct {
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
-	Name        string `yaml:"name,omitempty"        json:"name,omitempty"`
-	In          string `yaml:"in,omitempty"          json:"in,omitempty"`
+	Url         string `yaml:"url,omitempty"         json:"url,omitempty"`
 }
 
 type swagOperation struct {
-	Summary     string                   `yaml:"summary"               json:"summary"`
-	Description string                   `yaml:"description,omitempty" json:"description,omitempty"`
-	OperationId string                   `yaml:"operationId"           json:"operationId"`
-	Schemes     []string                 `yaml:"schemes,omitempty"     json:"schemes,omitempty"`
-	Consumes    []string                 `yaml:"consumes,omitempty"    json:"consumes,omitempty"`
-	Produces    []string                 `yaml:"produces,omitempty"    json:"produces,omitempty"`
-	Tags        []string                 `yaml:"tags,omitempty"        json:"tags,omitempty"`
-	Securities  []map[string][]string    `yaml:"security,omitempty"    json:"security,omitempty"`
-	Deprecated  bool                     `yaml:"deprecated,omitempty"  json:"deprecated,omitempty"`
-	Parameters  []*swagParam             `yaml:"parameters,omitempty"  json:"parameters,omitempty"`
-	Responses   map[string]*swagResponse `yaml:"responses,omitempty"   json:"responses,omitempty"`
+	Summary      string                   `yaml:"summary"                json:"summary"`
+	Description  string                   `yaml:"description,omitempty"  json:"description,omitempty"`
+	OperationId  string                   `yaml:"operationId"            json:"operationId"`
+	Schemes      []string                 `yaml:"schemes,omitempty"      json:"schemes,omitempty"`
+	Consumes     []string                 `yaml:"consumes,omitempty"     json:"consumes,omitempty"`
+	Produces     []string                 `yaml:"produces,omitempty"     json:"produces,omitempty"`
+	Tags         []string                 `yaml:"tags,omitempty"         json:"tags,omitempty"`
+	Securities   []map[string][]string    `yaml:"security,omitempty"     json:"security,omitempty"`
+	Deprecated   bool                     `yaml:"deprecated,omitempty"   json:"deprecated,omitempty"`
+	ExternalDocs *swagExternalDocs        `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Parameters   []*swagParam             `yaml:"parameters,omitempty"   json:"parameters,omitempty"`
+	Responses    map[string]*swagResponse `yaml:"responses,omitempty"    json:"responses,omitempty"`
 }
 
 type swagParam struct {
@@ -99,7 +111,7 @@ type swagParam struct {
 type swagResponse struct {
 	Description string                 `yaml:"description,omitempty" json:"description,omitempty"`
 	Headers     map[string]*swagHeader `yaml:"headers,omitempty"     json:"headers,omitempty"`
-	Examples    map[string]string      `yaml:"examples,omitempty"    json:"examples,omitempty"`
+	Examples    map[string]interface{} `yaml:"examples,omitempty"    json:"examples,omitempty"`
 	Schema      *swagResponseSchema    `yaml:"schema,omitempty"      json:"schema,omitempty"`
 }
 
@@ -118,10 +130,19 @@ type swagResponseSchema struct {
 }
 
 type swagDefinition struct {
-	Type        string      `yaml:"type"                  json:"type"`
-	Required    []string    `yaml:"required,omitempty"    json:"required,omitempty"`
-	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
-	Properties  *orderedMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
+	Type        string       `yaml:"type"                  json:"type"`
+	Required    []string     `yaml:"required,omitempty"    json:"required,omitempty"`
+	Description string       `yaml:"description,omitempty" json:"description,omitempty"`
+	XMLRepr     *swagXMLRepr `yaml:"xml,omitempty"         json:"xml,omitempty"`
+	Properties  *orderedMap  `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
+}
+
+type swagXMLRepr struct {
+	Name      string `yaml:"name,omitempty"      json:"name,omitempty"`
+	Namespace string `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Prefix    string `yaml:"prefix,omitempty"    json:"prefix,omitempty"`
+	Attribute bool   `yaml:"attribute,omitempty" json:"attribute,omitempty"`
+	Wrapped   bool   `yaml:"wrapped,omitempty"   json:"wrapped,omitempty"`
 }
 
 type swagSchema struct {
@@ -443,9 +464,20 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 		properties.Set(p.name, schema)
 	}
 
+	var xmlRepr *swagXMLRepr
+	if x := definition.xmlRepr; x != nil {
+		xmlRepr = &swagXMLRepr{
+			Name:      x.name,
+			Namespace: x.namespace,
+			Prefix:    x.prefix,
+			Attribute: x.attribute,
+			Wrapped:   x.wrapped,
+		}
+	}
 	return &swagDefinition{
 		Type:        OBJECT, // fixed schema type to object
 		Description: definition.desc,
+		XMLRepr:     xmlRepr,
 		Required:    required,
 		Properties:  properties,
 	}
@@ -467,7 +499,16 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 		}
 		securities := make([]map[string][]string, 0, len(op.securities))
 		for _, s := range op.securities {
-			securities = append(securities, map[string][]string{s: {}}) // support apiKey and basic
+			secReq := map[string][]string{s: {}}
+			scopes, ok := op.secsScopes[s]
+			if ok {
+				secReq[s] = scopes
+			}
+			securities = append(securities, secReq)
+		}
+		var externalDocs *swagExternalDocs
+		if e := op.externalDocs; e != nil {
+			externalDocs = &swagExternalDocs{Description: e.desc, Url: e.url}
 		}
 
 		_, ok := out[op.route]
@@ -475,17 +516,18 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 			out[op.route] = make(map[string]*swagOperation, 4) // cap defaults to 4
 		}
 		out[op.route][method] = &swagOperation{
-			Summary:     op.summary,
-			Description: op.desc,
-			OperationId: operationId,
-			Schemes:     op.schemes,
-			Consumes:    op.consumes,
-			Produces:    op.produces,
-			Tags:        op.tags,
-			Securities:  securities,
-			Deprecated:  op.deprecated,
-			Parameters:  buildSwaggerParams(op.params),
-			Responses:   buildSwaggerResponses(op.responses),
+			Summary:      op.summary,
+			Description:  op.desc,
+			OperationId:  operationId,
+			Schemes:      op.schemes,
+			Consumes:     op.consumes,
+			Produces:     op.produces,
+			Tags:         op.tags,
+			Securities:   securities,
+			Deprecated:   op.deprecated,
+			ExternalDocs: externalDocs,
+			Parameters:   buildSwaggerParams(op.params),
+			Responses:    buildSwaggerResponses(op.responses),
 		}
 	}
 	return out
@@ -539,7 +581,11 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 	if doc.option != nil {
 		tags := make([]*swagTag, 0, len(doc.option.tags))
 		for _, t := range doc.option.tags {
-			tags = append(tags, &swagTag{Name: t.name, Description: t.desc})
+			tag := &swagTag{Name: t.name, Description: t.desc}
+			if e := t.externalDocs; e != nil {
+				tag.ExternalDocs = &swagExternalDocs{Description: e.desc, Url: e.url}
+			}
+			tags = append(tags, tag)
 		}
 		securities := make(map[string]*swagSecurity, len(doc.option.securities))
 		for _, s := range doc.option.securities {
@@ -547,7 +593,13 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 				securities[s.title] = &swagSecurity{Type: APIKEY, Description: s.desc, Name: s.name, In: s.in}
 			} else if s.typ == BASIC {
 				securities[s.title] = &swagSecurity{Type: BASIC, Description: s.desc}
+			} else if s.typ == OAUTH2 {
+				securities[s.title] = &swagSecurity{Type: OAUTH2, Description: s.desc, Flow: s.flow, AuthorizationUrl: s.authorizationUrl, TokenUrl: s.tokenUrl, Scopes: s.scopes}
 			}
+		}
+		var externalDocs *swagExternalDocs
+		if e := doc.option.externalDocs; e != nil {
+			externalDocs = &swagExternalDocs{Description: e.desc, Url: e.url}
 		}
 
 		out.Schemes = doc.option.schemes
@@ -555,6 +607,7 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 		out.Produces = doc.option.produces
 		out.Tags = tags
 		out.Securities = securities
+		out.ExternalDocs = externalDocs
 	}
 
 	// definitions & operations

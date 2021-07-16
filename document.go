@@ -224,11 +224,12 @@ func (c *Contact) Email(email string) *Contact {
 // Option represents an extra options of Document.
 // TODO BREAK CHANGES
 type Option struct {
-	schemes    []string
-	consumes   []string
-	produces   []string
-	tags       []*Tag
-	securities []*Security
+	schemes      []string
+	consumes     []string
+	produces     []string
+	tags         []*Tag
+	securities   []*Security
+	externalDocs *ExternalDocs
 }
 
 // NewOption creates an empty document Option.
@@ -236,11 +237,12 @@ func NewOption() *Option {
 	return &Option{}
 }
 
-func (o *Option) GetSchemes() []string       { return o.schemes }
-func (o *Option) GetConsumes() []string      { return o.consumes }
-func (o *Option) GetProduces() []string      { return o.produces }
-func (o *Option) GetTags() []*Tag            { return o.tags }
-func (o *Option) GetSecurities() []*Security { return o.securities }
+func (o *Option) GetSchemes() []string           { return o.schemes }
+func (o *Option) GetConsumes() []string          { return o.consumes }
+func (o *Option) GetProduces() []string          { return o.produces }
+func (o *Option) GetTags() []*Tag                { return o.tags }
+func (o *Option) GetSecurities() []*Security     { return o.securities }
+func (o *Option) GetExternalDocs() *ExternalDocs { return o.externalDocs }
 
 // Schemes sets the whole schemes in Option.
 func (o *Option) Schemes(schemes ...string) *Option {
@@ -302,14 +304,21 @@ func (o *Option) AddSecurities(securities ...*Security) *Option {
 	return o
 }
 
+// ExternalDocs sets the externalDocs in Option.
+func (o *Option) ExternalDocs(docs *ExternalDocs) *Option {
+	o.externalDocs = docs
+	return o
+}
+
 // ===
 // Tag
 // ===
 
 // Tag represents an api tag information of Document.
 type Tag struct {
-	name string
-	desc string
+	name         string
+	desc         string
+	externalDocs *ExternalDocs
 }
 
 // NewTag creates a default Tag with given arguments.
@@ -317,8 +326,9 @@ func NewTag(name, desc string) *Tag {
 	return &Tag{name: name, desc: desc}
 }
 
-func (t *Tag) GetName() string { return t.name }
-func (t *Tag) GetDesc() string { return t.desc }
+func (t *Tag) GetName() string                { return t.name }
+func (t *Tag) GetDesc() string                { return t.desc }
+func (t *Tag) GetExternalDocs() *ExternalDocs { return t.externalDocs }
 
 // Name sets the name in Tag.
 func (t *Tag) Name(name string) *Tag {
@@ -332,19 +342,29 @@ func (t *Tag) Desc(desc string) *Tag {
 	return t
 }
 
+// ExternalDocs sets the externalDocs in Tag.
+func (t *Tag) ExternalDocs(docs *ExternalDocs) *Tag {
+	t.externalDocs = docs
+	return t
+}
+
 // ========
 // Security
 // ========
 
-// TODO oauth2
-
 // Security represents an api security definition information of Document.
 type Security struct {
 	title string
-	typ   string // supports apiKey and basic
+	typ   string
 	desc  string
-	in    string
-	name  string
+
+	in   string // only for apiKey
+	name string // only for apiKey
+
+	flow             string            // only for oauth2
+	authorizationUrl string            // only for oauth2
+	tokenUrl         string            // only for oauth2
+	scopes           map[string]string // only for oauth2
 }
 
 // NewSecurity creates a default Security with given arguments.
@@ -363,11 +383,20 @@ func NewBasicSecurity(title string) *Security {
 	return &Security{title: title, typ: BASIC}
 }
 
-func (s *Security) GetTitle() string { return s.title }
-func (s *Security) GetType() string  { return s.typ }
-func (s *Security) GetDesc() string  { return s.desc }
-func (s *Security) GetInLoc() string { return s.in }
-func (s *Security) GetName() string  { return s.name }
+// NewOAuth2Security creates an oauth2 authentication Security with given arguments.
+func NewOAuth2Security(title string, flow string) *Security {
+	return &Security{title: title, typ: OAUTH2, flow: flow}
+}
+
+func (s *Security) GetTitle() string             { return s.title }
+func (s *Security) GetType() string              { return s.typ }
+func (s *Security) GetDesc() string              { return s.desc }
+func (s *Security) GetInLoc() string             { return s.in }
+func (s *Security) GetName() string              { return s.name }
+func (s *Security) GetFlow() string              { return s.flow }
+func (s *Security) GetAuthorizationUrl() string  { return s.authorizationUrl }
+func (s *Security) GetTokenUrl() string          { return s.tokenUrl }
+func (s *Security) GetScopes() map[string]string { return s.scopes }
 
 // Title sets the title in Security.
 func (s *Security) Title(title string) *Security {
@@ -397,6 +426,69 @@ func (s *Security) InLoc(in string) *Security {
 func (s *Security) Name(name string) *Security {
 	s.name = name
 	return s
+}
+
+// Flow sets the flow in Security.
+func (s *Security) Flow(flow string) *Security {
+	s.flow = flow
+	return s
+}
+
+// AuthorizationUrl sets the authorizationUrl in Security.
+func (s *Security) AuthorizationUrl(authorizationUrl string) *Security {
+	s.authorizationUrl = authorizationUrl
+	return s
+}
+
+// TokenUrl sets the tokenUrl in Security.
+func (s *Security) TokenUrl(tokenUrl string) *Security {
+	s.tokenUrl = tokenUrl
+	return s
+}
+
+// Scopes sets the whole scopes in Security.
+func (s *Security) Scopes(scopes map[string]string) *Security {
+	s.scopes = scopes
+	return s
+}
+
+// AddScope add a scope into Security.
+func (s *Security) AddScope(scope, desc string) *Security {
+	if s.scopes == nil {
+		s.scopes = make(map[string]string)
+	}
+	s.scopes[scope] = desc
+	return s
+}
+
+// ============
+// ExternalDocs
+// ============
+
+// ExternalDocs represents an additional external documentation of Document.
+type ExternalDocs struct {
+	desc string
+	url  string
+}
+
+// NewExternalDocs creates a default ExternalDocs with given arguments.
+func NewExternalDocs(desc, url string) *ExternalDocs {
+	return &ExternalDocs{desc: desc, url: url}
+}
+
+func (e *ExternalDocs) GetDesc() string { return e.desc }
+func (e *ExternalDocs) GetUrl() string  { return e.url }
+
+// Desc sets the desc in ExternalDocs.
+func (e *ExternalDocs) Desc(desc string) *ExternalDocs {
+	e.desc = desc
+	return e
+}
+
+// Url sets the url in ExternalDocs.
+func (e *ExternalDocs) Url(url string) *ExternalDocs {
+	e.url = url
+	return e
 }
 
 // ===============

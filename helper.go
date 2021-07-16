@@ -3,6 +3,7 @@ package goapidoc
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -47,6 +48,18 @@ func jsonMarshal(t interface{}) ([]byte, error) {
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(t)
 	return buffer.Bytes(), err
+}
+
+func xmlMarshal(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := xml.NewEncoder(buffer)
+	encoder.Indent("", "  ")
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
+}
+
+func bsErrToStrErr(bs []byte, err error) (string, error) {
+	return string(bs), err
 }
 
 func saveFile(path string, data []byte) error {

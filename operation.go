@@ -5,22 +5,23 @@ package goapidoc
 // =========
 
 // Operation represents an api operation information of Document.
-// TODO BREAK CHANGES
 type Operation struct {
 	method  string
 	route   string
 	summary string
 
-	desc        string
-	operationId string
-	schemes     []string
-	consumes    []string
-	produces    []string
-	tags        []string
-	securities  []string
-	deprecated  bool
-	params      []*Param
-	responses   []*Response
+	desc         string
+	operationId  string
+	schemes      []string
+	consumes     []string
+	produces     []string
+	tags         []string
+	securities   []string
+	secsScopes   map[string][]string
+	deprecated   bool
+	externalDocs *ExternalDocs
+	params       []*Param
+	responses    []*Response
 }
 
 // NewOperation creates a default Operation with given arguments.
@@ -63,19 +64,21 @@ func NewPatchOperation(route, summary string) *Operation {
 	return NewOperation(PATCH, route, summary)
 }
 
-func (o *Operation) GetMethod() string         { return o.method }
-func (o *Operation) GetRoute() string          { return o.route }
-func (o *Operation) GetSummary() string        { return o.summary }
-func (o *Operation) GetDesc() string           { return o.desc }
-func (o *Operation) GetOperationId() string    { return o.operationId }
-func (o *Operation) GetSchemes() []string      { return o.schemes }
-func (o *Operation) GetConsumes() []string     { return o.consumes }
-func (o *Operation) GetProduces() []string     { return o.produces }
-func (o *Operation) GetTags() []string         { return o.tags }
-func (o *Operation) GetSecurities() []string   { return o.securities }
-func (o *Operation) GetDeprecated() bool       { return o.deprecated }
-func (o *Operation) GetParams() []*Param       { return o.params }
-func (o *Operation) GetResponses() []*Response { return o.responses }
+func (o *Operation) GetMethod() string                        { return o.method }
+func (o *Operation) GetRoute() string                         { return o.route }
+func (o *Operation) GetSummary() string                       { return o.summary }
+func (o *Operation) GetDesc() string                          { return o.desc }
+func (o *Operation) GetOperationId() string                   { return o.operationId }
+func (o *Operation) GetSchemes() []string                     { return o.schemes }
+func (o *Operation) GetConsumes() []string                    { return o.consumes }
+func (o *Operation) GetProduces() []string                    { return o.produces }
+func (o *Operation) GetTags() []string                        { return o.tags }
+func (o *Operation) GetSecurities() []string                  { return o.securities }
+func (o *Operation) GetSecuritiesScopes() map[string][]string { return o.secsScopes }
+func (o *Operation) GetDeprecated() bool                      { return o.deprecated }
+func (o *Operation) GetExternalDocs() *ExternalDocs           { return o.externalDocs }
+func (o *Operation) GetParams() []*Param                      { return o.params }
+func (o *Operation) GetResponses() []*Response                { return o.responses }
 
 // Method sets the method in Operation.
 func (o *Operation) Method(method string) *Operation {
@@ -167,9 +170,30 @@ func (o *Operation) AddSecurities(securities ...string) *Operation {
 	return o
 }
 
+// SecuritiesScopes sets the whole securities' scopes in Operation.
+func (o *Operation) SecuritiesScopes(scopes map[string][]string) *Operation {
+	o.secsScopes = scopes
+	return o
+}
+
+// AddSecurityScopes adds a security's scopes in Operation.
+func (o *Operation) AddSecurityScopes(security string, scopes ...string) *Operation {
+	if o.secsScopes == nil {
+		o.secsScopes = make(map[string][]string)
+	}
+	o.secsScopes[security] = scopes
+	return o
+}
+
 // Deprecated sets the deprecated in Operation.
 func (o *Operation) Deprecated(deprecated bool) *Operation {
 	o.deprecated = deprecated
+	return o
+}
+
+// ExternalDocs sets the externalDocs in Operation.
+func (o *Operation) ExternalDocs(docs *ExternalDocs) *Operation {
+	o.externalDocs = docs
 	return o
 }
 
@@ -207,7 +231,7 @@ type Response struct {
 	typ  string
 
 	desc     string
-	examples map[string]string
+	examples map[string]interface{}
 	headers  []*Header
 }
 
@@ -216,11 +240,11 @@ func NewResponse(code int, typ string) *Response {
 	return &Response{code: code, typ: typ}
 }
 
-func (r *Response) GetCode() int                   { return r.code }
-func (r *Response) GetType() string                { return r.typ }
-func (r *Response) GetDesc() string                { return r.desc }
-func (r *Response) GetExamples() map[string]string { return r.examples }
-func (r *Response) GetHeaders() []*Header          { return r.headers }
+func (r *Response) GetCode() int                        { return r.code }
+func (r *Response) GetType() string                     { return r.typ }
+func (r *Response) GetDesc() string                     { return r.desc }
+func (r *Response) GetExamples() map[string]interface{} { return r.examples }
+func (r *Response) GetHeaders() []*Header               { return r.headers }
 
 // Code sets the code in Response.
 func (r *Response) Code(code int) *Response {
@@ -240,20 +264,19 @@ func (r *Response) Desc(desc string) *Response {
 	return r
 }
 
-// TODO EXAMPLE
-
 // Examples sets the whole examples in Response.
-func (r *Response) Examples(examples map[string]string) *Response {
-	r.examples = examples // <<<
+// TODO BREAK CHANGES
+func (r *Response) Examples(examples map[string]interface{}) *Response {
+	r.examples = examples
 	return r
 }
 
 // AddExample add an example into Response.
-func (r *Response) AddExample(mime string, example string) *Response {
+func (r *Response) AddExample(mime string, example interface{}) *Response {
 	if r.examples == nil {
-		r.examples = make(map[string]string)
+		r.examples = make(map[string]interface{})
 	}
-	r.examples[mime] = example // <<<
+	r.examples[mime] = example
 	return r
 }
 

@@ -5,10 +5,53 @@ import (
 )
 
 func TestSetGet(t *testing.T) {
-	t.Cleanup(func() { CleanupDocument() })
+	t.Run("Default values", func(t *testing.T) {
+		if GetHost() != "" {
+			failNow(t, "Default value of host is not empty")
+		}
+		if GetBasePath() != "" {
+			failNow(t, "Default value of basePath is not empty")
+		}
+		if GetInfo() != nil {
+			failNow(t, "Default value of info is not nil")
+		}
+		if GetOption() != nil {
+			failNow(t, "Default value of option is not nil")
+		}
+		if len(GetOperations()) != 0 {
+			failNow(t, "Default value of operations is not empty")
+		}
+		if len(GetDefinitions()) != 0 {
+			failNow(t, "Default value of definitions is not empty")
+		}
+
+		_document.host = "x"
+		_document.basePath = "x"
+		_document.info = &Info{}
+		SetDocument("", "", nil)
+
+		if GetHost() != "" {
+			failNow(t, "Value after SetDocument of host is not empty")
+		}
+		if GetBasePath() != "" {
+			failNow(t, "Value after SetDocument of basePath is not empty")
+		}
+		if GetInfo() != nil {
+			failNow(t, "Value after SetDocument of info is not nil")
+		}
+		if GetOption() != nil {
+			failNow(t, "Value after SetDocument of option is not nil")
+		}
+		if len(GetOperations()) != 0 {
+			failNow(t, "Value after SetDocument of operations is not empty")
+		}
+		if len(GetDefinitions()) != 0 {
+			failNow(t, "Value after SetDocument of definitions is not empty")
+		}
+	})
 
 	t.Run("Set and get in document.go", func(t *testing.T) {
-		SetDocument("", "", nil)
+		CleanupDocument()
 		SetHost("localhost:12334")
 		SetBasePath("v1")
 		SetInfo(NewInfo("", "", "").
@@ -32,7 +75,8 @@ func TestSetGet(t *testing.T) {
 			AddProduces("application/xml", "application/protobuf").
 			Tags(NewTag("", "").
 				Name("Authorization").
-				Desc("auth-controller")).
+				Desc("auth-controller").
+				ExternalDocs(NewExternalDocs("Find out more", "https://github.com/Aoi-hosizora"))).
 			AddTags(NewTag("User", "user-controller"),
 				NewTag("Resource", "resource-controller")).
 			Securities(NewSecurity("", "").
@@ -42,7 +86,18 @@ func TestSetGet(t *testing.T) {
 				InLoc(HEADER).
 				Name("Authorization")).
 			AddSecurities(NewBasicSecurity("basic"),
-				NewApiKeySecurity("another_jwt", HEADER, "X-JWT")))
+				NewApiKeySecurity("another_jwt", HEADER, "X-JWT"),
+				NewOAuth2Security("oauth2", IMPLICIT_FLOW).
+					Flow(ACCESSCODE_FLOW).
+					AuthorizationUrl("xxx/oauth2/authorization").
+					TokenUrl("xxx/oauth2/token").
+					AddScope("x", "x").
+					Scopes(map[string]string{"read": "only for reading"}).
+					AddScope("write", "only for writing").
+					AddScope("rw", "for reading and writing")).
+			ExternalDocs(NewExternalDocs("", "").
+				Desc("Find out more about this api").
+				Url("https://github.com/Aoi-hosizora")))
 		AddOperations(NewOperation("", "", ""))
 		SetOperations(NewOperation("", "", ""),
 			NewOperation("", "", ""))
@@ -93,12 +148,18 @@ func TestSetGet(t *testing.T) {
 			failNow(t, "Option.Produces or Option.AddProduces has a wrong behavior")
 		}
 		if a := GetOption().GetTags(); a[0].GetName() != "Authorization" || a[0].GetDesc() != "auth-controller" ||
+			a[0].GetExternalDocs().GetDesc() != "Find out more" || a[0].GetExternalDocs().GetUrl() != "https://github.com/Aoi-hosizora" ||
 			a[1].GetName() != "User" || a[1].GetDesc() != "user-controller" || a[2].GetName() != "Resource" || a[2].GetDesc() != "resource-controller" {
 			failNow(t, "Option.Tags or Option.AddTags or Tags.XXX has a wrong behavior")
 		}
 		if s := GetOption().GetSecurities(); s[0].GetTitle() != "jwt" || s[0].GetType() != "apiKey" || s[0].GetDesc() != "A apiKey security called jwt" || s[0].GetInLoc() != "header" || s[0].GetName() != "Authorization" ||
-			s[1].GetTitle() != "basic" || s[1].GetType() != "basic" || s[2].GetTitle() != "another_jwt" || s[2].GetType() != "apiKey" || s[2].GetInLoc() != "header" || s[2].GetName() != "X-JWT" {
+			s[1].GetTitle() != "basic" || s[1].GetType() != "basic" || s[2].GetTitle() != "another_jwt" || s[2].GetType() != "apiKey" || s[2].GetInLoc() != "header" || s[2].GetName() != "X-JWT" ||
+			s[3].GetTitle() != "oauth2" || s[3].GetType() != "oauth2" || s[3].GetFlow() != "accessCode" || s[3].GetTokenUrl() != "xxx/oauth2/token" || s[3].GetAuthorizationUrl() != "xxx/oauth2/authorization" ||
+			s[3].GetScopes()["read"] != "only for reading" || s[3].GetScopes()["write"] != "only for writing" || s[3].GetScopes()["rw"] != "for reading and writing" {
 			failNow(t, "Option.Securities or Option.AddSecurities or Security.XXX has a wrong behavior")
+		}
+		if e := GetOption().GetExternalDocs(); e.GetDesc() != "Find out more about this api" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
+			failNow(t, "Option.ExternalDocs or ExternalDocs.XXX has a wrong behavior")
 		}
 		if len(GetOperations()) != 2 {
 			failNow(t, "AddOperations or SetOperations has a wrong behavior")
@@ -108,13 +169,13 @@ func TestSetGet(t *testing.T) {
 		}
 
 		CleanupDocument()
-		if GetHost() != "" || GetBasePath() != "" || GetInfo() != nil || GetOption() != nil || len(GetOperations()) != 0 || len(GetDefinitions()) != 0{
+		if GetHost() != "" || GetBasePath() != "" || GetInfo() != nil || GetOption() != nil || len(GetOperations()) != 0 || len(GetDefinitions()) != 0 {
 			failNow(t, "CleanupDocument has a wrong behavior")
 		}
 	})
 
 	t.Run("Set and get in operation.go", func(t *testing.T) {
-		SetOperations()
+		CleanupDocument()
 		AddOperations(NewGetOperation("/user", "Get all users"),
 			NewPutOperation("/user/{id}", "Replace user"),
 			NewPostOperation("/user", "Add new user"),
@@ -137,15 +198,21 @@ func TestSetGet(t *testing.T) {
 			Tags("User").
 			AddTags("Authorized", "Information").
 			Securities("jwt").
-			AddSecurities("basic", "another_jwt").
+			AddSecurities("basic", "oauth2", "another_oauth2").
+			AddSecurityScopes("x").
+			SecuritiesScopes(map[string][]string{"oauth2": {"read", "write"}}).
+			AddSecurityScopes("another_oauth2", "xx", "yy").
 			Deprecated(true).
+			ExternalDocs(NewExternalDocs("Find out more this operation", "https://github.com/Aoi-hosizora")).
 			Responses(NewResponse(404, "Result")).
 			AddResponses(NewResponse(0, "").
 				Code(200).
 				Type("_Result<User>").
 				Desc("200 OK").
-				Examples(map[string]string{JSON: `{"code": "200", "message": "success", "data": {"id": 1, "name": "user1"}}`}).
-				AddExample(XML, `<Result> <code>200</code> <message>success</message> </Result>`).
+				AddExample(XML, nil).
+				Examples(map[string]interface{}{JSON: map[string]interface{}{"code": 200, "message": "success", "data": map[string]interface{}{"id": 1, "name": "user1"}}}).
+				AddExample(XML, map[string]interface{}{"code": 200, "message": "ok"}).
+				AddExample(PLAIN, "hello world").
 				Headers(NewHeader("X-RateLimit-Remaining", "integer#int64", "Request rate limit remaining")).
 				AddHeaders(NewHeader("", "", "").
 					Name("X-RateLimit-Limit").
@@ -225,11 +292,17 @@ func TestSetGet(t *testing.T) {
 		if a := op.GetTags(); a[0] != "User" || a[1] != "Authorized" || a[2] != "Information" {
 			failNow(t, "Operation.Tags or Operation.AddTags has a wrong behavior")
 		}
-		if s := op.GetSecurities(); s[0] != "jwt" || s[1] != "basic" || s[2] != "another_jwt" {
+		if s := op.GetSecurities(); s[0] != "jwt" || s[1] != "basic" || s[2] != "oauth2" || s[3] != "another_oauth2" {
+			failNow(t, "Operation.Securities or Operation.AddSecurities has a wrong behavior")
+		}
+		if s := op.GetSecuritiesScopes(); s["oauth2"][0] != "read" || s["oauth2"][1] != "write" || s["another_oauth2"][0] != "xx" || s["another_oauth2"][1] != "yy" {
 			failNow(t, "Operation.Securities or Operation.AddSecurities has a wrong behavior")
 		}
 		if op.GetDeprecated() != true {
 			failNow(t, "Operation.Deprecated has a wrong behavior")
+		}
+		if e := op.GetExternalDocs(); e.GetDesc() != "Find out more this operation" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
+			failNow(t, "Operation.ExternalDocs has a wrong behavior")
 		}
 		if r := op.GetResponses()[0]; r.GetCode() != 404 || r.GetType() != "Result" {
 			failNow(t, "NewResponse has a wrong behavior")
@@ -244,8 +317,8 @@ func TestSetGet(t *testing.T) {
 		if resp.GetDesc() != "200 OK" {
 			failNow(t, "Response.Desc has a wrong behavior")
 		}
-		if e := resp.GetExamples(); e["application/json"] != `{"code": "200", "message": "success", "data": {"id": 1, "name": "user1"}}` ||
-			e["text/xml"] != `<Result> <code>200</code> <message>success</message> </Result>` {
+		if e := resp.GetExamples(); e["application/json"].(map[string]interface{})["message"] != "success" ||
+			e["application/xml"].(map[string]interface{})["message"] != "ok" || e["text/plain"].(string) != "hello world" {
 			failNow(t, "Response.Example or Response.AddExample has a wrong behavior")
 		}
 		if h := resp.GetHeaders()[0]; h.GetName() != "X-RateLimit-Remaining" || h.GetType() != "integer#int64" || h.GetDesc() != "Request rate limit remaining" {
@@ -343,9 +416,15 @@ func TestSetGet(t *testing.T) {
 	})
 
 	t.Run("Set and get in definition.go", func(t *testing.T) {
-		SetDefinitions()
+		CleanupDocument()
 		AddDefinitions(NewDefinition("Result", "A global response"),
 			NewDefinition("_Result", "A global response with generics").
+				XMLRepr(NewXMLRepr("").
+					Name("Result").
+					Namespace("http://swagger.io/schema/sample").
+					Prefix("sample").
+					Attribute(true).
+					Wrapped(true)).
 				Generics("T", "E").
 				Properties(NewProperty("data", "T", true, "response data"),
 					NewProperty("error", "E", false, "response error")))
@@ -407,6 +486,22 @@ func TestSetGet(t *testing.T) {
 		if d := GetDefinitions(); d[0].GetName() != "Result" || d[0].GetDesc() != "A global response" ||
 			d[1].GetName() != "_Result" || d[1].GetDesc() != "A global response with generics" {
 			failNow(t, "NewDefinition has a wrong behavior")
+		}
+		x := GetDefinitions()[1].GetXMLRepr()
+		if x.GetName() != "Result" {
+			failNow(t, "XMLRepr.Name has a wrong behavior")
+		}
+		if x.GetNamespace() != "http://swagger.io/schema/sample" {
+			failNow(t, "XMLRepr.Namespace has a wrong behavior")
+		}
+		if x.GetPrefix() != "sample" {
+			failNow(t, "XMLRepr.Prefix has a wrong behavior")
+		}
+		if x.GetAttribute() != true {
+			failNow(t, "XMLRepr.Attribute has a wrong behavior")
+		}
+		if x.GetWrapped() != true {
+			failNow(t, "XMLRepr.Wrapped has a wrong behavior")
 		}
 		if g := GetDefinitions()[1].GetGenerics(); g[0] != "T" || g[1] != "E" {
 			failNow(t, "Definition.Generics has a wrong behavior")

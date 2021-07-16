@@ -248,6 +248,7 @@ func prehandleDefinition(definition *Definition) *Definition {
 	out := &Definition{
 		name:       definition.name,
 		desc:       definition.desc,
+		xmlRepr:    definition.xmlRepr,
 		generics:   generics,
 		properties: make([]*Property, 0, len(definition.properties)),
 	}
@@ -324,6 +325,7 @@ func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []
 		specDef := &Definition{
 			name:       genDef.name, // TypeName<GenericName, ...>
 			desc:       genDef.desc,
+			xmlRepr:    genDef.xmlRepr,
 			generics:   nil, // empty
 			properties: make([]*Property, 0, len(genDef.properties)),
 		}

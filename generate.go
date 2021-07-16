@@ -28,6 +28,9 @@ func checkDocument(doc *Document) {
 			if t.name == "" {
 				panic("Tag name is required")
 			}
+			if t.externalDocs != nil && t.externalDocs.url == "" {
+				panic("Empty externalDocs url is not allowed")
+			}
 		}
 		for _, s := range doc.option.securities {
 			if s.typ == APIKEY {
@@ -42,9 +45,25 @@ func checkDocument(doc *Document) {
 				}
 			} else if s.typ == BASIC {
 				// pass
+			} else if s.typ == OAUTH2 {
+				if s.flow == "" {
+					panic("Security flow is required")
+				}
+				if (s.flow == IMPLICIT_FLOW || s.flow == ACCESSCODE_FLOW) && s.authorizationUrl == "" {
+					panic("Security authorizationUrl is required")
+				}
+				if (s.flow == PASSWORD_FLOW || s.flow == APPLICATION_FLOW || s.flow == ACCESSCODE_FLOW) && s.tokenUrl == "" {
+					panic("Security tokenUrl is required")
+				}
+				if len(s.scopes) == 0 {
+					panic("Empty security scopes is not allowed")
+				}
 			} else {
 				panic("Security type `" + s.typ + "` is not supported")
 			}
+		}
+		if doc.option.externalDocs != nil && doc.option.externalDocs.url == "" {
+			panic("Empty externalDocs url is not allowed")
 		}
 	}
 
@@ -92,6 +111,9 @@ func checkDocument(doc *Document) {
 					panic("Response header type is required")
 				}
 			}
+		}
+		if op.externalDocs != nil && op.externalDocs.url == "" {
+			panic("Empty externalDocs url is not allowed")
 		}
 	}
 

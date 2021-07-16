@@ -12,16 +12,20 @@ This is a sample server Petstore server.
 [Send email to the developer](mailto:apiteam@swagger.io)
 
 Securities defined:
-- api_key: apiKey (name: api_key, in: header)
-- b: basic
+- petstore_auth: oauth2 (flow: 'implicit', authorizationUrl: 'http://petstore.swagger.io/oauth/dialog', tokenUrl: '', scopes: (read:pets - read your pets, write:pets - modify pets in your account))
+- api_key: apiKey (name: 'api_key', in: 'header')
 
 Supported schemes:
 - https
 - http
 
+[Find out more about Swagger](http://swagger.io)
+
 # Group pet
 
 > Everything about your Pets
+
+[Find out more](http://swagger.io)
 
 ## Add a new pet to the store, Update an existing pet [/pet]
 
@@ -29,15 +33,15 @@ Supported schemes:
 
 `post /pet`
 
-Security: b
+Security: petstore_auth
 
 + Request (application/json)
 
     + Headers
 
-            Authorization: (string, optional) - b, basic
+            Authorization: (string, optional) - petstore_auth, oauth2
 
-    + Attributes (array[Pet])
+    + Attributes (Pet)
 
     + Body
 
@@ -51,9 +55,15 @@ Security: b
 
 `put /pet`
 
+Security: petstore_auth
+
 + Request (application/json)
 
-    + Attributes (array[Pet])
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Attributes (Pet)
 
     + Body
 
@@ -61,23 +71,17 @@ Security: b
 
     > Invalid ID supplied
 
-    + Attributes (string)
-
     + Body
 
 + Response 404 (application/xml)
 
     > Pet not found
 
-    + Attributes (string)
-
     + Body
 
 + Response 405 (application/xml)
 
     > Validation exception
-
-    + Attributes (string)
 
     + Body
 
@@ -89,6 +93,8 @@ Security: b
 
 > Multiple status values can be provided with comma separated strings
 
+Security: petstore_auth
+
 + Parameters
 
     + status (array[string], required) - Status values that need to be considered for filter
@@ -96,40 +102,9 @@ Security: b
 
 + Request (application/json)
 
-    + Body
+    + Headers
 
-+ Response 200 (application/json)
-
-    > successful operation
-
-    + Attributes (array[Pet])
-
-    + Body
-
-            a
-
-+ Response 400 (application/json)
-
-    > Invalid status value
-
-    + Body
-
-## Finds Pets by tags [/pet/findByTags{?tags}]
-
-### Finds Pets by tags [get]
-
-`get /pet/findByTags`
-
-> Multiple tags can be provided with comma separated strings.
-
-Attention: This api is deprecated.
-
-+ Parameters
-
-    + tags (array[string], required) - Tags to filter by
-        (collection format: multi, collection format: multi)
-
-+ Request (application/json)
+            Authorization: (string, optional) - petstore_auth, oauth2
 
     + Body
 
@@ -147,6 +122,184 @@ Attention: This api is deprecated.
 
     + Body
 
+## Finds Pets by tags [/pet/findByTags{?tags}]
+
+### Finds Pets by tags [get]
+
+`get /pet/findByTags`
+
+> Multiple tags can be provided with comma separated strings.
+
+Security: petstore_auth
+
+Attention: This api is deprecated.
+
++ Parameters
+
+    + tags (array[string], required) - Tags to filter by
+        (collection format: multi, collection format: multi)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (array[Pet])
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid tag value
+
+    + Body
+
+## Find pet by ID, Updates a pet in the store with form data, Deletes a pet [/pet/{petId}]
+
+### Find pet by ID [get]
+
+`get /pet/{petId}`
+
+> Returns a single pet
+
+Security: api_key
+
++ Parameters
+
+    + petId (number, required) - ID of pet to return
+        (format: int64)
+
++ Request (application/json)
+
+    + Headers
+
+            api_key: (string, optional) - api_key, apiKey
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (Pet)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Pet not found
+
+    + Body
+
+### Updates a pet in the store with form data [post]
+
+`post /pet/{petId}`
+
+Security: petstore_auth
+
++ Parameters
+
+    + petId (number, required) - ID of pet that needs to be updated
+        (format: int64)
+
++ Request (application/x-www-form-urlencoded)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Attributes (object)
+
+        + name (string, optional) - Updated name of the pet
+        + status (string, optional) - Updated status of the pet
+
+    + Body
+
++ Response 405 (application/xml)
+
+    > Invalid input
+
+    + Body
+
+### Deletes a pet [delete]
+
+`delete /pet/{petId}`
+
+Security: petstore_auth
+
++ Parameters
+
+    + petId (number, required) - Pet id to delete
+        (format: int64)
+
++ Request (application/json)
+
+    + Headers
+
+            api_key: (string, optional)
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Pet not found
+
+    + Body
+
+## uploads an image [/pet/{petId}/uploadImage]
+
+### uploads an image [post]
+
+`post /pet/{petId}/uploadImage`
+
+Security: petstore_auth
+
++ Parameters
+
+    + petId (number, required) - ID of pet to update
+        (format: int64)
+
++ Request (multipart/form-data)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Attributes (object)
+
+        + additionalMetadata (string, optional) - Additional data to pass to server
+        + file (file, optional) - file to upload
+
+    + Body
+
++ Response 200 (application/json)
+
+    > successful operation
+
+    + Attributes (ApiResponse)
+
+    + Body
+
 # Group store
 
 > Access to Petstore orders
@@ -155,7 +308,21 @@ Attention: This api is deprecated.
 
 > Operations about user
 
+[Find out more about our store](http://swagger.io)
+
 # Data Structures
+
+## Category (object)
+
++ id (number, optional)
+    (format: int64)
++ name (string, optional)
+
+## Tag (object)
+
++ id (number, optional)
+    (format: int64)
++ name (string, optional)
 
 ## Pet (object)
 
@@ -171,14 +338,9 @@ Attention: This api is deprecated.
         + `pending`
         + `sold`
 
-## Category (object)
+## ApiResponse (object)
 
-+ id (number, optional)
-    (format: int64)
-+ name (string, optional)
-
-## Tag (object)
-
-+ id (number, optional)
-    (format: int64)
-+ name (string, optional)
++ code (number, optional)
+    (format: int32)
++ type (string, optional)
++ message (string, optional)
