@@ -19,12 +19,13 @@ type apibDocument struct {
 	License        string
 	ContactUrl     string
 	ContactEmail   string
+	ExternalDocs   string
 
-	Securities   []string
-	Schemes      []string
-	Consumes     []string
-	Produces     []string
-	ExternalDocs string
+	Securities    []string
+	Schemes       []string
+	Consumes      []string
+	Produces      []string
+	AdditionalDoc string
 
 	GroupsString      string
 	DefinitionsString string
@@ -38,21 +39,23 @@ type apibGroup struct {
 }
 
 type apibRoute struct {
-	Route   string
-	Summary string
-	Methods string
+	Route         string
+	Summary       string
+	AdditionalDoc string
+	Methods       string
 }
 
 type apibMethod struct {
-	Route        string
-	Method       string
-	Summary      string
-	Description  string
-	Security     string
-	Deprecated   bool
-	Consume      string
-	Produce      string
-	ExternalDocs string
+	Route         string
+	Method        string
+	Summary       string
+	Description   string
+	Security      string
+	Deprecated    bool
+	Consume       string
+	Produce       string
+	ExternalDocs  string
+	AdditionalDoc string
 
 	Parameters []string
 	Headers    []string
@@ -110,10 +113,9 @@ func buildApibType(typ string) (string, *apiType) {
 	case apiPrimeKind:
 		t := at.prime.typ
 		if t == FILE {
-			fmt.Println("Warning: using file type for api blueprint 1A.")
-			// panic("File type is no allowed in api blueprint 1A")
-		}
-		if t == INTEGER {
+			fmt.Println("Warning: file type is not supported in API Blueprint, this will be shown in string.")
+			t = STRING
+		} else if t == INTEGER {
 			t = NUMBER
 		}
 		return t, at
@@ -245,11 +247,13 @@ var apibOperationTemplate = `
 
 {{ if .Description }}> {{ .Description }}{{ end }}
 
-{{ if .Security }}Security: {{ .Security }}{{ end }}
+{{ if .Security }}+ Security requirement: {{ .Security }}{{ end }}
 
-{{ if .Deprecated }}Attention: This api is deprecated.{{ end }}
+{{ if .Deprecated }}+ **Attention: This api is deprecated!**{{ end }}
 
 {{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
+
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
 
 {{ if .Parameters }}
 + Parameters
@@ -332,30 +336,29 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 
 	// render operation to apibMethod
 	out := &apibMethod{
-		Route:        op.route,
-		Method:       op.method,
-		Summary:      op.summary,
-		Description:  op.desc,
-		Deprecated:   op.deprecated,
-		Security:     secName,
-		Consume:      consume,
-		Produce:      produce,
-		ExternalDocs: "",
-		Parameters:   make([]string, 0, 2),
-		Headers:      make([]string, 0, 2),
-		AttrBody:     "",
-		Forms:        make([]string, 0),
-		Responses:    make([]*apibResponse, 0, 1),
+		Route:         op.route,
+		Method:        strings.ToUpper(op.method),
+		Summary:       op.summary,
+		Description:   op.desc,
+		Deprecated:    op.deprecated,
+		Security:      secName,
+		Consume:       consume,
+		Produce:       produce,
+		ExternalDocs:  "",
+		AdditionalDoc: op.additionalDoc,
+		Parameters:    make([]string, 0, 2),
+		Headers:       make([]string, 0, 2),
+		AttrBody:      "",
+		Forms:         make([]string, 0),
+		Responses:     make([]*apibResponse, 0, 1),
 	}
-	externalDocs := ""
 	if e := op.externalDocs; e != nil {
 		if e.desc == "" {
-			externalDocs = fmt.Sprintf("[%s](%s)", e.url, e.url)
+			out.ExternalDocs = fmt.Sprintf("[%s](%s)", e.url, e.url)
 		} else {
-			externalDocs = fmt.Sprintf("[%s](%s)", e.desc, e.url)
+			out.ExternalDocs = fmt.Sprintf("[%s](%s)", e.desc, e.url)
 		}
 	}
-	out.ExternalDocs = externalDocs
 	for _, p := range params {
 		s := buildApibSchema(&apibSchema{
 			name:     p.name,
@@ -399,7 +402,12 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 		}
 		headers := make([]string, 0, len(r.headers))
 		for _, h := range r.headers {
-			s := buildApibSchema(&apibSchema{name: h.name, typ: h.typ, desc: h.desc, required: true}, HEADER)
+			s := ""
+			if h.example != "" {
+				s = fmt.Sprintf("%s: %v", h.name, h.example)
+			} else {
+				s = buildApibSchema(&apibSchema{name: h.name, typ: h.typ, desc: h.desc, required: true}, HEADER)
+			}
 			headers = append(headers, spaceIndent(3, s))
 		}
 		example := ""
@@ -410,11 +418,13 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 			case JSON:
 				str, err = bsErrToStrErr(jsonMarshal(e))
 			case XML:
-				str, err = bsErrToStrErr(xmlMarshal(e))
+				fmt.Println("Warning: Example in xml mime is not supported in API Blueprint yet, this will be shown in json format.")
+				str, err = bsErrToStrErr(jsonMarshal(e))
 			case PLAIN, HTML:
 				str = fmt.Sprintf("%v", e)
 			default:
-				str = fmt.Sprintf("<unsupported mime> %v", e)
+				fmt.Printf("Warning: Example in unsupported mime %s is not supported in API Blueprint yet, this will be shown in json format.\n", produce)
+				str, err = bsErrToStrErr(jsonMarshal(e))
 			}
 			if err != nil {
 				panic(err)
@@ -444,6 +454,8 @@ var apibGroupsTemplate = `
 
 {{ range .Routes }}
 ## {{ .Summary }} [{{ .Route }}]
+
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
 
 {{ .Methods }}
 
@@ -485,7 +497,7 @@ func buildApibGroups(doc *Document) []byte {
 		if len(queries) > 0 {
 			route += fmt.Sprintf("{?%s}", strings.Join(queries, ","))
 		}
-		method := strings.ToLower(op.method)
+		method := strings.ToUpper(op.method)
 
 		// rmo: route - method - Operation
 		rmoMap, ok := trmoMap.Get(tag) // map[string]map[string]*Operation
@@ -518,10 +530,20 @@ func buildApibGroups(doc *Document) []byte {
 				summaries = append(summaries, op.summary)
 				moStrings = append(moStrings, fastBtos(buildApibOperation(op, securities)))
 			}
+			routeSummary := strings.Join(summaries, " | ")
+			routeAdditionalDoc := ""
+			if doc.option != nil {
+				alias, ok := doc.option.routesAliases[route]
+				if ok {
+					routeSummary = alias
+				}
+				routeAdditionalDoc = doc.option.routesAdditionalDocs[route]
+			}
 			outRoutes = append(outRoutes, &apibRoute{
-				Route:   route,
-				Summary: strings.Join(summaries, ", "),
-				Methods: strings.Join(moStrings, "\n\n"),
+				Route:         route,
+				Summary:       routeSummary,
+				AdditionalDoc: routeAdditionalDoc,
+				Methods:       strings.Join(moStrings, "\n\n"),
 			})
 		}
 		externalDocs := ""
@@ -602,7 +624,7 @@ HOST: {{ .Host }}{{ .BasePath }}
 
 # {{ .Title }} ({{ .Version }})
 
-{{ if .Description }}{{ .Description }}{{ end }}
+{{ if .Description }}> {{ .Description }}{{ end }}
 
 {{ if .TermsOfService }}{{ .TermsOfService }}{{ end }}
 
@@ -612,23 +634,29 @@ HOST: {{ .Host }}{{ .BasePath }}
 
 {{ if .ContactEmail }}{{ .ContactEmail }}{{ end }}
 
-{{ if .Securities }}Securities defined:
-{{ range .Securities }}- {{ . }}
-{{ end }}{{ end }}
-
-{{ if .Schemes }}Supported schemes:
-{{ range .Schemes }}- {{ . }}
-{{ end }}{{ end }}
-
-{{ if .Consumes }}Available consumes:
-{{ range .Consumes }}- {{ . }}
-{{ end }}{{ end }}
-
-{{ if .Produces }}Available produces:
-{{ range .Produces }}- {{ . }}
-{{ end }}{{ end }}
-
 {{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
+
+{{ if .Securities }}## Securities defined
+
+{{ range .Securities }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Schemes }}## Supported schemes
+
+{{ range .Schemes }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Consumes }}## Available consumes
+
+{{ range .Consumes }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Produces }}## Available produces
+
+{{ range .Produces }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
 
 {{ .GroupsString }}
 
@@ -670,28 +698,6 @@ func buildApibDocument(doc *Document) []byte {
 		}
 	}
 	if opt := doc.option; opt != nil {
-		arr := make([]string, 0, len(opt.securities))
-		for _, sec := range opt.securities {
-			s := ""
-			if sec.typ == APIKEY {
-				s = fmt.Sprintf("%s: apiKey (name: '%s', in: '%s')", sec.title, sec.name, sec.in)
-			} else if sec.typ == BASIC {
-				s = fmt.Sprintf("%s: basic", sec.title)
-			} else if sec.typ == OAUTH2 {
-				scopes := make([]string, 0, len(sec.scopes))
-				for k, v := range sec.scopes {
-					scopes = append(scopes, fmt.Sprintf("%s - %s", k, v))
-				}
-				s = fmt.Sprintf("%s: oauth2 (flow: '%s', authorizationUrl: '%s', tokenUrl: '%s', scopes: (%s))",
-					sec.title, sec.flow, sec.authorizationUrl, sec.tokenUrl, strings.Join(scopes, ", "))
-			}
-			if sec.desc != "" {
-				s += fmt.Sprintf(" - %s", sec.desc)
-			}
-			if s != "" {
-				arr = append(arr, s)
-			}
-		}
 		externalDocs := ""
 		if e := opt.externalDocs; e != nil {
 			if e.desc == "" {
@@ -700,12 +706,46 @@ func buildApibDocument(doc *Document) []byte {
 				externalDocs = fmt.Sprintf("[%s](%s)", e.desc, e.url)
 			}
 		}
+		securities := make([]string, 0, len(opt.securities))
+		for _, sec := range opt.securities {
+			s := ""
+			opts := make([]string, 0, 2)
+			if sec.typ == APIKEY {
+				s = fmt.Sprintf("%s: apiKey", sec.title)
+				opts = append(opts, fmt.Sprintf("+ name: %s", sec.name))
+				opts = append(opts, fmt.Sprintf("+ in: %s", sec.in))
+			} else if sec.typ == BASIC {
+				s = fmt.Sprintf("%s: basic", sec.title)
+			} else if sec.typ == OAUTH2 {
+				s = fmt.Sprintf("%s: oauth2", sec.title)
+				opts = append(opts, fmt.Sprintf("+ flow: %s", sec.flow))
+				if sec.authorizationUrl != "" {
+					opts = append(opts, fmt.Sprintf("+ authUrl: %s", sec.authorizationUrl))
+				}
+				if sec.tokenUrl != "" {
+					opts = append(opts, fmt.Sprintf("+ tokenUrl: %s`", sec.tokenUrl))
+				}
+				for k, v := range sec.scopes {
+					opts = append(opts, fmt.Sprintf("+ scope: %s - %s", k, v))
+				}
+			} else {
+				continue
+			}
+			if sec.desc != "" {
+				s += fmt.Sprintf(" - %s", sec.desc)
+			}
+			if len(opts) != 0 {
+				s += fmt.Sprintf("\n    %s", strings.Join(opts, "\n    "))
+			}
+			securities = append(securities, s)
+		}
 
-		out.Securities = arr
+		out.ExternalDocs = externalDocs
+		out.Securities = securities
 		out.Schemes = opt.schemes
 		out.Consumes = opt.consumes
 		out.Produces = opt.produces
-		out.ExternalDocs = externalDocs
+		out.AdditionalDoc = opt.additionalDoc
 	}
 
 	// definitions & operations

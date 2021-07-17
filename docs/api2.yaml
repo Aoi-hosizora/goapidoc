@@ -1,0 +1,113 @@
+swagger: "2.0"
+host: api.fake.com
+basePath: /
+info:
+  title: Gist Fox API
+  description: Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com).
+  version: 1.0.0
+tags:
+- name: Gist
+  description: Gist-related resources of *Gist Fox API*.
+- name: Access Authorization and Control
+  description: Access and Control of *Gist Fox API* OAuth token.
+paths:
+  /:
+    get:
+      summary: Retrieve the Entry Point
+      operationId: --get
+      produces:
+      - application/hal+json
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/>;rel="self",<http:/api.gistfox.com/gists>;rel="gists",<http:/api.gistfox.com/authorization>;rel="authorization"
+          examples:
+            application/hal+json: null
+  /gists/{id}:
+    delete:
+      summary: Delete a Gist
+      operationId: -gists-:id-delete
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the Gist in the form of a hash.
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      responses:
+        "204":
+          description: 204 No Content
+    get:
+      summary: Retrieve a Single Gist
+      operationId: -gists-:id-get
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the Gist in the form of a hash.
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+          examples:
+            application/hal+json: null
+    patch:
+      summary: Edit a Gist
+      description: To update a Gist send a JSON with updated value for one or more
+        of the Gist resource attributes. All attributes values (states) from the previous
+        version of this Gist are carried over by default if not included in the hash.
+      operationId: -gists-:id-patch
+      consumes:
+      - application/json
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the Gist in the form of a hash.
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      - name: content
+        in: body
+        required: true
+        schema:
+          type: string
+          example: Updated file contents
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+          examples:
+            application/hal+json: null

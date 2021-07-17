@@ -1,0 +1,745 @@
+FORMAT: 1A
+HOST: petstore.swagger.io/v2
+
+# Swagger Petstore (1.0.0)
+
+> This is a sample server Petstore server.
+
+[Terms of service](http://swagger.io/terms/)
+
+[License: Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
+
+[Send email to the developer](mailto:apiteam@swagger.io)
+
+[Find out more about Swagger](http://swagger.io)
+
+## Securities defined
+
++ petstore_auth: oauth2
+    + flow: implicit
+    + authUrl: http://petstore.swagger.io/oauth/dialog
+    + scope: write:pets - modify pets in your account
+    + scope: read:pets - read your pets
++ api_key: apiKey
+    + name: api_key
+    + in: header
+
+## Supported schemes
+
++ https
++ http
+
+# Group pet
+
+> Everything about your Pets
+
+[Find out more](http://swagger.io)
+
+## Add a new pet to the store | Update an existing pet [/pet]
+
+### Add a new pet to the store [POST]
+
+`POST /pet`
+
++ Security requirement: petstore_auth
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Attributes (Pet)
+
+    + Body
+
++ Response 405 (application/xml)
+
+    > Invalid input
+
+    + Body
+
+### Update an existing pet [PUT]
+
+`PUT /pet`
+
++ Security requirement: petstore_auth
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Attributes (Pet)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Pet not found
+
+    + Body
+
++ Response 405 (application/xml)
+
+    > Validation exception
+
+    + Body
+
+## Finds Pets by status [/pet/findByStatus{?status}]
+
+### Finds Pets by status [GET]
+
+`GET /pet/findByStatus`
+
+> Multiple status values can be provided with comma separated strings.
+
++ Security requirement: petstore_auth
+
++ Parameters
+
+    + status (array[string], required) - Status values that need to be considered for filter
+        (collection format: multi, collection format: multi)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (array[Pet])
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid status value
+
+    + Body
+
+## Finds Pets by tags [/pet/findByTags{?tags}]
+
+### Finds Pets by tags [GET]
+
+`GET /pet/findByTags`
+
+> Multiple tags can be provided with comma separated strings.
+
++ Security requirement: petstore_auth
+
++ **Attention: This api is deprecated!**
+
++ Parameters
+
+    + tags (array[string], required) - Tags to filter by
+        (collection format: multi, collection format: multi)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (array[Pet])
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid tag value
+
+    + Body
+
+## Find pet by ID | Updates a pet in the store with form data | Deletes a pet [/pet/{petId}]
+
+### Find pet by ID [GET]
+
+`GET /pet/{petId}`
+
+> Returns a single pet.
+
++ Security requirement: api_key
+
++ Parameters
+
+    + petId (number, required) - ID of pet to return
+        (format: int64)
+
++ Request (application/json)
+
+    + Headers
+
+            api_key: (string, optional) - api_key, apiKey
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (Pet)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Pet not found
+
+    + Body
+
+### Updates a pet in the store with form data [POST]
+
+`POST /pet/{petId}`
+
++ Security requirement: petstore_auth
+
++ Parameters
+
+    + petId (number, required) - ID of pet that needs to be updated
+        (format: int64)
+
++ Request (application/x-www-form-urlencoded)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Attributes (object)
+
+        + name (string, optional) - Updated name of the pet
+        + status (string, optional) - Updated status of the pet
+
+    + Body
+
++ Response 405 (application/xml)
+
+    > Invalid input
+
+    + Body
+
+### Deletes a pet [DELETE]
+
+`DELETE /pet/{petId}`
+
++ Security requirement: petstore_auth
+
++ Parameters
+
+    + petId (number, required) - Pet id to delete
+        (format: int64)
+
++ Request (application/json)
+
+    + Headers
+
+            api_key: (string, optional)
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Pet not found
+
+    + Body
+
+## Uploads an image [/pet/{petId}/uploadImage]
+
+### Uploads an image [POST]
+
+`POST /pet/{petId}/uploadImage`
+
++ Security requirement: petstore_auth
+
++ Parameters
+
+    + petId (number, required) - ID of pet to update
+        (format: int64)
+
++ Request (multipart/form-data)
+
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
+    + Attributes (object)
+
+        + additionalMetadata (string, optional) - Additional data to pass to server
+        + file (string, optional) - file to upload
+
+    + Body
+
++ Response 200 (application/json)
+
+    > successful operation
+
+    + Attributes (ApiResponse)
+
+    + Body
+
+# Group store
+
+> Access to Petstore orders
+
+## Place an order for a pet [/store/order]
+
+### Place an order for a pet [POST]
+
+`POST /store/order`
+
++ Request (application/json)
+
+    + Attributes (Order)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (Order)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid Order
+
+    + Body
+
+## Find purchase order by ID | Delete purchase order by ID [/store/order/{orderId}]
+
+### Find purchase order by ID [GET]
+
+`GET /store/order/{orderId}`
+
+> For valid response try integer IDs with value >= 1 and <= 10.
+
++ Parameters
+
+    + orderId (number, required) - ID of pet that needs to be fetched
+        (format: int64, 1.000 <= val <= 10.000)
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (Order)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Order not found
+
+    + Body
+
+### Delete purchase order by ID [DELETE]
+
+`DELETE /store/order/{orderId}`
+
+> For valid response try integer IDs with positive integer value.
+
++ Parameters
+
+    + orderId (number, required) - ID of the order that needs to be deleted
+        (format: int64, val >= 1.000)
+
++ Request (application/json)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Order not found
+
+    + Body
+
+# Group store
+
+> Access to Petstore orders
+
+## Place an order for a pet [/store/order]
+
+### Place an order for a pet [POST]
+
+`POST /store/order`
+
++ Request (application/json)
+
+    + Attributes (Order)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (Order)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid Order
+
+    + Body
+
+## Find purchase order by ID | Delete purchase order by ID [/store/order/{orderId}]
+
+### Find purchase order by ID [GET]
+
+`GET /store/order/{orderId}`
+
+> For valid response try integer IDs with value >= 1 and <= 10.
+
++ Parameters
+
+    + orderId (number, required) - ID of pet that needs to be fetched
+        (format: int64, 1.000 <= val <= 10.000)
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (Order)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Order not found
+
+    + Body
+
+### Delete purchase order by ID [DELETE]
+
+`DELETE /store/order/{orderId}`
+
+> For valid response try integer IDs with positive integer value.
+
++ Parameters
+
+    + orderId (number, required) - ID of the order that needs to be deleted
+        (format: int64, val >= 1.000)
+
++ Request (application/json)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid ID supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > Order not found
+
+    + Body
+
+# Group user
+
+> Operations about user
+
+[Find out more about our store](http://swagger.io)
+
+## Create user [/user]
+
+### Create user [POST]
+
+`POST /user`
+
+> This can only be done by the logged in user.
+
++ Request (application/json)
+
+    + Attributes (User)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Body
+
+## Creates list of users with given input array [/user/createWithArray]
+
+### Creates list of users with given input array [POST]
+
+`POST /user/createWithArray`
+
++ Request (application/json)
+
+    + Attributes (array[User])
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Body
+
+## Logs user into the system [/user/login{?username,password}]
+
+### Logs user into the system [GET]
+
+`GET /user/login`
+
++ Parameters
+
+    + username (string, required) - The user name for login
+    + password (string, required) - The password for login in clear text
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (string)
+
+    + Headers
+
+            <nil>
+            <nil>
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid username/password supplied
+
+    + Body
+
+## Logs out current logged in user session [/user/logout]
+
+### Logs out current logged in user session [GET]
+
+`GET /user/logout`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Body
+
+## Get user by user name | Update user | Delete user [/user/{username}]
+
+### Get user by user name [GET]
+
+`GET /user/{username}`
+
++ Parameters
+
+    + username (string, required) - The name that needs to be fetched. Use user1 for testing.
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/xml)
+
+    > successful operation
+
+    + Attributes (User)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid username supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > User not found
+
+    + Body
+
+### Update user [PUT]
+
+`PUT /user/{username}`
+
+> This can only be done by the logged in user.
+
++ Parameters
+
+    + username (string, required) - name that need to be updated
+
++ Request (application/json)
+
+    + Attributes (User)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid user supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > User not found
+
+    + Body
+
+### Delete user [DELETE]
+
+`DELETE /user/{username}`
+
+> This can only be done by the logged in user.
+
++ Parameters
+
+    + username (string, required) - The name that needs to be deleted
+
++ Request (application/json)
+
+    + Body
+
++ Response 400 (application/xml)
+
+    > Invalid username supplied
+
+    + Body
+
++ Response 404 (application/xml)
+
+    > User not found
+
+    + Body
+
+# Data Structures
+
+## Order (object)
+
++ id (number, optional)
+    (format: int64)
++ petId (number, optional)
+    (format: int64)
++ quantity (number, optional)
+    (format: int32)
++ shipDate (string, optional)
+    (format: date-time)
++ status (enum[string], optional) - Order Status
+    + Members
+        + `placed`
+        + `approved`
+        + `delivered`
++ complete (boolean, optional)
+    + Default: `false`
+
+## Category (object)
+
++ id (number, optional)
+    (format: int64)
++ name (string, optional)
+
+## User (object)
+
++ id (number, optional)
+    (format: int64)
++ username (string, optional)
++ firstName (string, optional)
++ lastName (string, optional)
++ email (string, optional)
++ password (string, optional)
++ phone (string, optional)
++ userStatus (number, optional) - User Status
+    (format: int32)
+
+## Tag (object)
+
++ id (number, optional)
+    (format: int64)
++ name (string, optional)
+
+## Pet (object)
+
++ id (number, optional)
+    (format: int64)
++ category (Category, optional)
++ name: `doggie` (string, required)
++ photoUrls (array[string], required)
++ tags (array[Tag], optional)
++ status (enum[string], optional) - pet status in the store
+    + Members
+        + `available`
+        + `pending`
+        + `sold`
+
+## ApiResponse (object)
+
++ code (number, optional)
+    (format: int32)
++ type (string, optional)
++ message (string, optional)

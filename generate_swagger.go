@@ -103,6 +103,7 @@ type swagParam struct {
 	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
+	XMLRepr          *swagXMLRepr  `yaml:"xml,omitempty"              json:"xml,omitempty"`
 
 	Items  *swagItems  `yaml:"items,omitempty"  json:"items,omitempty"`
 	Schema *swagSchema `yaml:"schema,omitempty" json:"schema,omitempty"`
@@ -116,9 +117,10 @@ type swagResponse struct {
 }
 
 type swagHeader struct {
-	Type        string `yaml:"type"                  json:"type"`
-	Format      string `yaml:"format,omitempty"      json:"format,omitempty"`
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Type        string      `yaml:"type"                  json:"type"`
+	Format      string      `yaml:"format,omitempty"      json:"format,omitempty"`
+	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
+	Example     interface{} `yaml:"example,omitempty"     json:"example,omitempty"` // ?
 }
 
 type swagResponseSchema struct {
@@ -166,6 +168,7 @@ type swagSchema struct {
 	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
+	XMLRepr          *swagXMLRepr  `yaml:"xml,omitempty"              json:"xml,omitempty"`
 
 	Items     *swagItems `yaml:"items,omitempty" json:"items,omitempty"`
 	OriginRef string     `yaml:"-"               json:"-"`
@@ -191,6 +194,7 @@ type swagItems struct {
 	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
+	XMLRepr          *swagXMLRepr  `yaml:"xml,omitempty"              json:"xml,omitempty"`
 
 	Items     *swagItems `yaml:"items,omitempty" json:"items,omitempty"`
 	OriginRef string     `yaml:"-"               json:"-"`
@@ -201,7 +205,7 @@ type swagItems struct {
 // items & schema
 // ==============
 
-func buildSwaggerItems(arr *apiArray, option *ItemOption) *swagItems {
+func buildSwaggerItems(arr *apiArray, opt *ItemOption) *swagItems {
 	/*
 		"items": {
 		  "type": "integer",
@@ -222,26 +226,35 @@ func buildSwaggerItems(arr *apiArray, option *ItemOption) *swagItems {
 	}
 
 	var items *swagItems
-	if option == nil {
+	if opt == nil {
 		items = &swagItems{}
 	} else {
 		items = &swagItems{
-			AllowEmpty:       option.allowEmpty, // ?
-			Default:          option.defaul,
-			Example:          option.example, // ?
-			Pattern:          option.pattern,
-			Enum:             option.enum,
-			MaxLength:        option.maxLength,
-			MinLength:        option.minLength,
-			MaxItems:         option.maxItems,
-			MinItems:         option.minItems,
-			UniqueItems:      option.uniqueItems,
-			CollectionFormat: option.collectionFormat,
-			Maximum:          option.maximum,
-			Minimum:          option.minimum,
-			ExclusiveMin:     option.exclusiveMin,
-			ExclusiveMax:     option.exclusiveMax,
-			MultipleOf:       option.multipleOf,
+			AllowEmpty:       opt.allowEmpty, // ?
+			Default:          opt.defaul,
+			Example:          opt.example, // ?
+			Pattern:          opt.pattern,
+			Enum:             opt.enum,
+			MaxLength:        opt.maxLength,
+			MinLength:        opt.minLength,
+			MaxItems:         opt.maxItems,
+			MinItems:         opt.minItems,
+			UniqueItems:      opt.uniqueItems,
+			CollectionFormat: opt.collectionFormat,
+			Maximum:          opt.maximum,
+			Minimum:          opt.minimum,
+			ExclusiveMin:     opt.exclusiveMin,
+			ExclusiveMax:     opt.exclusiveMax,
+			MultipleOf:       opt.multipleOf,
+		}
+		if x := opt.xmlRepr; x != nil {
+			items.XMLRepr = &swagXMLRepr{
+				Name:      x.name,
+				Namespace: x.namespace,
+				Prefix:    x.prefix,
+				Attribute: x.attribute,
+				Wrapped:   x.wrapped,
+			}
 		}
 	}
 
@@ -254,8 +267,8 @@ func buildSwaggerItems(arr *apiArray, option *ItemOption) *swagItems {
 	case apiArrayKind:
 		items.Type = ARRAY
 		var o *ItemOption
-		if option != nil {
-			o = option.itemOption
+		if opt != nil {
+			o = opt.itemOption
 		}
 		items.Items = buildSwaggerItems(arr.item.array, o)
 		return items
@@ -376,6 +389,15 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 				}
 			}
 		}
+		if x := p.xmlRepr; x != nil {
+			param.XMLRepr = &swagXMLRepr{
+				Name:      x.name,
+				Namespace: x.namespace,
+				Prefix:    x.prefix,
+				Attribute: x.attribute,
+				Wrapped:   x.wrapped,
+			}
+		}
 
 		out = append(out, param)
 	}
@@ -399,6 +421,7 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 				Type:        typ,
 				Format:      format,
 				Description: h.desc,
+				Example:     h.example, // ?
 				// ignore other fields, see https://swagger.io/specification/v2/#headerObject
 			}
 		}
@@ -459,6 +482,15 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 				ExclusiveMax:     p.exclusiveMax,
 				MultipleOf:       p.multipleOf,
 				Items:            items,
+			}
+		}
+		if x := p.xmlRepr; x != nil {
+			schema.XMLRepr = &swagXMLRepr{
+				Name:      x.name,
+				Namespace: x.namespace,
+				Prefix:    x.prefix,
+				Attribute: x.attribute,
+				Wrapped:   x.wrapped,
 			}
 		}
 		properties.Set(p.name, schema)

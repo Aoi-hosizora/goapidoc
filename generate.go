@@ -8,6 +8,9 @@ func checkDocument(doc *Document) {
 	if doc.host == "" {
 		panic("Host is required")
 	}
+	if !strings.HasSuffix(doc.basePath, "/") {
+		panic("BasePath must end with a slash")
+	}
 	if doc.info == nil {
 		panic("Info is required")
 	}

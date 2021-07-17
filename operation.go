@@ -10,18 +10,19 @@ type Operation struct {
 	route   string
 	summary string
 
-	desc         string
-	operationId  string
-	schemes      []string
-	consumes     []string
-	produces     []string
-	tags         []string
-	securities   []string
-	secsScopes   map[string][]string
-	deprecated   bool
-	externalDocs *ExternalDocs
-	params       []*Param
-	responses    []*Response
+	desc          string
+	operationId   string
+	schemes       []string
+	consumes      []string
+	produces      []string
+	tags          []string
+	securities    []string
+	secsScopes    map[string][]string
+	deprecated    bool
+	externalDocs  *ExternalDocs
+	additionalDoc string
+	params        []*Param
+	responses     []*Response
 }
 
 // NewOperation creates a default Operation with given arguments.
@@ -77,6 +78,7 @@ func (o *Operation) GetSecurities() []string                  { return o.securit
 func (o *Operation) GetSecuritiesScopes() map[string][]string { return o.secsScopes }
 func (o *Operation) GetDeprecated() bool                      { return o.deprecated }
 func (o *Operation) GetExternalDocs() *ExternalDocs           { return o.externalDocs }
+func (o *Operation) GetAdditionalDoc() string                 { return o.additionalDoc }
 func (o *Operation) GetParams() []*Param                      { return o.params }
 func (o *Operation) GetResponses() []*Response                { return o.responses }
 
@@ -197,6 +199,12 @@ func (o *Operation) ExternalDocs(docs *ExternalDocs) *Operation {
 	return o
 }
 
+// AdditionalDoc sets the additional document in Operation, this is only supported in API Blueprint.
+func (o *Operation) AdditionalDoc(doc string) *Operation {
+	o.additionalDoc = doc
+	return o
+}
+
 // Params sets the whole params in Operation.
 func (o *Operation) Params(params ...*Param) *Operation {
 	o.params = params
@@ -298,9 +306,10 @@ func (r *Response) AddHeaders(headers ...*Header) *Response {
 
 // Header represents a response header information of Response.
 type Header struct {
-	name string
-	typ  string // primitive type
-	desc string
+	name    string
+	typ     string // primitive type
+	desc    string
+	example interface{}
 }
 
 // NewHeader creates a default Header with given arguments.
@@ -308,9 +317,10 @@ func NewHeader(name, typ, desc string) *Header {
 	return &Header{name: name, typ: typ, desc: desc}
 }
 
-func (h *Header) GetName() string { return h.name }
-func (h *Header) GetType() string { return h.typ }
-func (h *Header) GetDesc() string { return h.desc }
+func (h *Header) GetName() string         { return h.name }
+func (h *Header) GetType() string         { return h.typ }
+func (h *Header) GetDesc() string         { return h.desc }
+func (h *Header) GetExample() interface{} { return h.example }
 
 // Name sets the name in Header.
 func (h *Header) Name(name string) *Header {
@@ -327,6 +337,12 @@ func (h *Header) Type(typ string) *Header {
 // Desc sets the desc in Header.
 func (h *Header) Desc(desc string) *Header {
 	h.desc = desc
+	return h
+}
+
+// Example sets the example in Header.
+func (h *Header) Example(example interface{}) *Header {
+	h.example = example
 	return h
 }
 
@@ -359,6 +375,7 @@ type Param struct {
 	exclusiveMax     bool
 	multipleOf       float64
 	itemOption       *ItemOption
+	xmlRepr          *XMLRepr
 }
 
 // NewParam creates a default Param with given arguments.
@@ -413,6 +430,7 @@ func (p *Param) GetExclusiveMin() bool       { return p.exclusiveMin }
 func (p *Param) GetExclusiveMax() bool       { return p.exclusiveMax }
 func (p *Param) GetMultipleOf() float64      { return p.multipleOf }
 func (p *Param) GetItemOption() *ItemOption  { return p.itemOption }
+func (p *Param) GetXMLRepr() *XMLRepr        { return p.xmlRepr }
 
 // Name sets the name in Param.
 func (p *Param) Name(name string) *Param {
@@ -565,8 +583,14 @@ func (p *Param) MultipleOf(multipleOf float64) *Param {
 	return p
 }
 
-// ItemOption sets the itemOption in ItemOption.
+// ItemOption sets the itemOption in Param.
 func (p *Param) ItemOption(itemOption *ItemOption) *Param {
 	p.itemOption = itemOption
+	return p
+}
+
+// XMLRepr sets the xml repr in Param, this is only supported in Swagger.
+func (p *Param) XMLRepr(repr *XMLRepr) *Param {
+	p.xmlRepr = repr
 	return p
 }

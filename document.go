@@ -224,12 +224,15 @@ func (c *Contact) Email(email string) *Contact {
 // Option represents an extra options of Document.
 // TODO BREAK CHANGES
 type Option struct {
-	schemes      []string
-	consumes     []string
-	produces     []string
-	tags         []*Tag
-	securities   []*Security
-	externalDocs *ExternalDocs
+	schemes              []string
+	consumes             []string
+	produces             []string
+	tags                 []*Tag
+	securities           []*Security
+	externalDocs         *ExternalDocs
+	additionalDoc        string
+	routesAliases        map[string]string
+	routesAdditionalDocs map[string]string
 }
 
 // NewOption creates an empty document Option.
@@ -237,12 +240,15 @@ func NewOption() *Option {
 	return &Option{}
 }
 
-func (o *Option) GetSchemes() []string           { return o.schemes }
-func (o *Option) GetConsumes() []string          { return o.consumes }
-func (o *Option) GetProduces() []string          { return o.produces }
-func (o *Option) GetTags() []*Tag                { return o.tags }
-func (o *Option) GetSecurities() []*Security     { return o.securities }
-func (o *Option) GetExternalDocs() *ExternalDocs { return o.externalDocs }
+func (o *Option) GetSchemes() []string                       { return o.schemes }
+func (o *Option) GetConsumes() []string                      { return o.consumes }
+func (o *Option) GetProduces() []string                      { return o.produces }
+func (o *Option) GetTags() []*Tag                            { return o.tags }
+func (o *Option) GetSecurities() []*Security                 { return o.securities }
+func (o *Option) GetExternalDocs() *ExternalDocs             { return o.externalDocs }
+func (o *Option) GetAdditionalDoc() string                   { return o.additionalDoc }
+func (o *Option) GetRoutesAliases() map[string]string        { return o.routesAliases }
+func (o *Option) GetRoutesAdditionalDocs() map[string]string { return o.routesAdditionalDocs }
 
 // Schemes sets the whole schemes in Option.
 func (o *Option) Schemes(schemes ...string) *Option {
@@ -307,6 +313,42 @@ func (o *Option) AddSecurities(securities ...*Security) *Option {
 // ExternalDocs sets the externalDocs in Option.
 func (o *Option) ExternalDocs(docs *ExternalDocs) *Option {
 	o.externalDocs = docs
+	return o
+}
+
+// AdditionalDoc sets the additional document in Option, this is only supported in API Blueprint.
+func (o *Option) AdditionalDoc(doc string) *Option {
+	o.additionalDoc = doc
+	return o
+}
+
+// RoutesAliases sets the whole routes' aliases in Option, this is only supported in API Blueprint.
+func (o *Option) RoutesAliases(aliases map[string]string) *Option {
+	o.routesAliases = aliases
+	return o
+}
+
+// AddRoutesAlias adds a routes' alias in Option, this is only supported in API Blueprint.
+func (o *Option) AddRoutesAlias(route, alias string) *Option {
+	if o.routesAliases == nil {
+		o.routesAliases = make(map[string]string, 0)
+	}
+	o.routesAliases[route] = alias
+	return o
+}
+
+// RoutesAdditionalDocs sets the routes' additional documents in Option, this is only supported in API Blueprint.
+func (o *Option) RoutesAdditionalDocs(aliases map[string]string) *Option {
+	o.routesAdditionalDocs = aliases
+	return o
+}
+
+// AddRoutesAlias adds a routes' additional document in Option, this is only supported in API Blueprint.
+func (o *Option) AddRoutesAdditionalDoc(route, doc string) *Option {
+	if o.routesAdditionalDocs == nil {
+		o.routesAdditionalDocs = make(map[string]string, 0)
+	}
+	o.routesAdditionalDocs[route] = doc
 	return o
 }
 

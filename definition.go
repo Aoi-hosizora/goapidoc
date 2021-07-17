@@ -37,7 +37,7 @@ func (d *Definition) Desc(desc string) *Definition {
 	return d
 }
 
-// XMLRepr sets the xml repr in Definition.
+// XMLRepr sets the xml repr in Definition, this is only supported in Swagger.
 func (d *Definition) XMLRepr(repr *XMLRepr) *Definition {
 	d.xmlRepr = repr
 	return d
@@ -143,6 +143,7 @@ type Property struct {
 	exclusiveMax     bool
 	multipleOf       float64
 	itemOption       *ItemOption
+	xmlRepr          *XMLRepr
 }
 
 // NewProperty creates a default Property with given arguments.
@@ -171,6 +172,7 @@ func (p *Property) GetExclusiveMin() bool       { return p.exclusiveMin }
 func (p *Property) GetExclusiveMax() bool       { return p.exclusiveMax }
 func (p *Property) GetMultipleOf() float64      { return p.multipleOf }
 func (p *Property) GetItemOption() *ItemOption  { return p.itemOption }
+func (p *Property) GetXMLRepr() *XMLRepr        { return p.xmlRepr }
 
 // Name sets the name in Property.
 func (p *Property) Name(name string) *Property {
@@ -323,6 +325,12 @@ func (p *Property) ItemOption(itemOption *ItemOption) *Property {
 	return p
 }
 
+// XMLRepr sets the xml repr in Property, this is only supported in Swagger.
+func (p *Property) XMLRepr(repr *XMLRepr) *Property {
+	p.xmlRepr = repr
+	return p
+}
+
 // ItemOption represents an array type's item option for Param and Property.
 type ItemOption struct {
 	allowEmpty       bool
@@ -342,6 +350,7 @@ type ItemOption struct {
 	exclusiveMax     bool
 	multipleOf       float64
 	itemOption       *ItemOption
+	xmlRepr          *XMLRepr
 }
 
 // NewItemOption creates a default ItemOption with no option.
@@ -366,6 +375,7 @@ func (o *ItemOption) GetExclusiveMin() bool       { return o.exclusiveMin }
 func (o *ItemOption) GetExclusiveMax() bool       { return o.exclusiveMax }
 func (o *ItemOption) GetMultipleOf() float64      { return o.multipleOf }
 func (o *ItemOption) GetItemOption() *ItemOption  { return o.itemOption }
+func (o *ItemOption) GetXMLRepr() *XMLRepr        { return o.xmlRepr }
 
 // AllowEmpty sets the allowEmpty in ItemOption.
 func (o *ItemOption) AllowEmpty(allow bool) *ItemOption {
@@ -490,6 +500,12 @@ func (o *ItemOption) ItemOption(itemOption *ItemOption) *ItemOption {
 	return o
 }
 
+// XMLRepr sets the xml repr in ItemOption, this is only supported in Swagger.
+func (o *ItemOption) XMLRepr(repr *XMLRepr) *ItemOption {
+	o.xmlRepr = repr
+	return o
+}
+
 // cloneItemOption clones the given ItemOption recursively.
 func cloneItemOption(o *ItemOption) *ItemOption {
 	if o == nil {
@@ -513,6 +529,7 @@ func cloneItemOption(o *ItemOption) *ItemOption {
 		exclusiveMax:     o.exclusiveMax,
 		multipleOf:       o.multipleOf,
 		itemOption:       cloneItemOption(o.itemOption),
+		xmlRepr:          o.xmlRepr, // <<<
 	}
 }
 
@@ -540,5 +557,6 @@ func cloneProperty(p *Property) *Property {
 		exclusiveMax:     p.exclusiveMax,
 		multipleOf:       p.multipleOf,
 		itemOption:       cloneItemOption(p.itemOption),
+		xmlRepr:          p.xmlRepr, // <<<
 	}
 }

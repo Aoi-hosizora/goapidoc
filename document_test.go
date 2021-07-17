@@ -97,7 +97,14 @@ func TestSetGet(t *testing.T) {
 					AddScope("rw", "for reading and writing")).
 			ExternalDocs(NewExternalDocs("", "").
 				Desc("Find out more about this api").
-				Url("https://github.com/Aoi-hosizora")))
+				Url("https://github.com/Aoi-hosizora")).
+			AdditionalDoc("## Error States\n\nPlease visit [xxx](xxx).").
+			AddRoutesAlias("", "").
+			RoutesAliases(map[string]string{"/user": "Operations about user list"}).
+			AddRoutesAlias("/user/{id}", "Operations about specific user").
+			AddRoutesAdditionalDoc("", "").
+			RoutesAdditionalDocs(map[string]string{"/user": "This is /user"}).
+			AddRoutesAdditionalDoc("/user/{id}", "This is /user/{id}"))
 		AddOperations(NewOperation("", "", ""))
 		SetOperations(NewOperation("", "", ""),
 			NewOperation("", "", ""))
@@ -161,6 +168,15 @@ func TestSetGet(t *testing.T) {
 		if e := GetOption().GetExternalDocs(); e.GetDesc() != "Find out more about this api" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
 			failNow(t, "Option.ExternalDocs or ExternalDocs.XXX has a wrong behavior")
 		}
+		if GetOption().GetAdditionalDoc() != "## Error States\n\nPlease visit [xxx](xxx)." {
+			failNow(t, "Option.AdditionalDoc has a wrong behavior")
+		}
+		if a := GetOption().GetRoutesAliases(); a["/user"] != "Operations about user list" || a["/user/{id}"] != "Operations about specific user" {
+			failNow(t, "Option.RoutesAliases or Option.AddRoutesAliases has a wrong behavior")
+		}
+		if d := GetOption().GetRoutesAdditionalDocs(); d["/user"] != "This is /user" || d["/user/{id}"] != "This is /user/{id}" {
+			failNow(t, "Option.RoutesAdditionalDocs or Option.AddRoutesAdditionalDoc has a wrong behavior")
+		}
 		if len(GetOperations()) != 2 {
 			failNow(t, "AddOperations or SetOperations has a wrong behavior")
 		}
@@ -204,6 +220,7 @@ func TestSetGet(t *testing.T) {
 			AddSecurityScopes("another_oauth2", "xx", "yy").
 			Deprecated(true).
 			ExternalDocs(NewExternalDocs("Find out more this operation", "https://github.com/Aoi-hosizora")).
+			AdditionalDoc("This is GET /user/{id}'s additional document").
 			Responses(NewResponse(404, "Result")).
 			AddResponses(NewResponse(0, "").
 				Code(200).
@@ -217,11 +234,12 @@ func TestSetGet(t *testing.T) {
 				AddHeaders(NewHeader("", "", "").
 					Name("X-RateLimit-Limit").
 					Type("integer#int64").
-					Desc("Request rate limit size"))).
+					Desc("Request rate limit size").
+					Example(60))).
 			Params(NewPathParam("id", "integer#int64", true, "user id"),
 				NewQueryParam("need_details", "boolean", false, "is need details")).
 			AddParams(NewFormParam("key", "string", false, "fake form key"), // only for test
-				NewBodyParam("param", "Fake", false, "fake body"), // only for test
+				NewBodyParam("param", "Fake", false, "fake body").XMLRepr(NewXMLRepr("Fake")), // only for test
 				NewHeaderParam("X-NEED-DETAILS", "boolean", false, "a duplicate parameter of need_details query")).
 			AddParams(NewParam("", "", "", false, "").
 				Name("X-TEST").
@@ -304,6 +322,9 @@ func TestSetGet(t *testing.T) {
 		if e := op.GetExternalDocs(); e.GetDesc() != "Find out more this operation" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
 			failNow(t, "Operation.ExternalDocs has a wrong behavior")
 		}
+		if op.GetAdditionalDoc() != "This is GET /user/{id}'s additional document" {
+			failNow(t, "Operation.AdditionalDoc has a wrong behavior")
+		}
 		if r := op.GetResponses()[0]; r.GetCode() != 404 || r.GetType() != "Result" {
 			failNow(t, "NewResponse has a wrong behavior")
 		}
@@ -334,13 +355,16 @@ func TestSetGet(t *testing.T) {
 		if header.GetDesc() != "Request rate limit size" {
 			failNow(t, "Header.Desc has a wrong behavior")
 		}
+		if header.GetExample() != 60 {
+			failNow(t, "Header.Example has a wrong behavior")
+		}
 		if len(op.GetParams()) != 8 {
 			failNow(t, "Operation.Params or Operation.AddParams has a wrong behavior")
 		}
 		if p := op.GetParams(); p[0].GetName() != "id" || p[0].GetType() != "integer#int64" || p[0].GetInLoc() != "path" || p[0].GetRequired() != true || p[0].GetDesc() != "user id" ||
 			p[1].GetName() != "need_details" || p[1].GetType() != "boolean" || p[1].GetInLoc() != "query" || p[1].GetRequired() != false || p[1].GetDesc() != "is need details" ||
 			p[2].GetName() != "key" || p[2].GetType() != "string" || p[2].GetInLoc() != "formData" || p[2].GetRequired() != false || p[2].GetDesc() != "fake form key" ||
-			p[3].GetName() != "param" || p[3].GetType() != "Fake" || p[3].GetInLoc() != "body" || p[3].GetRequired() != false || p[3].GetDesc() != "fake body" ||
+			p[3].GetName() != "param" || p[3].GetType() != "Fake" || p[3].GetInLoc() != "body" || p[3].GetRequired() != false || p[3].GetDesc() != "fake body" || p[3].GetXMLRepr().GetName() != "Fake" ||
 			p[4].GetName() != "X-NEED-DETAILS" || p[4].GetType() != "boolean" || p[4].GetInLoc() != "header" || p[4].GetRequired() != false || p[4].GetDesc() != "a duplicate parameter of need_details query" {
 			failNow(t, "NewXXXParam has a wrong behavior")
 		}
@@ -459,6 +483,7 @@ func TestSetGet(t *testing.T) {
 					ExclusiveMax(true).
 					ExclusiveMin(true).
 					MultipleOf(1.1).
+					XMLRepr(NewXMLRepr("Data")).
 					ItemOption(NewItemOption(). // only for test
 						AllowEmpty(true).
 						Default([]string{}).
@@ -479,6 +504,7 @@ func TestSetGet(t *testing.T) {
 						ExclusiveMax(true).
 						ExclusiveMin(true).
 						MultipleOf(1.1).
+						XMLRepr(NewXMLRepr("Object")).
 						ItemOption(NewItemOption()))))
 		if len(GetDefinitions()) != 3 {
 			failNow(t, "AddDefinitions or SetDefinitions has a wrong behavior")
@@ -584,6 +610,9 @@ func TestSetGet(t *testing.T) {
 		if prop.GetMultipleOf() != 1.1 {
 			failNow(t, "Property.MultipleOf has a wrong behavior")
 		}
+		if prop.GetXMLRepr().GetName() != "Data" {
+			failNow(t, "Property.XMLRepr has a wrong behavior")
+		}
 		opt := prop.GetItemOption()
 		if opt.GetAllowEmpty() != true {
 			failNow(t, "ItemOption.AllowEmpty has a wrong behavior")
@@ -632,6 +661,9 @@ func TestSetGet(t *testing.T) {
 		}
 		if opt.GetMultipleOf() != 1.1 {
 			failNow(t, "ItemOption.MultipleOf has a wrong behavior")
+		}
+		if opt.GetXMLRepr().GetName() != "Object" {
+			failNow(t, "ItemOption.XMLRepr has a wrong behavior")
 		}
 		if opt.GetItemOption() == nil || opt.GetItemOption().GetItemOption() != nil {
 			failNow(t, "ItemOption.ItemOption has a wrong behavior")

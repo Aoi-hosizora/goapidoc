@@ -1,0 +1,139 @@
+FORMAT: 1A
+HOST: api.fake.com/
+
+# Gist Fox API (1.0.0)
+
+> Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com).
+
+## Authentication
+*Gist Fox API* uses OAuth Authorization. First you create a new (or acquire existing) OAuth token using Basic Authentication. After you have acquired your token you can use it to access other resources within token' scope.
+
+## Media Types
+Where applicable this API uses the [HAL+JSON](https://github.com/mikekelly/hal_specification/blob/master/hal_specification.md) media-type to represent resources states and affordances.
+
+Requests with a message-body are using plain JSON to set or update resource states.
+
+## Error States
+The common [HTTP Response Status Codes](https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md) are used.
+
+# Group Gist
+
+> Gist-related resources of *Gist Fox API*.
+
+## Gist [/gists/{id}{?access_token}]
+
+A single Gist object. The Gist resource is the central resource in the Gist Fox API. It represents one paste - a single text note.
+
+The Gist resource has the following attributes:
+
++ id
++ created_at
++ description
++ content
+
+The states *id* and *created_at* are assigned by the Gist Fox API at the moment of creation.
+
+### Retrieve a Single Gist [GET]
+
+`GET /gists/{id}`
+
++ Parameters
+
+    + id (string, required) - ID of the Gist in the form of a hash.
+    + access_token (string, optional) - Gist Fox API access token.
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/hal+json)
+
+    > 200 OK
+
+    + Headers
+
+            Link: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+
+    + Body
+
+            null
+
+### Edit a Gist [PATCH]
+
+`PATCH /gists/{id}`
+
+> To update a Gist send a JSON with updated value for one or more of the Gist resource attributes. All attributes values (states) from the previous version of this Gist are carried over by default if not included in the hash.
+
++ Parameters
+
+    + id (string, required) - ID of the Gist in the form of a hash.
+    + access_token (string, optional) - Gist Fox API access token.
+
++ Request (application/json)
+
+    + Attributes (string)
+
+    + Body
+
++ Response 200 (application/hal+json)
+
+    > 200 OK
+
+    + Headers
+
+            Link: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+
+    + Body
+
+            null
+
+### Delete a Gist [DELETE]
+
+`DELETE /gists/{id}`
+
++ Parameters
+
+    + id (string, required) - ID of the Gist in the form of a hash.
+    + access_token (string, optional) - Gist Fox API access token.
+
++ Request (application/json)
+
+    + Body
+
++ Response 204 (application/json)
+
+    > 204 No Content
+
+    + Body
+
+# Group Access Authorization and Control
+
+> Access and Control of *Gist Fox API* OAuth token.
+
+# Group Default
+
+## Gist Fox API Root [/]
+
+This resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and HAL links.
+
+### Retrieve the Entry Point [GET]
+
+`GET /`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/hal+json)
+
+    > 200 OK
+
+    + Headers
+
+            Link: <http:/api.gistfox.com/>;rel="self",<http:/api.gistfox.com/gists>;rel="gists",<http:/api.gistfox.com/authorization>;rel="authorization"
+
+    + Body
+
+            null
+
+# Data Structures
