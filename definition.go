@@ -65,7 +65,7 @@ func (d *Definition) AddProperties(properties ...*Property) *Definition {
 // XMLRepr
 // =======
 
-// XMLRepr represents a xml representation format of Definition.
+// XMLRepr represents a xml representation format information of Definition, Property, Param an ItemOption.
 type XMLRepr struct {
 	name      string
 	namespace string
@@ -319,7 +319,7 @@ func (p *Property) MultipleOf(multipleOf float64) *Property {
 	return p
 }
 
-// ItemOption sets the itemOption in Property, this is only supported in Swagger.
+// ItemOption sets the item option in Property, this is only supported in Swagger.
 func (p *Property) ItemOption(itemOption *ItemOption) *Property {
 	p.itemOption = itemOption
 	return p
@@ -331,7 +331,11 @@ func (p *Property) XMLRepr(repr *XMLRepr) *Property {
 	return p
 }
 
-// ItemOption represents an array type's item option for Param and Property.
+// ==========
+// ItemOption
+// ==========
+
+// ItemOption represents an array type's item option of Param, Property and ItemOption itself.
 type ItemOption struct {
 	allowEmpty       bool
 	defaul           interface{}
@@ -353,7 +357,7 @@ type ItemOption struct {
 	xmlRepr          *XMLRepr
 }
 
-// NewItemOption creates a default ItemOption with no option.
+// NewItemOption creates a default ItemOption.
 func NewItemOption() *ItemOption {
 	return &ItemOption{}
 }
@@ -494,7 +498,7 @@ func (o *ItemOption) MultipleOf(multipleOf float64) *ItemOption {
 	return o
 }
 
-// ItemOption sets the itemOption in ItemOption, this is only supported in Swagger.
+// ItemOption sets the item option in ItemOption, this is only supported in Swagger.
 func (o *ItemOption) ItemOption(itemOption *ItemOption) *ItemOption {
 	o.itemOption = itemOption
 	return o
@@ -505,6 +509,10 @@ func (o *ItemOption) XMLRepr(repr *XMLRepr) *ItemOption {
 	o.xmlRepr = repr
 	return o
 }
+
+// ========
+// cloneXXX
+// ========
 
 // cloneItemOption clones the given ItemOption recursively.
 func cloneItemOption(o *ItemOption) *ItemOption {
@@ -529,7 +537,7 @@ func cloneItemOption(o *ItemOption) *ItemOption {
 		exclusiveMax:     o.exclusiveMax,
 		multipleOf:       o.multipleOf,
 		itemOption:       cloneItemOption(o.itemOption),
-		xmlRepr:          o.xmlRepr, // <<<
+		xmlRepr:          o.xmlRepr,
 	}
 }
 
@@ -557,6 +565,6 @@ func cloneProperty(p *Property) *Property {
 		exclusiveMax:     p.exclusiveMax,
 		multipleOf:       p.multipleOf,
 		itemOption:       cloneItemOption(p.itemOption),
-		xmlRepr:          p.xmlRepr, // <<<
+		xmlRepr:          p.xmlRepr,
 	}
 }

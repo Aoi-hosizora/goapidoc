@@ -54,9 +54,9 @@ type apibMethod struct {
 	Description   string
 	Security      string
 	Deprecated    bool
+	Example       string
 	Consume       string
 	Produce       string
-	Example       string
 	ExternalDocs  string
 	AdditionalDoc string
 
@@ -117,7 +117,7 @@ func buildApibType(typ string) (string, *apiType) {
 	case apiPrimeKind:
 		t := at.prime.typ
 		if t == FILE {
-			logWarning("file type is not supported in API Blueprint, this will be shown in string.")
+			logWarning("file type is not supported in API Blueprint, this will be replaced to string.")
 			t = STRING
 		} else if t == INTEGER {
 			t = NUMBER
@@ -132,7 +132,7 @@ func buildApibType(typ string) (string, *apiType) {
 	case apiObjectKind:
 		return typ, at
 	default:
-		return "", nil
+		return "", nil // unreachable
 	}
 }
 
@@ -258,7 +258,7 @@ func buildApibExample(e interface{}, produce string) string {
 	if e == nil {
 		return ""
 	}
-	var str string
+	str := ""
 	switch e.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, uintptr, string, bool:
 		str = fmt.Sprintf("%v", e)
@@ -268,9 +268,10 @@ func buildApibExample(e interface{}, produce string) string {
 		}
 		bs, err := jsonMarshal(e)
 		if err != nil {
-			panic(err)
+			logWarning(fmt.Sprintf("Example in %T type is not supported in API Blueprint yet, this will be ignored.", e))
+		} else {
+			str = fastBtos(bs)
 		}
-		str = fastBtos(bs)
 	}
 	return str
 }
@@ -347,7 +348,7 @@ var apibOperationTemplate = `
 {{ end }}
 `
 
-func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
+func buildApibOperation(op *Operation, securities map[string]*Security) ([]byte, error) {
 	// prehandle operation fields
 	consume := JSON
 	if len(op.consumes) >= 1 {
@@ -384,9 +385,9 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 		Description:   op.desc,
 		Security:      secReqName,
 		Deprecated:    op.deprecated,
+		Example:       spaceIndent(3, buildApibExample(op.reqExample, produce)),
 		Consume:       consume,
 		Produce:       produce,
-		Example:       spaceIndent(3, buildApibExample(op.example, produce)),
 		ExternalDocs:  buildApiExternalDocs(op.externalDocs),
 		AdditionalDoc: op.additionalDoc,
 		Parameters:    make([]string, 0, 2),
@@ -441,6 +442,13 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 			s := buildApibSchema(&apibSchema{name: h.name, typ: h.typ, desc: h.desc, required: true, example: h.example}, HEADER)
 			headers = append(headers, spaceIndent(3, s))
 		}
+		example := ""
+		for _, e := range r.examples {
+			if e.mime == produce {
+				example = spaceIndent(3, buildApibExample(e.example, produce))
+				break
+			}
+		}
 		out.Responses = append(out.Responses, &apibResponse{
 			Code:          r.code,
 			Description:   desc,
@@ -448,7 +456,7 @@ func buildApibOperation(op *Operation, securities map[string]*Security) []byte {
 			AdditionalDoc: r.additionalDoc,
 			Headers:       headers,
 			AttrBody:      buildApibSchema(&apibSchema{typ: r.typ}, BODY),
-			Example:       spaceIndent(3, buildApibExample(r.examples[produce], produce)),
+			Example:       example,
 		})
 	}
 
@@ -476,7 +484,7 @@ var apibGroupsTemplate = `
 
 {{ end }}`
 
-func buildApibGroups(doc *Document) []byte {
+func buildApibGroups(doc *Document) ([]byte, error) {
 	// get tags and securities from document.option
 	var allTags []*Tag
 	var securities map[string]*Security
@@ -548,7 +556,11 @@ func buildApibGroups(doc *Document) []byte {
 				op := moMap.MustGet(method).(*Operation)
 				rawRoute = op.route
 				summaries = append(summaries, op.summary)
-				moStrings = append(moStrings, fastBtos(buildApibOperation(op, securities)))
+				bs, err := buildApibOperation(op, securities)
+				if err != nil {
+					return nil, err
+				}
+				moStrings = append(moStrings, fastBtos(bs))
 			}
 			summary := strings.Join(summaries, " | ")
 			additionalDoc := ""
@@ -583,7 +595,7 @@ var apibDefinitionTemplate = `
 
 {{ end }}`
 
-func buildApibDefinitions(doc *Document) []byte {
+func buildApibDefinitions(doc *Document) ([]byte, error) {
 	// prehandle definition list
 	allSpecTypes := collectAllSpecTypes(doc)
 	clonedDefinitions := make([]*Definition, 0, len(doc.definitions))
@@ -675,7 +687,7 @@ HOST: {{ .Host }}{{ .BasePath }}
 {{ .DefinitionsString }}
 `
 
-func buildApibDocument(doc *Document) []byte {
+func buildApibDocument(doc *Document) ([]byte, error) {
 	// check
 	checkDocument(doc)
 
@@ -730,15 +742,15 @@ func buildApibDocument(doc *Document) []byte {
 					opts = append(opts, fmt.Sprintf("+ tokenUrl: %s`", sec.tokenUrl))
 				}
 				scopes := make([][2]string, 0, len(sec.scopes))
-				for k, v := range sec.scopes {
-					scopes = append(scopes, [2]string{k, v})
+				for _, c := range sec.scopes {
+					scopes = append(scopes, [2]string{c.scope, c.desc})
 				}
 				sort.Slice(scopes, func(i, j int) bool { return scopes[i][0] < scopes[j][0] })
 				for _, kv := range scopes {
 					opts = append(opts, fmt.Sprintf("+ scope: %s - %s", kv[0], kv[1]))
 				}
 			} else {
-				continue
+				continue // unreachable
 			}
 			if sec.desc != "" {
 				s += fmt.Sprintf(" - %s", sec.desc)
@@ -758,13 +770,24 @@ func buildApibDocument(doc *Document) []byte {
 	}
 
 	// definitions & operations
-	out.DefinitionsString = fastBtos(buildApibDefinitions(doc))
-	out.GroupsString = fastBtos(buildApibGroups(doc))
+	s1, err1 := buildApibDefinitions(doc)
+	s2, err2 := buildApibGroups(doc)
+	if err1 != nil {
+		return nil, err1
+	}
+	if err2 != nil {
+		return nil, err2
+	}
+	out.DefinitionsString = fastBtos(s1)
+	out.GroupsString = fastBtos(s2)
 
 	// execute template and format
-	bs := renderTemplate(apibDocumentTemplate, out)
+	bs, err := renderTemplate(apibDocumentTemplate, out)
+	if err != nil {
+		return nil, err
+	}
 	bs = regexp.MustCompile(`[ \t]+\n`).ReplaceAll(bs, []byte("\n"))
 	bs = regexp.MustCompile(`\n{3,}`).ReplaceAll(bs, []byte("\n\n"))
 	bs = regexp.MustCompile(`\n+$`).ReplaceAll(bs, []byte("\n"))
-	return bs
+	return bs, nil
 }

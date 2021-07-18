@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// TODO omitempty
-
 type swagDocument struct {
 	Swagger      string                               `yaml:"swagger"                       json:"swagger"`
 	Host         string                               `yaml:"host"                          json:"host"`
@@ -25,8 +23,8 @@ type swagDocument struct {
 
 type swagInfo struct {
 	Title          string       `yaml:"title"                    json:"title"`
-	Description    string       `yaml:"description,omitempty"    json:"description,omitempty"`
 	Version        string       `yaml:"version"                  json:"version"`
+	Description    string       `yaml:"description,omitempty"    json:"description,omitempty"`
 	TermsOfService string       `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
 	License        *swagLicense `yaml:"license,omitempty"        json:"license,omitempty"`
 	Contact        *swagContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
@@ -61,14 +59,14 @@ type swagSecurity struct {
 }
 
 type swagExternalDocs struct {
+	Url         string `yaml:"url"                   json:"url"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
-	Url         string `yaml:"url,omitempty"         json:"url,omitempty"`
 }
 
 type swagOperation struct {
 	Summary      string                   `yaml:"summary"                json:"summary"`
-	Description  string                   `yaml:"description,omitempty"  json:"description,omitempty"`
 	OperationId  string                   `yaml:"operationId"            json:"operationId"`
+	Description  string                   `yaml:"description,omitempty"  json:"description,omitempty"`
 	Schemes      []string                 `yaml:"schemes,omitempty"      json:"schemes,omitempty"`
 	Consumes     []string                 `yaml:"consumes,omitempty"     json:"consumes,omitempty"`
 	Produces     []string                 `yaml:"produces,omitempty"     json:"produces,omitempty"`
@@ -110,13 +108,13 @@ type swagParam struct {
 }
 
 type swagResponse struct {
-	Description string                 `yaml:"description,omitempty" json:"description,omitempty"`
-	Headers     map[string]*swagHeader `yaml:"headers,omitempty"     json:"headers,omitempty"`
-	Examples    map[string]interface{} `yaml:"examples,omitempty"    json:"examples,omitempty"`
-	Schema      *swagResponseSchema    `yaml:"schema,omitempty"      json:"schema,omitempty"`
+	Description string                         `yaml:"description"        json:"description"`
+	Headers     map[string]*swagResponseHeader `yaml:"headers,omitempty"  json:"headers,omitempty"`
+	Examples    map[string]interface{}         `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Schema      *swagResponseSchema            `yaml:"schema,omitempty"   json:"schema,omitempty"`
 }
 
-type swagHeader struct {
+type swagResponseHeader struct {
 	Type        string      `yaml:"type"                  json:"type"`
 	Format      string      `yaml:"format,omitempty"      json:"format,omitempty"`
 	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
@@ -205,7 +203,7 @@ type swagItems struct {
 // items & schema & xmlRepr & externalDocs
 // ==============
 
-func buildSwaggerItems(arr *apiArray, opt *ItemOption) *swagItems {
+func buildSwagItems(arr *apiArray, opt *ItemOption, allowFile bool) *swagItems {
 	/*
 		"items": {
 		  "type": "integer",
@@ -221,10 +219,6 @@ func buildSwaggerItems(arr *apiArray, opt *ItemOption) *swagItems {
 		  "$ref": "#/definitions/User"
 		}
 	*/
-	if arr == nil {
-		return nil
-	}
-
 	var items *swagItems
 	if opt == nil {
 		items = &swagItems{}
@@ -246,21 +240,16 @@ func buildSwaggerItems(arr *apiArray, opt *ItemOption) *swagItems {
 			ExclusiveMin:     opt.exclusiveMin,
 			ExclusiveMax:     opt.exclusiveMax,
 			MultipleOf:       opt.multipleOf,
-		}
-		if x := opt.xmlRepr; x != nil {
-			items.XMLRepr = &swagXMLRepr{
-				Name:      x.name,
-				Namespace: x.namespace,
-				Prefix:    x.prefix,
-				Attribute: x.attribute,
-				Wrapped:   x.wrapped,
-			}
+			XMLRepr:          buildSwagXMLRepr(opt.xmlRepr),
 		}
 	}
 
 	switch arr.item.kind {
 	case apiPrimeKind:
 		prime := arr.item.prime
+		if prime.typ == FILE && !allowFile {
+			panic("Invalid file type used in non-request-parameter")
+		}
 		items.Type = prime.typ
 		items.Format = prime.format
 		return items
@@ -270,18 +259,18 @@ func buildSwaggerItems(arr *apiArray, opt *ItemOption) *swagItems {
 		if opt != nil {
 			o = opt.itemOption
 		}
-		items.Items = buildSwaggerItems(arr.item.array, o)
+		items.Items = buildSwagItems(arr.item.array, o, allowFile)
 		return items
 	case apiObjectKind:
 		origin := arr.item.name
 		ref := "#/definitions/" + origin
 		return &swagItems{OriginRef: origin, Ref: ref}
 	default:
-		return nil
+		return nil // unreachable
 	}
 }
 
-func buildSwaggerSchema(typ string, option *ItemOption) (outType, outFmt, origin, ref string, items *swagItems) {
+func buildSwagSchema(typ string, option *ItemOption, allowFile bool) (outType, outFmt, origin, ref string, items *swagItems) {
 	/*
 		{
 		  "type": "string",
@@ -301,23 +290,26 @@ func buildSwaggerSchema(typ string, option *ItemOption) (outType, outFmt, origin
 
 	switch at.kind {
 	case apiPrimeKind:
+		if at.prime.typ == FILE && !allowFile {
+			panic("Invalid file type used in non-request-parameter")
+		}
 		outType = at.prime.typ
 		outFmt = at.prime.format
 		return
 	case apiArrayKind:
 		outType = ARRAY
-		items = buildSwaggerItems(at.array, option)
+		items = buildSwagItems(at.array, option, allowFile)
 		return
 	case apiObjectKind:
 		origin = at.name
 		ref = "#/definitions/" + origin // ref
 		return
 	default:
-		return
+		return // unreachable
 	}
 }
 
-func buildSwaggerXMLRepr(xml *XMLRepr) *swagXMLRepr {
+func buildSwagXMLRepr(xml *XMLRepr) *swagXMLRepr {
 	if xml == nil {
 		return nil
 	}
@@ -330,25 +322,22 @@ func buildSwaggerXMLRepr(xml *XMLRepr) *swagXMLRepr {
 	}
 }
 
-func buildSwaggerExternalDocs(docs *ExternalDocs) *swagExternalDocs {
+func buildSwagExternalDocs(docs *ExternalDocs) *swagExternalDocs {
 	if docs == nil {
 		return nil
 	}
-	return &swagExternalDocs{
-		Description: docs.desc,
-		Url:         docs.url,
-	}
+	return &swagExternalDocs{Url: docs.url, Description: docs.desc}
 }
 
 // ===============================
 // params & responses & definition
 // ===============================
 
-func buildSwaggerParams(params []*Param) []*swagParam {
+func buildSwagParams(params []*Param) []*swagParam {
 	out := make([]*swagParam, 0, len(params))
 	for _, p := range params {
 		var param *swagParam
-		typ, format, origin, ref, items := buildSwaggerSchema(p.typ, p.itemOption)
+		typ, format, origin, ref, items := buildSwagSchema(p.typ, p.itemOption, true)
 		if p.in != BODY {
 			// cannot use schema
 			if ref != "" {
@@ -377,7 +366,7 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 				ExclusiveMin:     p.exclusiveMin,
 				ExclusiveMax:     p.exclusiveMax,
 				MultipleOf:       p.multipleOf,
-				XMLRepr:          buildSwaggerXMLRepr(p.xmlRepr),
+				XMLRepr:          buildSwagXMLRepr(p.xmlRepr),
 				Items:            items,
 			}
 		} else {
@@ -410,7 +399,7 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 					ExclusiveMin:     p.exclusiveMin,
 					ExclusiveMax:     p.exclusiveMax,
 					MultipleOf:       p.multipleOf,
-					XMLRepr:          buildSwaggerXMLRepr(p.xmlRepr),
+					XMLRepr:          buildSwagXMLRepr(p.xmlRepr),
 					Items:            items,
 				}
 			}
@@ -421,20 +410,20 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 	return out
 }
 
-func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
+func buildSwagResponses(responses []*Response) map[string]*swagResponse {
 	out := make(map[string]*swagResponse, len(responses))
 	for _, r := range responses {
 		desc := r.desc
 		if desc == "" {
 			desc = strconv.Itoa(r.code) + " " + http.StatusText(r.code)
 		}
-		headers := make(map[string]*swagHeader, len(r.headers))
+		headers := make(map[string]*swagResponseHeader, len(r.headers))
 		for _, h := range r.headers {
-			typ, format, _, ref, items := buildSwaggerSchema(h.typ, nil)
+			typ, format, _, ref, items := buildSwagSchema(h.typ, nil, false)
 			if ref != "" || items != nil {
 				panic("Invalid type `" + h.typ + "` used in response header") // only allow primitive
 			}
-			headers[h.name] = &swagHeader{
+			headers[h.name] = &swagResponseHeader{
 				Type:        typ,
 				Format:      format,
 				Description: h.desc,
@@ -442,14 +431,18 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 				// ignore other fields, see https://swagger.io/specification/v2/#headerObject
 			}
 		}
+		examples := make(map[string]interface{}, len(r.examples))
+		for _, e := range r.examples {
+			examples[e.mime] = e.example
+		}
 
 		resp := &swagResponse{
 			Description: desc,
-			Examples:    r.examples,
 			Headers:     headers,
+			Examples:    examples,
 		}
 		if r.typ != "" {
-			typ, format, origin, ref, items := buildSwaggerSchema(r.typ, nil)
+			typ, format, origin, ref, items := buildSwagSchema(r.typ, nil, false)
 			resp.Schema = &swagResponseSchema{
 				Type:      typ,
 				Format:    format,
@@ -464,7 +457,7 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 	return out
 }
 
-func buildSwaggerDefinition(definition *Definition) *swagDefinition {
+func buildSwagDefinition(definition *Definition) *swagDefinition {
 	required := make([]string, 0, len(definition.properties)/2)
 	properties := newOrderedMap(len(definition.properties)) // map[string]*swagSchema
 	for _, p := range definition.properties {
@@ -473,7 +466,7 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 		}
 
 		var schema *swagSchema
-		typ, format, origin, ref, items := buildSwaggerSchema(p.typ, p.itemOption)
+		typ, format, origin, ref, items := buildSwagSchema(p.typ, p.itemOption, false)
 		if ref != "" {
 			schema = &swagSchema{OriginRef: origin, Ref: ref}
 		} else {
@@ -498,7 +491,7 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 				ExclusiveMin:     p.exclusiveMin,
 				ExclusiveMax:     p.exclusiveMax,
 				MultipleOf:       p.multipleOf,
-				XMLRepr:          buildSwaggerXMLRepr(p.xmlRepr),
+				XMLRepr:          buildSwagXMLRepr(p.xmlRepr),
 				Items:            items,
 			}
 		}
@@ -509,7 +502,7 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 		Type:        OBJECT, // fixed schema type to object
 		Required:    required,
 		Description: definition.desc,
-		XMLRepr:     buildSwaggerXMLRepr(definition.xmlRepr),
+		XMLRepr:     buildSwagXMLRepr(definition.xmlRepr),
 		Properties:  properties,
 	}
 }
@@ -518,7 +511,7 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 // operations & definitions
 // ========================
 
-func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation {
+func buildSwagOperations(doc *Document) map[string]map[string]*swagOperation {
 	// route - method - operation
 	out := make(map[string]map[string]*swagOperation, 2) // cap defaults to 2
 	for _, op := range doc.operations {
@@ -543,23 +536,23 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 		}
 		out[op.route][method] = &swagOperation{
 			Summary:      op.summary,
-			Description:  op.desc,
 			OperationId:  operationId,
+			Description:  op.desc,
 			Schemes:      op.schemes,
 			Consumes:     op.consumes,
 			Produces:     op.produces,
 			Tags:         op.tags,
 			Securities:   securities,
 			Deprecated:   op.deprecated,
-			ExternalDocs: buildSwaggerExternalDocs(op.externalDocs),
-			Parameters:   buildSwaggerParams(op.params),
-			Responses:    buildSwaggerResponses(op.responses),
+			ExternalDocs: buildSwagExternalDocs(op.externalDocs),
+			Parameters:   buildSwagParams(op.params),
+			Responses:    buildSwagResponses(op.responses),
 		}
 	}
 	return out
 }
 
-func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
+func buildSwagDefinitions(doc *Document) map[string]*swagDefinition {
 	// prehandle definition list
 	allSpecTypes := collectAllSpecTypes(doc)
 	clonedDefinitions := make([]*Definition, 0, len(doc.definitions))
@@ -571,7 +564,7 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 	// return result map
 	out := make(map[string]*swagDefinition, len(newDefinitionList))
 	for _, definition := range newDefinitionList {
-		out[definition.name] = buildSwaggerDefinition(definition)
+		out[definition.name] = buildSwagDefinition(definition)
 	}
 	return out
 }
@@ -580,7 +573,7 @@ func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
 // document
 // ========
 
-func buildSwaggerDocument(doc *Document) *swagDocument {
+func buildSwagDocument(doc *Document) *swagDocument {
 	// check
 	checkDocument(doc)
 
@@ -591,8 +584,8 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 		BasePath: doc.basePath,
 		Info: &swagInfo{
 			Title:          doc.info.title,
-			Description:    doc.info.desc,
 			Version:        doc.info.version,
+			Description:    doc.info.desc,
 			TermsOfService: doc.info.termsOfService,
 		},
 	}
@@ -607,7 +600,7 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 	if opt := doc.option; opt != nil {
 		tags := make([]*swagTag, 0, len(opt.tags))
 		for _, t := range opt.tags {
-			tags = append(tags, &swagTag{Name: t.name, Description: t.desc, ExternalDocs: buildSwaggerExternalDocs(t.externalDocs)})
+			tags = append(tags, &swagTag{Name: t.name, Description: t.desc, ExternalDocs: buildSwagExternalDocs(t.externalDocs)})
 		}
 		securities := make(map[string]*swagSecurity, len(opt.securities))
 		for _, s := range opt.securities {
@@ -616,10 +609,14 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 			} else if s.typ == BASIC {
 				securities[s.title] = &swagSecurity{Type: BASIC, Description: s.desc}
 			} else if s.typ == OAUTH2 {
-				securities[s.title] = &swagSecurity{Type: OAUTH2, Description: s.desc, Flow: s.flow, AuthorizationUrl: s.authorizationUrl, TokenUrl: s.tokenUrl, Scopes: s.scopes}
+				scopes := make(map[string]string, len(s.scopes))
+				for _, c := range s.scopes {
+					scopes[c.scope] = c.desc
+				}
+				securities[s.title] = &swagSecurity{Type: OAUTH2, Description: s.desc, Flow: s.flow, AuthorizationUrl: s.authorizationUrl, TokenUrl: s.tokenUrl, Scopes: scopes}
 			}
 		}
-		docs := buildSwaggerExternalDocs(opt.externalDocs)
+		docs := buildSwagExternalDocs(opt.externalDocs)
 
 		out.Schemes = opt.schemes
 		out.Consumes = opt.consumes
@@ -630,8 +627,8 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 	}
 
 	// definitions & operations
-	out.Definitions = buildSwaggerDefinitions(doc)
-	out.Operations = buildSwaggerOperations(doc)
+	out.Definitions = buildSwagDefinitions(doc)
+	out.Operations = buildSwagOperations(doc)
 
 	return out
 }

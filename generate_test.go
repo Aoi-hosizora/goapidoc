@@ -27,8 +27,10 @@ func TestGenerate1(t *testing.T) {
 		Securities(
 			NewOAuth2Security("petstore_auth", IMPLICIT_FLOW).
 				AuthorizationUrl("http://petstore.swagger.io/oauth/dialog").
-				AddScope("write:pets", "modify pets in your account").
-				AddScope("read:pets", "read your pets"),
+				Scopes(
+					NewSecurityScope("write:pets", "modify pets in your account"),
+					NewSecurityScope("read:pets", "read your pets"),
+				),
 			NewApiKeySecurity("api_key", HEADER, "api_key"),
 			NewBasicSecurity("b").Desc("A demo basic security definition"),
 		).
@@ -239,8 +241,8 @@ func TestGenerate1(t *testing.T) {
 			).
 			Responses(
 				NewResponse(200, "string").Desc("successful operation").Headers(
-					NewHeader("X-Rate-Limit", "integer#int32", "calls per hour allowed by the user"),
-					NewHeader("X-Expires-After", "string#date-time", "date in UTC when token expires"),
+					NewResponseHeader("X-Rate-Limit", "integer#int32", "calls per hour allowed by the user"),
+					NewResponseHeader("X-Expires-After", "string#date-time", "date in UTC when token expires"),
 				),
 				NewResponse(400, "").Desc("Invalid username/password supplied"),
 			),
@@ -352,16 +354,17 @@ func TestGenerate1(t *testing.T) {
 			),
 	)
 
-	DisableWarningLogger()
 	if _, err := GenerateSwaggerYaml(); err != nil {
 		failNow(t, fmt.Sprintf("GenerateSwaggerYaml error: %v", err))
 	}
 	if _, err := GenerateSwaggerJson(); err != nil {
 		failNow(t, fmt.Sprintf("GenerateSwaggerJson error: %v", err))
 	}
+	EnableWarningLogger()
 	if _, err := GenerateApib(); err != nil {
 		failNow(t, fmt.Sprintf("GenerateApib error: %v", err))
 	}
+	DisableWarningLogger()
 	if _, err := SaveSwaggerYaml("./docs/api1.yaml"); err != nil {
 		failNow(t, fmt.Sprintf("SaveSwaggerYaml error: %v", err))
 	}
@@ -402,9 +405,11 @@ func TestGenerate2(t *testing.T) {
 			Responses(
 				NewResponse(200, "").
 					Headers(
-						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/>;rel="self",<http:/api.gistfox.com/gists>;rel="gists",<http:/api.gistfox.com/authorization>;rel="authorization"`),
+						NewResponseHeader("Link", "string", "").Example(`<http:/api.gistfox.com/>;rel="self",<http:/api.gistfox.com/gists>;rel="gists",<http:/api.gistfox.com/authorization>;rel="authorization"`),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/\" },\n        \"gists\": { \"href\": \"/gists?{since}\", \"templated\": true },\n        \"authorization\": { \"href\": \"/authorization\"}\n    }\n}"),
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/\" },\n        \"gists\": { \"href\": \"/gists?{since}\", \"templated\": true },\n        \"authorization\": { \"href\": \"/authorization\"}\n    }\n}"),
+					),
 			),
 	)
 
@@ -419,9 +424,11 @@ func TestGenerate2(t *testing.T) {
 			Responses(
 				NewResponse(200, "").
 					Headers(
-						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
+						NewResponseHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}").
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}"),
+					).
 					AdditionalDoc("HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links."),
 			),
 
@@ -433,14 +440,16 @@ func TestGenerate2(t *testing.T) {
 				NewPathParam("id", "string", true, "ID of the Gist in the form of a hash."),
 				NewQueryParam("access_token", "string", false, "Gist Fox API access token."),
 			).
-			Example("{\n    \"content\": \"Updated file contents\"\n}").
+			RequestExample("{\n    \"content\": \"Updated file contents\"\n}").
 			Produces("application/hal+json").
 			Responses(
 				NewResponse(200, "").
 					Headers(
-						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
+						NewResponseHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}").
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}"),
+					).
 					AdditionalDoc("HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links."),
 			),
 
@@ -466,9 +475,11 @@ func TestGenerate2(t *testing.T) {
 			Responses(
 				NewResponse(200, "").
 					Headers(
-						NewHeader("Link", "string", "").Example(" <http:/api.gistfox.com/gists>;rel=\"self\""),
+						NewResponseHeader("Link", "string", "").Example(" <http:/api.gistfox.com/gists>;rel=\"self\""),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists\" }\n    },\n    \"_embedded\": {\n        \"gists\": [\n            {\n                \"_links\" : {\n                    \"self\": { \"href\": \"/gists/42\" }\n                },\n                \"id\": \"42\",\n                \"created_at\": \"2014-04-14T02:15:15Z\",\n                \"description\": \"Description of Gist\"\n            }\n        ]\n    },\n    \"total\": 1\n}").
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists\" }\n    },\n    \"_embedded\": {\n        \"gists\": [\n            {\n                \"_links\" : {\n                    \"self\": { \"href\": \"/gists/42\" }\n                },\n                \"id\": \"42\",\n                \"created_at\": \"2014-04-14T02:15:15Z\",\n                \"description\": \"Description of Gist\"\n            }\n        ]\n    },\n    \"total\": 1\n}"),
+					).
 					AdditionalDoc("HAL+JSON representation of Gist Collection Resource. The Gist resources in collections are embedded. Note the embedded Gists resource are incomplete representations of the Gist in question. Use the respective Gist link to retrieve its full representation."),
 			),
 
@@ -480,14 +491,16 @@ func TestGenerate2(t *testing.T) {
 				NewQueryParam("access_token", "string", false, "Gist Fox API access token."),
 			).
 			Consumes(JSON).
-			Example("{\n    \"description\": \"Description of Gist\",\n    \"content\": \"String content\"\n}").
+			RequestExample("{\n    \"description\": \"Description of Gist\",\n    \"content\": \"String content\"\n}").
 			Produces("application/hal+json").
 			Responses(
 				NewResponse(201, "").
 					Headers(
-						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
+						NewResponseHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}").
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}"),
+					).
 					AdditionalDoc("HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links."),
 			),
 	)
@@ -527,9 +540,11 @@ func TestGenerate2(t *testing.T) {
 			Responses(
 				NewResponse(200, "").
 					Headers(
-						NewHeader("Link", "string", "").Example("<http:/api.gistfox.com/gists/42/star>;rel=\"self\""),
+						NewResponseHeader("Link", "string", "").Example("<http:/api.gistfox.com/gists/42/star>;rel=\"self\""),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42/star\" },\n    },\n    \"starred\": true\n}").
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42/star\" },\n    },\n    \"starred\": true\n}"),
+					).
 					AdditionalDoc("HAL+JSON representation of Star Resource."),
 			),
 	)
@@ -544,9 +559,11 @@ func TestGenerate2(t *testing.T) {
 			Responses(
 				NewResponse(200, "").
 					Headers(
-						NewHeader("Link", "string", "").Example("<http:/api.gistfox.com/authorizations/1>;rel=\"self\""),
+						NewResponseHeader("Link", "string", "").Example("<http:/api.gistfox.com/authorizations/1>;rel=\"self\""),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"),
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"),
+					),
 			),
 
 		NewPostOperation("/authorization", "Create Authorization").
@@ -554,14 +571,16 @@ func TestGenerate2(t *testing.T) {
 			Params(
 				NewHeaderParam("Authorization", "string", true, "").Example("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="),
 			).
-			Example("{\n    \"scopes\": [\n        \"gist_write\"\n    ]\n}").
+			RequestExample("{\n    \"scopes\": [\n        \"gist_write\"\n    ]\n}").
 			Produces("application/hal+json").
 			Responses(
 				NewResponse(201, "").
 					Headers(
-						NewHeader("Link", "string", "").Example("<http:/api.gistfox.com/authorizations/1>;rel=\"self\""),
+						NewResponseHeader("Link", "string", "").Example("<http:/api.gistfox.com/authorizations/1>;rel=\"self\""),
 					).
-					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"),
+					Examples(
+						NewResponseExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"),
+					),
 			),
 
 		NewDeleteOperation("/authorization", "Remove an Authorization").

@@ -54,7 +54,7 @@ func TestRenderTemplate(t *testing.T) {
 		name         string
 		giveTemplate string
 		giveObject   interface{}
-		wantPanic    bool
+		wantErr      bool
 		want         string
 	}{
 		{"wrong template", "{{ /* xxx */ }}", nil, true, ""},
@@ -66,11 +66,13 @@ func TestRenderTemplate(t *testing.T) {
 		{"normal array", "{{ range . }}{{ .Test }}{{ end }}", []struct{ Test string }{{"a"}, {"b"}, {"c"}}, false, "abc"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			testPanic(t, tc.wantPanic, func() {
-				if string(renderTemplate(tc.giveTemplate, tc.giveObject)) != tc.want {
-					failNow(t, "renderTemplate get an unexpected result")
-				}
-			}, "testPanic")
+			bs, err := renderTemplate(tc.giveTemplate, tc.giveObject)
+			if (err != nil && !tc.wantErr) || (err == nil && tc.wantErr) {
+				failNow(t, "renderTemplate get an unexpected result for error")
+			}
+			if string(bs) != tc.want {
+				failNow(t, "renderTemplate get an unexpected result")
+			}
 		})
 	}
 }

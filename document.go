@@ -91,6 +91,7 @@ func (d *Document) AddDefinitions(definitions ...*Definition) *Document {
 // ====
 
 // Info represents a basic api information of Document.
+// TODO BREAK CHANGES
 type Info struct {
 	title   string
 	desc    string
@@ -153,7 +154,7 @@ func (i *Info) Contact(contact *Contact) *Info {
 // License
 // =======
 
-// License represents an api license information of Document.
+// License represents a license information of Document.
 type License struct {
 	name string
 	url  string
@@ -183,7 +184,7 @@ func (l *License) Url(url string) *License {
 // Contact
 // =======
 
-// Contact represents an api contact information of Document.
+// Contact represents a contact information of Document.
 type Contact struct {
 	name  string
 	url   string
@@ -221,8 +222,7 @@ func (c *Contact) Email(email string) *Contact {
 // Option
 // ======
 
-// Option represents an extra options of Document.
-// TODO BREAK CHANGES
+// Option represents an api's extra option of Document.
 type Option struct {
 	schemes       []string
 	consumes      []string
@@ -234,7 +234,7 @@ type Option struct {
 	routesOptions []*RoutesOption
 }
 
-// NewOption creates an empty document Option.
+// NewOption creates a default Option.
 func NewOption() *Option {
 	return &Option{}
 }
@@ -254,7 +254,7 @@ func (o *Option) Schemes(schemes ...string) *Option {
 	return o
 }
 
-// AddSchemes adds some tags schemes into Option.
+// AddSchemes adds some schemes into Option.
 func (o *Option) AddSchemes(schemes ...string) *Option {
 	o.schemes = append(o.schemes, schemes...)
 	return o
@@ -308,7 +308,7 @@ func (o *Option) AddSecurities(securities ...*Security) *Option {
 	return o
 }
 
-// ExternalDocs sets the externalDocs in Option.
+// ExternalDocs sets the external documents in Option.
 func (o *Option) ExternalDocs(docs *ExternalDocs) *Option {
 	o.externalDocs = docs
 	return o
@@ -336,7 +336,7 @@ func (o *Option) AddRoutesOptions(options ...*RoutesOption) *Option {
 // Tag
 // ===
 
-// Tag represents an api tag information of Document.
+// Tag represents a tag information of Document.
 type Tag struct {
 	name         string
 	desc         string
@@ -364,7 +364,7 @@ func (t *Tag) Desc(desc string) *Tag {
 	return t
 }
 
-// ExternalDocs sets the externalDocs in Tag.
+// ExternalDocs sets the external documents in Tag.
 func (t *Tag) ExternalDocs(docs *ExternalDocs) *Tag {
 	t.externalDocs = docs
 	return t
@@ -374,7 +374,7 @@ func (t *Tag) ExternalDocs(docs *ExternalDocs) *Tag {
 // Security
 // ========
 
-// Security represents an api security definition information of Document.
+// Security represents a security definition information of Document.
 type Security struct {
 	title string
 	typ   string
@@ -383,10 +383,10 @@ type Security struct {
 	in   string // only for apiKey
 	name string // only for apiKey
 
-	flow             string            // only for oauth2
-	authorizationUrl string            // only for oauth2
-	tokenUrl         string            // only for oauth2
-	scopes           map[string]string // only for oauth2 // TODO use new type
+	flow             string           // only for oauth2
+	authorizationUrl string           // only for oauth2
+	tokenUrl         string           // only for oauth2
+	scopes           []*SecurityScope // only for oauth2
 }
 
 // NewSecurity creates a default Security with given arguments.
@@ -410,15 +410,15 @@ func NewOAuth2Security(title string, flow string) *Security {
 	return &Security{title: title, typ: OAUTH2, flow: flow}
 }
 
-func (s *Security) GetTitle() string             { return s.title }
-func (s *Security) GetType() string              { return s.typ }
-func (s *Security) GetDesc() string              { return s.desc }
-func (s *Security) GetInLoc() string             { return s.in }
-func (s *Security) GetName() string              { return s.name }
-func (s *Security) GetFlow() string              { return s.flow }
-func (s *Security) GetAuthorizationUrl() string  { return s.authorizationUrl }
-func (s *Security) GetTokenUrl() string          { return s.tokenUrl }
-func (s *Security) GetScopes() map[string]string { return s.scopes }
+func (s *Security) GetTitle() string            { return s.title }
+func (s *Security) GetType() string             { return s.typ }
+func (s *Security) GetDesc() string             { return s.desc }
+func (s *Security) GetInLoc() string            { return s.in }
+func (s *Security) GetName() string             { return s.name }
+func (s *Security) GetFlow() string             { return s.flow }
+func (s *Security) GetAuthorizationUrl() string { return s.authorizationUrl }
+func (s *Security) GetTokenUrl() string         { return s.tokenUrl }
+func (s *Security) GetScopes() []*SecurityScope { return s.scopes }
 
 // Title sets the title in Security.
 func (s *Security) Title(title string) *Security {
@@ -456,30 +456,57 @@ func (s *Security) Flow(flow string) *Security {
 	return s
 }
 
-// AuthorizationUrl sets the authorizationUrl in Security.
+// AuthorizationUrl sets the authorization url in Security.
 func (s *Security) AuthorizationUrl(authorizationUrl string) *Security {
 	s.authorizationUrl = authorizationUrl
 	return s
 }
 
-// TokenUrl sets the tokenUrl in Security.
+// TokenUrl sets the token url in Security.
 func (s *Security) TokenUrl(tokenUrl string) *Security {
 	s.tokenUrl = tokenUrl
 	return s
 }
 
-// Scopes sets the whole scopes in Security.
-func (s *Security) Scopes(scopes map[string]string) *Security {
+// Scopes sets the whole security scopes in Security.
+func (s *Security) Scopes(scopes ...*SecurityScope) *Security {
 	s.scopes = scopes
 	return s
 }
 
-// AddScope add a scope into Security.
-func (s *Security) AddScope(scope, desc string) *Security {
-	if s.scopes == nil {
-		s.scopes = make(map[string]string)
-	}
-	s.scopes[scope] = desc
+// AddScope add some security scopes into Security.
+func (s *Security) AddScopes(scopes ...*SecurityScope) *Security {
+	s.scopes = append(s.scopes, scopes...)
+	return s
+}
+
+// =============
+// SecurityScope
+// =============
+
+// SecurityScope represents a security scope information of Document.
+type SecurityScope struct {
+	scope string
+	desc  string
+}
+
+// NewSecurityScope creates a default SecurityScope with given arguments.
+func NewSecurityScope(scope, desc string) *SecurityScope {
+	return &SecurityScope{scope: scope, desc: desc}
+}
+
+func (s *SecurityScope) GetScope() string { return s.scope }
+func (s *SecurityScope) GetDesc() string  { return s.desc }
+
+// Scope sets the scope in Security.
+func (s *SecurityScope) Scope(scope string) *SecurityScope {
+	s.scope = scope
+	return s
+}
+
+// Desc sets the desc in Security.
+func (s *SecurityScope) Desc(desc string) *SecurityScope {
+	s.desc = desc
 	return s
 }
 
@@ -487,7 +514,7 @@ func (s *Security) AddScope(scope, desc string) *Security {
 // ExternalDocs
 // ============
 
-// ExternalDocs represents an additional external documentation of Document.
+// ExternalDocs represents an external documentation information of Document, Tag and Operation.
 type ExternalDocs struct {
 	desc string
 	url  string
@@ -517,7 +544,7 @@ func (e *ExternalDocs) Url(url string) *ExternalDocs {
 // RoutesOption
 // ============
 
-// RoutesOption represents a routes' option of Document.
+// RoutesOption represents a routes-group option of Document.
 type RoutesOption struct {
 	route         string
 	summary       string
@@ -573,7 +600,7 @@ func GetOption() *Option            { return _document.GetOption() }
 func GetOperations() []*Operation   { return _document.GetOperations() }
 func GetDefinitions() []*Definition { return _document.GetDefinitions() }
 
-// CleanupDocument cleans up Document.
+// CleanupDocument cleans up the global Document.
 func CleanupDocument() *Document {
 	return _document.Cleanup()
 }

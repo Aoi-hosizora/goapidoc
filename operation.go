@@ -17,9 +17,9 @@ type Operation struct {
 	produces      []string
 	tags          []string
 	securities    []string
-	secsScopes    map[string][]string
+	secsScopes    map[string][]string // TODO new type
 	deprecated    bool
-	example       interface{}
+	reqExample    interface{}
 	externalDocs  *ExternalDocs
 	additionalDoc string
 	params        []*Param
@@ -51,7 +51,7 @@ func NewDeleteOperation(route, summary string) *Operation {
 	return NewOperation(DELETE, route, summary)
 }
 
-// NewOptionsOperation creates a options Operation with given arguments.
+// NewOptionsOperation creates an options Operation with given arguments.
 func NewOptionsOperation(route, summary string) *Operation {
 	return NewOperation(OPTIONS, route, summary)
 }
@@ -78,7 +78,7 @@ func (o *Operation) GetTags() []string                        { return o.tags }
 func (o *Operation) GetSecurities() []string                  { return o.securities }
 func (o *Operation) GetSecuritiesScopes() map[string][]string { return o.secsScopes }
 func (o *Operation) GetDeprecated() bool                      { return o.deprecated }
-func (o *Operation) GetExample() interface{}                  { return o.example }
+func (o *Operation) GetRequestExample() interface{}           { return o.reqExample }
 func (o *Operation) GetExternalDocs() *ExternalDocs           { return o.externalDocs }
 func (o *Operation) GetAdditionalDoc() string                 { return o.additionalDoc }
 func (o *Operation) GetParams() []*Param                      { return o.params }
@@ -120,7 +120,7 @@ func (o *Operation) Schemes(schemes ...string) *Operation {
 	return o
 }
 
-// AddSchemes adds some tags schemes into Operation.
+// AddSchemes adds some schemes into Operation.
 func (o *Operation) AddSchemes(schemes ...string) *Operation {
 	o.schemes = append(o.schemes, schemes...)
 	return o
@@ -162,13 +162,13 @@ func (o *Operation) AddTags(tags ...string) *Operation {
 	return o
 }
 
-// Securities sets the whole security-requirements in Operation.
+// Securities sets the whole security requirements in Operation.
 func (o *Operation) Securities(securities ...string) *Operation {
 	o.securities = securities
 	return o
 }
 
-// AddSecurities adds some security-requirements into Operation.
+// AddSecurities adds some security requirements into Operation.
 func (o *Operation) AddSecurities(securities ...string) *Operation {
 	o.securities = append(o.securities, securities...)
 	return o
@@ -195,13 +195,13 @@ func (o *Operation) Deprecated(deprecated bool) *Operation {
 	return o
 }
 
-// Example sets the example in Operation, this is only supported in API Blueprint.
-func (o *Operation) Example(example interface{}) *Operation {
-	o.example = example
+// RequestExample sets the request example in Operation, this is only supported in API Blueprint.
+func (o *Operation) RequestExample(reqExample interface{}) *Operation {
+	o.reqExample = reqExample
 	return o
 }
 
-// ExternalDocs sets the externalDocs in Operation.
+// ExternalDocs sets the external documents in Operation.
 func (o *Operation) ExternalDocs(docs *ExternalDocs) *Operation {
 	o.externalDocs = docs
 	return o
@@ -241,14 +241,14 @@ func (o *Operation) AddResponses(responses ...*Response) *Operation {
 // Response
 // ========
 
-// Response represents a operation response information of Operation.
+// Response represents an operation response information of Operation.
 type Response struct {
 	code int
 	typ  string
 
 	desc          string
-	examples      map[string]interface{}
-	headers       []*Header
+	examples      []*ResponseExample
+	headers       []*ResponseHeader
 	additionalDoc string
 }
 
@@ -257,12 +257,12 @@ func NewResponse(code int, typ string) *Response {
 	return &Response{code: code, typ: typ}
 }
 
-func (r *Response) GetCode() int                        { return r.code }
-func (r *Response) GetType() string                     { return r.typ }
-func (r *Response) GetDesc() string                     { return r.desc }
-func (r *Response) GetExamples() map[string]interface{} { return r.examples }
-func (r *Response) GetHeaders() []*Header               { return r.headers }
-func (r *Response) GetAdditionalDoc() string            { return r.additionalDoc }
+func (r *Response) GetCode() int                    { return r.code }
+func (r *Response) GetType() string                 { return r.typ }
+func (r *Response) GetDesc() string                 { return r.desc }
+func (r *Response) GetExamples() []*ResponseExample { return r.examples }
+func (r *Response) GetHeaders() []*ResponseHeader   { return r.headers }
+func (r *Response) GetAdditionalDoc() string        { return r.additionalDoc }
 
 // Code sets the code in Response.
 func (r *Response) Code(code int) *Response {
@@ -282,30 +282,27 @@ func (r *Response) Desc(desc string) *Response {
 	return r
 }
 
-// Examples sets the whole examples in Response.
+// Examples sets the whole response examples in Response.
 // TODO BREAK CHANGES
-func (r *Response) Examples(examples map[string]interface{}) *Response {
+func (r *Response) Examples(examples ...*ResponseExample) *Response {
 	r.examples = examples
 	return r
 }
 
-// AddExample add an example into Response.
-func (r *Response) AddExample(mime string, example interface{}) *Response {
-	if r.examples == nil {
-		r.examples = make(map[string]interface{})
-	}
-	r.examples[mime] = example
+// AddExamples add some response examples into Response.
+func (r *Response) AddExamples(examples ...*ResponseExample) *Response {
+	r.examples = append(r.examples, examples...)
 	return r
 }
 
-// Headers sets the whole headers in Response.
-func (r *Response) Headers(headers ...*Header) *Response {
+// Headers sets the whole response headers in Response.
+func (r *Response) Headers(headers ...*ResponseHeader) *Response {
 	r.headers = headers
 	return r
 }
 
-// AddHeaders add some headers in Response.
-func (r *Response) AddHeaders(headers ...*Header) *Response {
+// AddHeaders add some response headers in Response.
+func (r *Response) AddHeaders(headers ...*ResponseHeader) *Response {
 	r.headers = append(r.headers, headers...)
 	return r
 }
@@ -316,12 +313,43 @@ func (r *Response) AdditionalDoc(doc string) *Response {
 	return r
 }
 
-// ======
-// Header
-// ======
+// ===============
+// ResponseExample
+// ===============
 
-// Header represents a response header information of Response.
-type Header struct {
+// ResponseExample represents a response example information of Response.
+type ResponseExample struct {
+	mime    string
+	example interface{}
+}
+
+// NewResponseExample creates a default ResponseExample with given arguments.
+func NewResponseExample(mime string, example interface{}) *ResponseExample {
+	return &ResponseExample{mime: mime, example: example}
+}
+
+func (r *ResponseExample) GetMime() string         { return r.mime }
+func (r *ResponseExample) GetExample() interface{} { return r.example }
+
+// Mime sets the mime in ResponseExample.
+func (r *ResponseExample) Mime(mime string) *ResponseExample {
+	r.mime = mime
+	return r
+}
+
+// Example sets the example in ResponseExample.
+func (r *ResponseExample) Example(example interface{}) *ResponseExample {
+	r.example = example
+	return r
+}
+
+// ==============
+// ResponseHeader
+// ==============
+
+// ResponseHeader represents a response header information of Response.
+// TODO BREAK CHANGES
+type ResponseHeader struct {
 	name    string
 	typ     string // primitive type
 	desc    string
@@ -329,35 +357,35 @@ type Header struct {
 }
 
 // NewHeader creates a default Header with given arguments.
-func NewHeader(name, typ, desc string) *Header {
-	return &Header{name: name, typ: typ, desc: desc}
+func NewResponseHeader(name, typ, desc string) *ResponseHeader {
+	return &ResponseHeader{name: name, typ: typ, desc: desc}
 }
 
-func (h *Header) GetName() string         { return h.name }
-func (h *Header) GetType() string         { return h.typ }
-func (h *Header) GetDesc() string         { return h.desc }
-func (h *Header) GetExample() interface{} { return h.example }
+func (h *ResponseHeader) GetName() string         { return h.name }
+func (h *ResponseHeader) GetType() string         { return h.typ }
+func (h *ResponseHeader) GetDesc() string         { return h.desc }
+func (h *ResponseHeader) GetExample() interface{} { return h.example }
 
-// Name sets the name in Header.
-func (h *Header) Name(name string) *Header {
+// Name sets the name in ResponseHeader.
+func (h *ResponseHeader) Name(name string) *ResponseHeader {
 	h.name = name
 	return h
 }
 
-// Type sets the type in Header.
-func (h *Header) Type(typ string) *Header {
+// Type sets the type in ResponseHeader.
+func (h *ResponseHeader) Type(typ string) *ResponseHeader {
 	h.typ = typ
 	return h
 }
 
-// Desc sets the desc in Header.
-func (h *Header) Desc(desc string) *Header {
+// Desc sets the desc in ResponseHeader.
+func (h *ResponseHeader) Desc(desc string) *ResponseHeader {
 	h.desc = desc
 	return h
 }
 
-// Example sets the example in Header.
-func (h *Header) Example(example interface{}) *Header {
+// Example sets the example in ResponseHeader.
+func (h *ResponseHeader) Example(example interface{}) *ResponseHeader {
 	h.example = example
 	return h
 }
@@ -599,7 +627,7 @@ func (p *Param) MultipleOf(multipleOf float64) *Param {
 	return p
 }
 
-// ItemOption sets the itemOption in Param, this is only supported in Swagger.
+// ItemOption sets the item option in Param, this is only supported in Swagger.
 func (p *Param) ItemOption(itemOption *ItemOption) *Param {
 	p.itemOption = itemOption
 	return p

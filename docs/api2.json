@@ -4,8 +4,8 @@
   "basePath": "/",
   "info": {
     "title": "Gist Fox API",
-    "description": "Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com).",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com)."
   },
   "tags": [
     {
@@ -173,8 +173,8 @@
       },
       "post": {
         "summary": "Create a Gist",
-        "description": "To create a new Gist simply provide a JSON hash of the *description* and *content* attributes for the new Gist.\n\nThis action requires an `access_token` with `gist_write` scope.",
         "operationId": "-gists-post",
+        "description": "To create a new Gist simply provide a JSON hash of the *description* and *content* attributes for the new Gist.\n\nThis action requires an `access_token` with `gist_write` scope.",
         "consumes": [
           "application/json"
         ],
@@ -287,8 +287,8 @@
       },
       "patch": {
         "summary": "Edit a Gist",
-        "description": "To update a Gist send a JSON with updated value for one or more of the Gist resource attributes. All attributes values (states) from the previous version of this Gist are carried over by default if not included in the hash.",
         "operationId": "-gists-:id-patch",
+        "description": "To update a Gist send a JSON with updated value for one or more of the Gist resource attributes. All attributes values (states) from the previous version of this Gist are carried over by default if not included in the hash.",
         "consumes": [
           "application/json"
         ],
@@ -333,8 +333,8 @@
     "/gists/{id}/star": {
       "delete": {
         "summary": "Unstar a Gist",
-        "description": "This action requires an `access_token` with `gist_write` scope.",
         "operationId": "-gists-:id-star-delete",
+        "description": "This action requires an `access_token` with `gist_write` scope.",
         "produces": [
           "application/hal+json"
         ],
@@ -405,8 +405,8 @@
       },
       "put": {
         "summary": "Star a Gist",
-        "description": "This action requires an `access_token` with `gist_write` scope.",
         "operationId": "-gists-:id-star-put",
+        "description": "This action requires an `access_token` with `gist_write` scope.",
         "produces": [
           "application/hal+json"
         ],

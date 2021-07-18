@@ -3,8 +3,8 @@ host: petstore.swagger.io
 basePath: /v2
 info:
   title: Swagger Petstore
-  description: This is a sample server Petstore server.
   version: 1.0.0
+  description: This is a sample server Petstore server.
   termsOfService: http://swagger.io/terms/
   license:
     name: Apache 2.0
@@ -18,15 +18,15 @@ tags:
 - name: pet
   description: Everything about your Pets
   externalDocs:
-    description: Find out more
     url: http://swagger.io
+    description: Find out more
 - name: store
   description: Access to Petstore orders
 - name: user
   description: Operations about user
   externalDocs:
-    description: Find out more about our store
     url: http://swagger.io
+    description: Find out more about our store
 securityDefinitions:
   api_key:
     type: apiKey
@@ -43,8 +43,8 @@ securityDefinitions:
       read:pets: read your pets
       write:pets: modify pets in your account
 externalDocs:
-  description: Find out more about Swagger
   url: http://swagger.io
+  description: Find out more about Swagger
 paths:
   /pet:
     post:
@@ -132,8 +132,8 @@ paths:
           description: Pet not found
     get:
       summary: Find pet by ID
-      description: Returns a single pet.
       operationId: getPetById
+      description: Returns a single pet.
       produces:
       - application/xml
       - application/json
@@ -231,8 +231,8 @@ paths:
   /pet/findByStatus:
     get:
       summary: Finds Pets by status
-      description: Multiple status values can be provided with comma separated strings.
       operationId: findPetsByStatus
+      description: Multiple status values can be provided with comma separated strings.
       produces:
       - application/xml
       - application/json
@@ -268,8 +268,8 @@ paths:
   /pet/findByTags:
     get:
       summary: Finds Pets by tags
-      description: Multiple tags can be provided with comma separated strings.
       operationId: findPetsByTags
+      description: Multiple tags can be provided with comma separated strings.
       produces:
       - application/xml
       - application/json
@@ -326,8 +326,8 @@ paths:
   /store/order/{orderId}:
     delete:
       summary: Delete purchase order by ID
-      description: For valid response try integer IDs with positive integer value.
       operationId: deleteOrder
+      description: For valid response try integer IDs with positive integer value.
       produces:
       - application/xml
       - application/json
@@ -350,8 +350,8 @@ paths:
           description: Order not found
     get:
       summary: Find purchase order by ID
-      description: For valid response try integer IDs with value >= 1 and <= 10.
       operationId: getOrderById
+      description: For valid response try integer IDs with value >= 1 and <= 10.
       produces:
       - application/xml
       - application/json
@@ -380,8 +380,8 @@ paths:
   /user:
     post:
       summary: Create user
-      description: This can only be done by the logged in user.
       operationId: createUser
+      description: This can only be done by the logged in user.
       produces:
       - application/xml
       - application/json
@@ -400,8 +400,8 @@ paths:
   /user/{username}:
     delete:
       summary: Delete user
-      description: This can only be done by the logged in user.
       operationId: deleteUser
+      description: This can only be done by the logged in user.
       produces:
       - application/xml
       - application/json
@@ -443,8 +443,8 @@ paths:
           description: User not found
     put:
       summary: Update user
-      description: This can only be done by the logged in user.
       operationId: updateUser
+      description: This can only be done by the logged in user.
       produces:
       - application/xml
       - application/json

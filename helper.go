@@ -23,17 +23,17 @@ func fastBtos(bs []byte) string {
 	return *(*string)(unsafe.Pointer(&bs))
 }
 
-func renderTemplate(t string, object interface{}) []byte {
+func renderTemplate(t string, object interface{}) ([]byte, error) {
 	tmpl, err := template.New("template").Parse(t)
 	if err != nil {
-		panic("Template rendering error: " + err.Error())
+		return nil, err
 	}
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, object)
 	if err != nil {
-		panic("Template rendering error: " + err.Error())
+		return nil, err
 	}
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 func yamlMarshal(t interface{}) ([]byte, error) {
@@ -96,11 +96,8 @@ func (l *orderedMap) Get(key string) (interface{}, bool) {
 }
 
 func (l *orderedMap) MustGet(key string) interface{} {
-	val, ok := l.Get(key)
-	if !ok {
-		panic("key " + key + " is not found.")
-	}
-	return val
+	val, _ := l.Get(key)
+	return val // return nil if not exists, no panic
 }
 
 func (l *orderedMap) MarshalJSON() ([]byte, error) {

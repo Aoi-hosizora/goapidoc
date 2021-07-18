@@ -91,10 +91,11 @@ func TestSetGet(t *testing.T) {
 					Flow(ACCESSCODE_FLOW).
 					AuthorizationUrl("xxx/oauth2/authorization").
 					TokenUrl("xxx/oauth2/token").
-					AddScope("x", "x").
-					Scopes(map[string]string{"read": "only for reading"}).
-					AddScope("write", "only for writing").
-					AddScope("rw", "for reading and writing")).
+					Scopes(NewSecurityScope("read", "only for reading")).
+					AddScopes(NewSecurityScope("write", "only for writing"),
+						NewSecurityScope("", "").
+						Scope("rw").
+						Desc("for reading and writing"))).
 			ExternalDocs(NewExternalDocs("", "").
 				Desc("Find out more about this api").
 				Url("https://github.com/Aoi-hosizora")).
@@ -163,7 +164,7 @@ func TestSetGet(t *testing.T) {
 		if s := GetOption().GetSecurities(); s[0].GetTitle() != "jwt" || s[0].GetType() != "apiKey" || s[0].GetDesc() != "A apiKey security called jwt" || s[0].GetInLoc() != "header" || s[0].GetName() != "Authorization" ||
 			s[1].GetTitle() != "basic" || s[1].GetType() != "basic" || s[2].GetTitle() != "another_jwt" || s[2].GetType() != "apiKey" || s[2].GetInLoc() != "header" || s[2].GetName() != "X-JWT" ||
 			s[3].GetTitle() != "oauth2" || s[3].GetType() != "oauth2" || s[3].GetFlow() != "accessCode" || s[3].GetTokenUrl() != "xxx/oauth2/token" || s[3].GetAuthorizationUrl() != "xxx/oauth2/authorization" ||
-			s[3].GetScopes()["read"] != "only for reading" || s[3].GetScopes()["write"] != "only for writing" || s[3].GetScopes()["rw"] != "for reading and writing" {
+			s[3].GetScopes()[0].GetScope() != "read" || s[3].GetScopes()[0].GetDesc() != "only for reading" || s[3].GetScopes()[1].GetScope() != "write" || s[3].GetScopes()[1].GetDesc() != "only for writing" || s[3].GetScopes()[2].GetScope() != "rw" || s[3].GetScopes()[2].GetDesc() != "for reading and writing" {
 			failNow(t, "Option.Securities or Option.AddSecurities or Security.XXX has a wrong behavior")
 		}
 		if e := GetOption().GetExternalDocs(); e.GetDesc() != "Find out more about this api" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
@@ -227,7 +228,7 @@ func TestSetGet(t *testing.T) {
 			SecuritiesScopes(map[string][]string{"oauth2": {"read", "write"}}).
 			AddSecurityScopes("another_oauth2", "xx", "yy").
 			Deprecated(true).
-			Example(map[string]interface{}{"key": "value"}).
+			RequestExample(map[string]interface{}{"key": "value"}).
 			ExternalDocs(NewExternalDocs("Find out more this operation", "https://github.com/Aoi-hosizora")).
 			AdditionalDoc("This is GET /user/{id}'s additional document").
 			Responses(NewResponse(404, "Result")).
@@ -236,12 +237,13 @@ func TestSetGet(t *testing.T) {
 				Type("_Result<User>").
 				Desc("200 OK").
 				AdditionalDoc("The response is a result model").
-				AddExample(XML, nil).
-				Examples(map[string]interface{}{JSON: map[string]interface{}{"code": 200, "message": "success", "data": map[string]interface{}{"id": 1, "name": "user1"}}}).
-				AddExample(XML, map[string]interface{}{"code": 200, "message": "ok"}).
-				AddExample(PLAIN, "hello world").
-				Headers(NewHeader("X-RateLimit-Remaining", "integer#int64", "Request rate limit remaining")).
-				AddHeaders(NewHeader("", "", "").
+				Examples(NewResponseExample(JSON, map[string]interface{}{"code": 200, "message": "success", "data": map[string]interface{}{"id": 1, "name": "user1"}})).
+				AddExamples(NewResponseExample(XML, map[string]interface{}{"code": 200, "message": "ok"}),
+					NewResponseExample("", "").
+					Mime(PLAIN).
+					Example("hello world")).
+				Headers(NewResponseHeader("X-RateLimit-Remaining", "integer#int64", "Request rate limit remaining")).
+				AddHeaders(NewResponseHeader("", "", "").
 					Name("X-RateLimit-Limit").
 					Type("integer#int64").
 					Desc("Request rate limit size").
@@ -329,8 +331,8 @@ func TestSetGet(t *testing.T) {
 		if op.GetDeprecated() != true {
 			failNow(t, "Operation.Deprecated has a wrong behavior")
 		}
-		if op.GetExample() == nil || op.GetExample().(map[string]interface{})["key"] != "value" {
-			failNow(t, "Operation.Example has a wrong behavior")
+		if op.GetRequestExample() == nil || op.GetRequestExample().(map[string]interface{})["key"] != "value" {
+			failNow(t, "Operation.RequestExample has a wrong behavior")
 		}
 		if e := op.GetExternalDocs(); e.GetDesc() != "Find out more this operation" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
 			failNow(t, "Operation.ExternalDocs has a wrong behavior")
@@ -354,8 +356,9 @@ func TestSetGet(t *testing.T) {
 		if resp.GetAdditionalDoc() != "The response is a result model" {
 			failNow(t, "Response.AdditionalDoc has a wrong behavior")
 		}
-		if e := resp.GetExamples(); e["application/json"].(map[string]interface{})["message"] != "success" ||
-			e["application/xml"].(map[string]interface{})["message"] != "ok" || e["text/plain"].(string) != "hello world" {
+		if e := resp.GetExamples(); e[0].GetMime() != "application/json" || e[0].GetExample().(map[string]interface{})["message"] != "success" ||
+			e[1].GetMime() != "application/xml" || e[1].GetExample().(map[string]interface{})["message"] != "ok" ||
+			e[2].GetMime() != "text/plain" || e[2].GetExample().(string) != "hello world" {
 			failNow(t, "Response.Example or Response.AddExample has a wrong behavior")
 		}
 		if h := resp.GetHeaders()[0]; h.GetName() != "X-RateLimit-Remaining" || h.GetType() != "integer#int64" || h.GetDesc() != "Request rate limit remaining" {

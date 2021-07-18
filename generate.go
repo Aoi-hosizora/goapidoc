@@ -140,22 +140,21 @@ func checkDocument(doc *Document) {
 // GenerateSwaggerYaml generates swagger yaml script and returns byte array.
 // TODO BREAK CHANGES
 func (d *Document) GenerateSwaggerYaml() ([]byte, error) {
-	swagDoc := buildSwaggerDocument(d)
-	return yamlMarshal(swagDoc)
+	doc := buildSwagDocument(d)
+	return yamlMarshal(doc)
 }
 
 // GenerateSwaggerJson generates swagger json script and returns byte array.
 // TODO BREAK CHANGES
 func (d *Document) GenerateSwaggerJson() ([]byte, error) {
-	swagDoc := buildSwaggerDocument(d)
-	return jsonMarshal(swagDoc)
+	doc := buildSwagDocument(d)
+	return jsonMarshal(doc)
 }
 
 // GenerateApib generates apib script and returns byte array.
 // TODO BREAK CHANGES
 func (d *Document) GenerateApib() ([]byte, error) {
-	doc := buildApibDocument(d)
-	return doc, nil
+	return buildApibDocument(d)
 }
 
 // SaveSwaggerYaml generates swagger yaml script and saves into file.
@@ -227,27 +226,26 @@ func SaveApib(path string) ([]byte, error) {
 	return _document.SaveApib(path)
 }
 
-// warningLogger is a global switcher for logger when warning.
-var warningLogger atomic.Value
+// _warningLogger is a global switcher for logger when warning.
+var _warningLogger atomic.Value
 
 func init() {
-	// warningLogger initializes to true, defaults to log the warning message
-	warningLogger.Store(true)
+	_warningLogger.Store(true)
 }
 
 // DisableWarningLogger disables the warning logger switcher.
 func DisableWarningLogger() {
-	warningLogger.Store(false)
+	_warningLogger.Store(false)
 }
 
 // EnableWarningLogger enables the warning logger switcher.
 func EnableWarningLogger() {
-	warningLogger.Store(true)
+	_warningLogger.Store(true)
 }
 
 // logWarning logs the warning message.
 func logWarning(s string) {
-	if warningLogger.Load().(bool) {
+	if _warningLogger.Load().(bool) {
 		fmt.Printf("Warning: %s\n", s)
 	}
 }
