@@ -1,6 +1,6 @@
 {
   "swagger": "2.0",
-  "host": "api.fake.com",
+  "host": "api.gistfox.com",
   "basePath": "/",
   "info": {
     "title": "Gist Fox API",
@@ -35,7 +35,182 @@
               }
             },
             "examples": {
-              "application/hal+json": null
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/\" },\n        \"gists\": { \"href\": \"/gists?{since}\", \"templated\": true },\n        \"authorization\": { \"href\": \"/authorization\"}\n    }\n}"
+            }
+          }
+        }
+      }
+    },
+    "/authorization": {
+      "delete": {
+        "summary": "Remove an Authorization",
+        "operationId": "-authorization-delete",
+        "tags": [
+          "Access Authorization and Control"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "example": "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "204 No Content"
+          }
+        }
+      },
+      "get": {
+        "summary": "Retrieve Authorization",
+        "operationId": "-authorization-get",
+        "produces": [
+          "application/hal+json"
+        ],
+        "tags": [
+          "Access Authorization and Control"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "example": "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "headers": {
+              "Link": {
+                "type": "string",
+                "example": "<http:/api.gistfox.com/authorizations/1>;rel=\"self\""
+              }
+            },
+            "examples": {
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Authorization",
+        "operationId": "-authorization-post",
+        "produces": [
+          "application/hal+json"
+        ],
+        "tags": [
+          "Access Authorization and Control"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "example": "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "201 Created",
+            "headers": {
+              "Link": {
+                "type": "string",
+                "example": "<http:/api.gistfox.com/authorizations/1>;rel=\"self\""
+              }
+            },
+            "examples": {
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"
+            }
+          }
+        }
+      }
+    },
+    "/gists": {
+      "get": {
+        "summary": "List All Gists",
+        "operationId": "-gists-get",
+        "produces": [
+          "application/hal+json"
+        ],
+        "tags": [
+          "Gist"
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "description": "Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists updated at or after this time are returned.",
+            "type": "string"
+          },
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": false,
+            "description": "Gist Fox API access token.",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "headers": {
+              "Link": {
+                "type": "string",
+                "example": " <http:/api.gistfox.com/gists>;rel=\"self\""
+              }
+            },
+            "examples": {
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists\" }\n    },\n    \"_embedded\": {\n        \"gists\": [\n            {\n                \"_links\" : {\n                    \"self\": { \"href\": \"/gists/42\" }\n                },\n                \"id\": \"42\",\n                \"created_at\": \"2014-04-14T02:15:15Z\",\n                \"description\": \"Description of Gist\"\n            }\n        ]\n    },\n    \"total\": 1\n}"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a Gist",
+        "description": "To create a new Gist simply provide a JSON hash of the *description* and *content* attributes for the new Gist.\n\nThis action requires an `access_token` with `gist_write` scope.",
+        "operationId": "-gists-post",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/hal+json"
+        ],
+        "tags": [
+          "Gist"
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "description": "Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists updated at or after this time are returned.",
+            "type": "string"
+          },
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": false,
+            "description": "Gist Fox API access token.",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "201 Created",
+            "headers": {
+              "Link": {
+                "type": "string",
+                "example": "<http:/api.gistfox.com/gists/42>;rel=\"self\", <http:/api.gistfox.com/gists/42/star>;rel=\"star\""
+              }
+            },
+            "examples": {
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}"
             }
           }
         }
@@ -105,7 +280,7 @@
               }
             },
             "examples": {
-              "application/hal+json": null
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}"
             }
           }
         }
@@ -137,15 +312,6 @@
             "required": false,
             "description": "Gist Fox API access token.",
             "type": "string"
-          },
-          {
-            "name": "content",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "example": "Updated file contents"
-            }
           }
         ],
         "responses": {
@@ -158,8 +324,114 @@
               }
             },
             "examples": {
-              "application/hal+json": null
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}"
             }
+          }
+        }
+      }
+    },
+    "/gists/{id}/star": {
+      "delete": {
+        "summary": "Unstar a Gist",
+        "description": "This action requires an `access_token` with `gist_write` scope.",
+        "operationId": "-gists-:id-star-delete",
+        "produces": [
+          "application/hal+json"
+        ],
+        "tags": [
+          "Gist"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the gist in the form of a hash",
+            "type": "string"
+          },
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": false,
+            "description": "Gist Fox API access token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "204 No Content"
+          }
+        }
+      },
+      "get": {
+        "summary": "Check if a Gist is Starred",
+        "operationId": "-gists-:id-star-get",
+        "produces": [
+          "application/hal+json"
+        ],
+        "tags": [
+          "Gist"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the gist in the form of a hash",
+            "type": "string"
+          },
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": false,
+            "description": "Gist Fox API access token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "headers": {
+              "Link": {
+                "type": "string",
+                "example": "<http:/api.gistfox.com/gists/42/star>;rel=\"self\""
+              }
+            },
+            "examples": {
+              "application/hal+json": "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42/star\" },\n    },\n    \"starred\": true\n}"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Star a Gist",
+        "description": "This action requires an `access_token` with `gist_write` scope.",
+        "operationId": "-gists-:id-star-put",
+        "produces": [
+          "application/hal+json"
+        ],
+        "tags": [
+          "Gist"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the gist in the form of a hash",
+            "type": "string"
+          },
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": false,
+            "description": "Gist Fox API access token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "204 No Content"
           }
         }
       }

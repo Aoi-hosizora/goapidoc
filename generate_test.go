@@ -21,7 +21,6 @@ func TestGenerate1(t *testing.T) {
 			NewTag("pet", "Everything about your Pets").
 				ExternalDocs(NewExternalDocs("Find out more", "http://swagger.io")),
 			NewTag("store", "Access to Petstore orders"),
-			NewTag("store", "Access to Petstore orders"),
 			NewTag("user", "Operations about user").
 				ExternalDocs(NewExternalDocs("Find out more about our store", "http://swagger.io")),
 		).
@@ -31,6 +30,7 @@ func TestGenerate1(t *testing.T) {
 				AddScope("write:pets", "modify pets in your account").
 				AddScope("read:pets", "read your pets"),
 			NewApiKeySecurity("api_key", HEADER, "api_key"),
+			NewBasicSecurity("b").Desc("A demo basic security definition"),
 		).
 		ExternalDocs(NewExternalDocs("Find out more about Swagger", "http://swagger.io")),
 	)
@@ -111,7 +111,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(400, "").Desc("Invalid ID supplied"),
 				NewResponse(404, "").Desc("Pet not found"),
 			).
-			Securities("api_key"),
+			Securities("api_key", "b"),
 
 		NewPostOperation("/pet/{petId}", "Updates a pet in the store with form data").
 			Tags("pet").
@@ -172,7 +172,8 @@ func TestGenerate1(t *testing.T) {
 			Responses(
 				NewResponse(200, "Order").Desc("successful operation"),
 				NewResponse(400, "").Desc("Invalid Order"),
-			),
+			).
+			Securities("b"),
 
 		NewGetOperation("/store/order/{orderId}", "Find purchase order by ID").
 			Tags("store").
@@ -186,7 +187,8 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(200, "Order").Desc("successful operation"),
 				NewResponse(400, "").Desc("Invalid ID supplied"),
 				NewResponse(404, "").Desc("Order not found"),
-			),
+			).
+			Securities("b"),
 
 		NewDeleteOperation("/store/order/{orderId}", "Delete purchase order by ID").
 			Tags("store").
@@ -199,7 +201,8 @@ func TestGenerate1(t *testing.T) {
 			Responses(
 				NewResponse(400, "").Desc("Invalid ID supplied"),
 				NewResponse(404, "").Desc("Order not found"),
-			),
+			).
+			Securities("b"),
 	)
 
 	AddOperations(
@@ -349,6 +352,7 @@ func TestGenerate1(t *testing.T) {
 			),
 	)
 
+	DisableWarningLogger()
 	if _, err := GenerateSwaggerYaml(); err != nil {
 		failNow(t, fmt.Sprintf("GenerateSwaggerYaml error: %v", err))
 	}
@@ -370,10 +374,10 @@ func TestGenerate1(t *testing.T) {
 }
 
 func TestGenerate2(t *testing.T) {
-	// https://github.com/apiaryio/api-blueprint/blob/master/examples/Gist%20Fox%20API%20%2B%20Auth.md
+	// https://raw.githubusercontent.com/apiaryio/api-blueprint/master/examples/Gist%20Fox%20API%20%2B%20Auth.md
 	// https://editor.docs.apiary.io/
 	CleanupDocument()
-	SetDocument("api.fake.com", "/",
+	SetDocument("api.gistfox.com", "/",
 		NewInfo("Gist Fox API", "Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com).", "1.0.0"),
 	)
 
@@ -382,32 +386,14 @@ func TestGenerate2(t *testing.T) {
 			NewTag("Gist", "Gist-related resources of *Gist Fox API*."),
 			NewTag("Access Authorization and Control", "Access and Control of *Gist Fox API* OAuth token."),
 		).
-		AdditionalDoc(`## Authentication
-*Gist Fox API* uses OAuth Authorization. First you create a new (or acquire existing) OAuth token using Basic Authentication. After you have acquired your token you can use it to access other resources within token' scope.
-
-## Media Types
-Where applicable this API uses the [HAL+JSON](https://github.com/mikekelly/hal_specification/blob/master/hal_specification.md) media-type to represent resources states and affordances.
-
-Requests with a message-body are using plain JSON to set or update resource states.
-
-## Error States
-The common [HTTP Response Status Codes](https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md) are used.`).
-		AddRoutesAlias("/", "Gist Fox API Root").
-		AddRoutesAlias("/gists/{id}{?access_token}", "Gist").
-		AddRoutesAlias("/gists{?access_token,since}", "Gists Collection").
-		AddRoutesAlias("/gists/{id}/star{?access_token}", "Star").
-		AddRoutesAlias("/authorization", "Authorization").
-		AddRoutesAdditionalDoc("/", "This resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and HAL links.").
-		AddRoutesAdditionalDoc("/gists/{id}{?access_token}", `A single Gist object. The Gist resource is the central resource in the Gist Fox API. It represents one paste - a single text note.
-
-The Gist resource has the following attributes:
-
-+ id
-+ created_at
-+ description
-+ content
-
-The states *id* and *created_at* are assigned by the Gist Fox API at the moment of creation.`),
+		AdditionalDoc("## Authentication\n*Gist Fox API* uses OAuth Authorization. First you create a new (or acquire existing) OAuth token using Basic Authentication. After you have acquired your token you can use it to access other resources within token' scope.\n\n## Media Types\nWhere applicable this API uses the [HAL+JSON](https://github.com/mikekelly/hal_specification/blob/master/hal_specification.md) media-type to represent resources states and affordances.\n\nRequests with a message-body are using plain JSON to set or update resource states.\n\n## Error States\nThe common [HTTP Response Status Codes](https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md) are used.").
+		RoutesOptions(
+			NewRoutesOption("/").Summary("Gist Fox API Root").AdditionalDoc("Gist Fox API entry point.\n\nThis resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and\nHAL links."),
+			NewRoutesOption("/gists/{id}{?access_token}").Summary("Gist").AdditionalDoc("A single Gist object. The Gist resource is the central resource in the Gist Fox API. It represents one paste - a single text note.\n\nThe Gist resource has the following attributes:\n\n+ id\n+ created_at\n+ description\n+ content\n\nThe states *id* and *created_at* are assigned by the Gist Fox API at the moment of creation."),
+			NewRoutesOption("/gists{?since,access_token}").Summary("Gists Collection").AdditionalDoc("Collection of all Gists.\n\nThe Gist Collection resource has the following attribute:\n\n+ total\n\nIn addition it **embeds** *Gist Resources* in the Gist Fox API."),
+			NewRoutesOption("/gists/{id}/star{?access_token}").Summary("Star").AdditionalDoc("Star resource represents a Gist starred status.\n\nThe Star resource has the following attribute:\n\n+ starred"),
+			NewRoutesOption("/authorization").Summary("Authorization").AdditionalDoc("Authorization Resource represents an authorization granted to the user. You can **only** access your own authorization, and only through **Basic Authentication**.\n\nThe Authorization Resource has the following attribute:\n\n+ token\n+ scopes\n\nWhere *token* represents an OAuth token and *scopes* is an array of scopes granted for the given authorization. At this moment the only available scope is `gist_write`."),
+		),
 	)
 
 	AddOperations(
@@ -418,7 +404,7 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 					Headers(
 						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/>;rel="self",<http:/api.gistfox.com/gists>;rel="gists",<http:/api.gistfox.com/authorization>;rel="authorization"`),
 					).
-					AddExample("application/hal+json", nil),
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/\" },\n        \"gists\": { \"href\": \"/gists?{since}\", \"templated\": true },\n        \"authorization\": { \"href\": \"/authorization\"}\n    }\n}"),
 			),
 	)
 
@@ -435,7 +421,8 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 					Headers(
 						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
 					).
-					AddExample("application/hal+json", nil),
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}").
+					AdditionalDoc("HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links."),
 			),
 
 		NewPatchOperation("/gists/{id}", "Edit a Gist").
@@ -445,15 +432,16 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 			Params(
 				NewPathParam("id", "string", true, "ID of the Gist in the form of a hash."),
 				NewQueryParam("access_token", "string", false, "Gist Fox API access token."),
-				NewBodyParam("content", "string", true, "").Example("Updated file contents"), // <<<
 			).
+			Example("{\n    \"content\": \"Updated file contents\"\n}").
 			Produces("application/hal+json").
 			Responses(
 				NewResponse(200, "").
 					Headers(
 						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
 					).
-					AddExample("application/hal+json", nil),
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}").
+					AdditionalDoc("HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links."),
 			),
 
 		NewDeleteOperation("/gists/{id}", "Delete a Gist").
@@ -467,15 +455,136 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 			),
 	)
 
+	AddOperations(
+		NewGetOperation("/gists", "List All Gists").
+			Tags("Gist").
+			Params(
+				NewQueryParam("since", "string", false, "Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists updated at or after this time are returned."),
+				NewQueryParam("access_token", "string", false, "Gist Fox API access token."),
+			).
+			Produces("application/hal+json").
+			Responses(
+				NewResponse(200, "").
+					Headers(
+						NewHeader("Link", "string", "").Example(" <http:/api.gistfox.com/gists>;rel=\"self\""),
+					).
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists\" }\n    },\n    \"_embedded\": {\n        \"gists\": [\n            {\n                \"_links\" : {\n                    \"self\": { \"href\": \"/gists/42\" }\n                },\n                \"id\": \"42\",\n                \"created_at\": \"2014-04-14T02:15:15Z\",\n                \"description\": \"Description of Gist\"\n            }\n        ]\n    },\n    \"total\": 1\n}").
+					AdditionalDoc("HAL+JSON representation of Gist Collection Resource. The Gist resources in collections are embedded. Note the embedded Gists resource are incomplete representations of the Gist in question. Use the respective Gist link to retrieve its full representation."),
+			),
+
+		NewPostOperation("/gists", "Create a Gist").
+			Tags("Gist").
+			Desc("To create a new Gist simply provide a JSON hash of the *description* and *content* attributes for the new Gist.\n\nThis action requires an `access_token` with `gist_write` scope.").
+			Params(
+				NewQueryParam("since", "string", false, "Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists updated at or after this time are returned."),
+				NewQueryParam("access_token", "string", false, "Gist Fox API access token."),
+			).
+			Consumes(JSON).
+			Example("{\n    \"description\": \"Description of Gist\",\n    \"content\": \"String content\"\n}").
+			Produces("application/hal+json").
+			Responses(
+				NewResponse(201, "").
+					Headers(
+						NewHeader("Link", "string", "").Example(`<http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"`),
+					).
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42\" },\n        \"star\": { \"href\": \"/gists/42/star\" },\n    },\n    \"id\": \"42\",\n    \"created_at\": \"2014-04-14T02:15:15Z\",\n    \"description\": \"Description of Gist\",\n    \"content\": \"String contents\"\n}").
+					AdditionalDoc("HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links."),
+			),
+	)
+
+	AddOperations(
+		NewPutOperation("/gists/{id}/star", "Star a Gist").
+			Tags("Gist").
+			Desc("This action requires an `access_token` with `gist_write` scope.").
+			Params(
+				NewPathParam("id", "string", true, "ID of the gist in the form of a hash"),
+				NewQueryParam("access_token", "string", false, "Gist Fox API access token"),
+			).
+			Produces("application/hal+json").
+			Responses(
+				NewResponse(204, ""),
+			),
+
+		NewDeleteOperation("/gists/{id}/star", "Unstar a Gist").
+			Tags("Gist").
+			Desc("This action requires an `access_token` with `gist_write` scope.").
+			Params(
+				NewPathParam("id", "string", true, "ID of the gist in the form of a hash"),
+				NewQueryParam("access_token", "string", false, "Gist Fox API access token"),
+			).
+			Produces("application/hal+json").
+			Responses(
+				NewResponse(204, ""),
+			),
+
+		NewGetOperation("/gists/{id}/star", "Check if a Gist is Starred").
+			Tags("Gist").
+			Params(
+				NewPathParam("id", "string", true, "ID of the gist in the form of a hash"),
+				NewQueryParam("access_token", "string", false, "Gist Fox API access token"),
+			).
+			Produces("application/hal+json").
+			Responses(
+				NewResponse(200, "").
+					Headers(
+						NewHeader("Link", "string", "").Example("<http:/api.gistfox.com/gists/42/star>;rel=\"self\""),
+					).
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/gists/42/star\" },\n    },\n    \"starred\": true\n}").
+					AdditionalDoc("HAL+JSON representation of Star Resource."),
+			),
+	)
+
+	AddOperations(
+		NewGetOperation("/authorization", "Retrieve Authorization").
+			Tags("Access Authorization and Control").
+			Params(
+				NewHeaderParam("Authorization", "string", true, "").Example("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="),
+			).
+			Produces("application/hal+json").
+			Responses(
+				NewResponse(200, "").
+					Headers(
+						NewHeader("Link", "string", "").Example("<http:/api.gistfox.com/authorizations/1>;rel=\"self\""),
+					).
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"),
+			),
+
+		NewPostOperation("/authorization", "Create Authorization").
+			Tags("Access Authorization and Control").
+			Params(
+				NewHeaderParam("Authorization", "string", true, "").Example("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="),
+			).
+			Example("{\n    \"scopes\": [\n        \"gist_write\"\n    ]\n}").
+			Produces("application/hal+json").
+			Responses(
+				NewResponse(201, "").
+					Headers(
+						NewHeader("Link", "string", "").Example("<http:/api.gistfox.com/authorizations/1>;rel=\"self\""),
+					).
+					AddExample("application/hal+json", "{\n    \"_links\": {\n        \"self\": { \"href\": \"/authorizations\" },\n    },\n    \"scopes\": [\n        \"gist_write\"\n    ],\n    \"token\": \"abc123\"\n}"),
+			),
+
+		NewDeleteOperation("/authorization", "Remove an Authorization").
+			Tags("Access Authorization and Control").
+			Params(
+				NewHeaderParam("Authorization", "string", true, "").Example("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="),
+			).
+			Responses(
+				NewResponse(204, ""),
+			),
+	)
+
 	if _, err := GenerateSwaggerYaml(); err != nil {
 		failNow(t, fmt.Sprintf("GenerateSwaggerYaml error: %v", err))
 	}
 	if _, err := GenerateSwaggerJson(); err != nil {
 		failNow(t, fmt.Sprintf("GenerateSwaggerJson error: %v", err))
 	}
+	EnableWarningLogger()
 	if _, err := GenerateApib(); err != nil {
 		failNow(t, fmt.Sprintf("GenerateApib error: %v", err))
 	}
+	DisableWarningLogger()
 	if _, err := SaveSwaggerYaml("./docs/api2.yaml"); err != nil {
 		failNow(t, fmt.Sprintf("SaveSwaggerYaml error: %v", err))
 	}

@@ -319,7 +319,7 @@ func (p *Property) MultipleOf(multipleOf float64) *Property {
 	return p
 }
 
-// ItemOption sets the itemOption in Property.
+// ItemOption sets the itemOption in Property, this is only supported in Swagger.
 func (p *Property) ItemOption(itemOption *ItemOption) *Property {
 	p.itemOption = itemOption
 	return p
@@ -494,7 +494,7 @@ func (o *ItemOption) MultipleOf(multipleOf float64) *ItemOption {
 	return o
 }
 
-// ItemOption sets the itemOption in ItemOption.
+// ItemOption sets the itemOption in ItemOption, this is only supported in Swagger.
 func (o *ItemOption) ItemOption(itemOption *ItemOption) *ItemOption {
 	o.itemOption = itemOption
 	return o

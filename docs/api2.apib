@@ -1,9 +1,9 @@
 FORMAT: 1A
-HOST: api.fake.com/
+HOST: api.gistfox.com/
 
 # Gist Fox API (1.0.0)
 
-> Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com).
+Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com).
 
 ## Authentication
 *Gist Fox API* uses OAuth Authorization. First you create a new (or acquire existing) OAuth token using Basic Authentication. After you have acquired your token you can use it to access other resources within token' scope.
@@ -18,9 +18,11 @@ The common [HTTP Response Status Codes](https://github.com/for-GET/know-your-htt
 
 # Group Gist
 
-> Gist-related resources of *Gist Fox API*.
+Gist-related resources of *Gist Fox API*.
 
 ## Gist [/gists/{id}{?access_token}]
+
+> `/gists/{id}`
 
 A single Gist object. The Gist resource is the central resource in the Gist Fox API. It represents one paste - a single text note.
 
@@ -35,7 +37,7 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 
 ### Retrieve a Single Gist [GET]
 
-`GET /gists/{id}`
+> `GET /gists/{id}`
 
 + Parameters
 
@@ -48,7 +50,9 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 
 + Response 200 (application/hal+json)
 
-    > 200 OK
+    200 OK
+
+    HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
 
     + Headers
 
@@ -56,13 +60,22 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 
     + Body
 
-            null
+            {
+                "_links": {
+                    "self": { "href": "/gists/42" },
+                    "star": { "href": "/gists/42/star" },
+                },
+                "id": "42",
+                "created_at": "2014-04-14T02:15:15Z",
+                "description": "Description of Gist",
+                "content": "String contents"
+            }
 
 ### Edit a Gist [PATCH]
 
-`PATCH /gists/{id}`
+> `PATCH /gists/{id}`
 
-> To update a Gist send a JSON with updated value for one or more of the Gist resource attributes. All attributes values (states) from the previous version of this Gist are carried over by default if not included in the hash.
+To update a Gist send a JSON with updated value for one or more of the Gist resource attributes. All attributes values (states) from the previous version of this Gist are carried over by default if not included in the hash.
 
 + Parameters
 
@@ -71,13 +84,17 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 
 + Request (application/json)
 
-    + Attributes (string)
-
     + Body
+
+            {
+                "content": "Updated file contents"
+            }
 
 + Response 200 (application/hal+json)
 
-    > 200 OK
+    200 OK
+
+    HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
 
     + Headers
 
@@ -85,11 +102,20 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 
     + Body
 
-            null
+            {
+                "_links": {
+                    "self": { "href": "/gists/42" },
+                    "star": { "href": "/gists/42/star" },
+                },
+                "id": "42",
+                "created_at": "2014-04-14T02:15:15Z",
+                "description": "Description of Gist",
+                "content": "String contents"
+            }
 
 ### Delete a Gist [DELETE]
 
-`DELETE /gists/{id}`
+> `DELETE /gists/{id}`
 
 + Parameters
 
@@ -102,23 +128,30 @@ The states *id* and *created_at* are assigned by the Gist Fox API at the moment 
 
 + Response 204 (application/json)
 
-    > 204 No Content
+    204 No Content
 
     + Body
 
-# Group Access Authorization and Control
+## Gists Collection [/gists{?since,access_token}]
 
-> Access and Control of *Gist Fox API* OAuth token.
+> `/gists`
 
-# Group Default
+Collection of all Gists.
 
-## Gist Fox API Root [/]
+The Gist Collection resource has the following attribute:
 
-This resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and HAL links.
++ total
 
-### Retrieve the Entry Point [GET]
+In addition it **embeds** *Gist Resources* in the Gist Fox API.
 
-`GET /`
+### List All Gists [GET]
+
+> `GET /gists`
+
++ Parameters
+
+    + since (string, optional) - Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists updated at or after this time are returned.
+    + access_token (string, optional) - Gist Fox API access token.
 
 + Request (application/json)
 
@@ -126,7 +159,291 @@ This resource does not have any attributes. Instead it offers the initial API af
 
 + Response 200 (application/hal+json)
 
-    > 200 OK
+    200 OK
+
+    HAL+JSON representation of Gist Collection Resource. The Gist resources in collections are embedded. Note the embedded Gists resource are incomplete representations of the Gist in question. Use the respective Gist link to retrieve its full representation.
+
+    + Headers
+
+            Link:  <http:/api.gistfox.com/gists>;rel="self"
+
+    + Body
+
+            {
+                "_links": {
+                    "self": { "href": "/gists" }
+                },
+                "_embedded": {
+                    "gists": [
+                        {
+                            "_links" : {
+                                "self": { "href": "/gists/42" }
+                            },
+                            "id": "42",
+                            "created_at": "2014-04-14T02:15:15Z",
+                            "description": "Description of Gist"
+                        }
+                    ]
+                },
+                "total": 1
+            }
+
+### Create a Gist [POST]
+
+> `POST /gists`
+
+To create a new Gist simply provide a JSON hash of the *description* and *content* attributes for the new Gist.
+
+This action requires an `access_token` with `gist_write` scope.
+
++ Parameters
+
+    + since (string, optional) - Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists updated at or after this time are returned.
+    + access_token (string, optional) - Gist Fox API access token.
+
++ Request (application/json)
+
+    + Body
+
+            {
+                "description": "Description of Gist",
+                "content": "String content"
+            }
+
++ Response 201 (application/hal+json)
+
+    201 Created
+
+    HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Headers
+
+            Link: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+
+    + Body
+
+            {
+                "_links": {
+                    "self": { "href": "/gists/42" },
+                    "star": { "href": "/gists/42/star" },
+                },
+                "id": "42",
+                "created_at": "2014-04-14T02:15:15Z",
+                "description": "Description of Gist",
+                "content": "String contents"
+            }
+
+## Star [/gists/{id}/star{?access_token}]
+
+> `/gists/{id}/star`
+
+Star resource represents a Gist starred status.
+
+The Star resource has the following attribute:
+
++ starred
+
+### Star a Gist [PUT]
+
+> `PUT /gists/{id}/star`
+
+This action requires an `access_token` with `gist_write` scope.
+
++ Parameters
+
+    + id (string, required) - ID of the gist in the form of a hash
+    + access_token (string, optional) - Gist Fox API access token
+
++ Request (application/json)
+
+    + Body
+
++ Response 204 (application/hal+json)
+
+    204 No Content
+
+    + Body
+
+### Unstar a Gist [DELETE]
+
+> `DELETE /gists/{id}/star`
+
+This action requires an `access_token` with `gist_write` scope.
+
++ Parameters
+
+    + id (string, required) - ID of the gist in the form of a hash
+    + access_token (string, optional) - Gist Fox API access token
+
++ Request (application/json)
+
+    + Body
+
++ Response 204 (application/hal+json)
+
+    204 No Content
+
+    + Body
+
+### Check if a Gist is Starred [GET]
+
+> `GET /gists/{id}/star`
+
++ Parameters
+
+    + id (string, required) - ID of the gist in the form of a hash
+    + access_token (string, optional) - Gist Fox API access token
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/hal+json)
+
+    200 OK
+
+    HAL+JSON representation of Star Resource.
+
+    + Headers
+
+            Link: <http:/api.gistfox.com/gists/42/star>;rel="self"
+
+    + Body
+
+            {
+                "_links": {
+                    "self": { "href": "/gists/42/star" },
+                },
+                "starred": true
+            }
+
+# Group Access Authorization and Control
+
+Access and Control of *Gist Fox API* OAuth token.
+
+## Authorization [/authorization]
+
+> `/authorization`
+
+Authorization Resource represents an authorization granted to the user. You can **only** access your own authorization, and only through **Basic Authentication**.
+
+The Authorization Resource has the following attribute:
+
++ token
++ scopes
+
+Where *token* represents an OAuth token and *scopes* is an array of scopes granted for the given authorization. At this moment the only available scope is `gist_write`.
+
+### Retrieve Authorization [GET]
+
+> `GET /authorization`
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+
+    + Body
+
++ Response 200 (application/hal+json)
+
+    200 OK
+
+    + Headers
+
+            Link: <http:/api.gistfox.com/authorizations/1>;rel="self"
+
+    + Body
+
+            {
+                "_links": {
+                    "self": { "href": "/authorizations" },
+                },
+                "scopes": [
+                    "gist_write"
+                ],
+                "token": "abc123"
+            }
+
+### Create Authorization [POST]
+
+> `POST /authorization`
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+
+    + Body
+
+            {
+                "scopes": [
+                    "gist_write"
+                ]
+            }
+
++ Response 201 (application/hal+json)
+
+    201 Created
+
+    + Headers
+
+            Link: <http:/api.gistfox.com/authorizations/1>;rel="self"
+
+    + Body
+
+            {
+                "_links": {
+                    "self": { "href": "/authorizations" },
+                },
+                "scopes": [
+                    "gist_write"
+                ],
+                "token": "abc123"
+            }
+
+### Remove an Authorization [DELETE]
+
+> `DELETE /authorization`
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+
+    + Body
+
++ Response 204 (application/json)
+
+    204 No Content
+
+    + Body
+
+# Group Default
+
+## Gist Fox API Root [/]
+
+> `/`
+
+Gist Fox API entry point.
+
+This resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and
+HAL links.
+
+### Retrieve the Entry Point [GET]
+
+> `GET /`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/hal+json)
+
+    200 OK
 
     + Headers
 
@@ -134,6 +451,12 @@ This resource does not have any attributes. Instead it offers the initial API af
 
     + Body
 
-            null
+            {
+                "_links": {
+                    "self": { "href": "/" },
+                    "gists": { "href": "/gists?{since}", "templated": true },
+                    "authorization": { "href": "/authorization"}
+                }
+            }
 
 # Data Structures

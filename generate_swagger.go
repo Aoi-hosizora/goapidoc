@@ -202,7 +202,7 @@ type swagItems struct {
 }
 
 // ==============
-// items & schema
+// items & schema & xmlRepr & externalDocs
 // ==============
 
 func buildSwaggerItems(arr *apiArray, opt *ItemOption) *swagItems {
@@ -317,6 +317,29 @@ func buildSwaggerSchema(typ string, option *ItemOption) (outType, outFmt, origin
 	}
 }
 
+func buildSwaggerXMLRepr(xml *XMLRepr) *swagXMLRepr {
+	if xml == nil {
+		return nil
+	}
+	return &swagXMLRepr{
+		Name:      xml.name,
+		Namespace: xml.namespace,
+		Prefix:    xml.prefix,
+		Attribute: xml.attribute,
+		Wrapped:   xml.wrapped,
+	}
+}
+
+func buildSwaggerExternalDocs(docs *ExternalDocs) *swagExternalDocs {
+	if docs == nil {
+		return nil
+	}
+	return &swagExternalDocs{
+		Description: docs.desc,
+		Url:         docs.url,
+	}
+}
+
 // ===============================
 // params & responses & definition
 // ===============================
@@ -327,6 +350,7 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 		var param *swagParam
 		typ, format, origin, ref, items := buildSwaggerSchema(p.typ, p.itemOption)
 		if p.in != BODY {
+			// cannot use schema
 			if ref != "" {
 				panic("Invalid type `" + p.typ + "` used in non-body parameter") // only allowed primitive and array
 			}
@@ -353,6 +377,7 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 				ExclusiveMin:     p.exclusiveMin,
 				ExclusiveMax:     p.exclusiveMax,
 				MultipleOf:       p.multipleOf,
+				XMLRepr:          buildSwaggerXMLRepr(p.xmlRepr),
 				Items:            items,
 			}
 		} else {
@@ -385,17 +410,9 @@ func buildSwaggerParams(params []*Param) []*swagParam {
 					ExclusiveMin:     p.exclusiveMin,
 					ExclusiveMax:     p.exclusiveMax,
 					MultipleOf:       p.multipleOf,
+					XMLRepr:          buildSwaggerXMLRepr(p.xmlRepr),
 					Items:            items,
 				}
-			}
-		}
-		if x := p.xmlRepr; x != nil {
-			param.XMLRepr = &swagXMLRepr{
-				Name:      x.name,
-				Namespace: x.namespace,
-				Prefix:    x.prefix,
-				Attribute: x.attribute,
-				Wrapped:   x.wrapped,
 			}
 		}
 
@@ -448,7 +465,7 @@ func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
 }
 
 func buildSwaggerDefinition(definition *Definition) *swagDefinition {
-	required := make([]string, 0, len(definition.properties))
+	required := make([]string, 0, len(definition.properties)/2)
 	properties := newOrderedMap(len(definition.properties)) // map[string]*swagSchema
 	for _, p := range definition.properties {
 		if p.required {
@@ -481,36 +498,18 @@ func buildSwaggerDefinition(definition *Definition) *swagDefinition {
 				ExclusiveMin:     p.exclusiveMin,
 				ExclusiveMax:     p.exclusiveMax,
 				MultipleOf:       p.multipleOf,
+				XMLRepr:          buildSwaggerXMLRepr(p.xmlRepr),
 				Items:            items,
-			}
-		}
-		if x := p.xmlRepr; x != nil {
-			schema.XMLRepr = &swagXMLRepr{
-				Name:      x.name,
-				Namespace: x.namespace,
-				Prefix:    x.prefix,
-				Attribute: x.attribute,
-				Wrapped:   x.wrapped,
 			}
 		}
 		properties.Set(p.name, schema)
 	}
 
-	var xmlRepr *swagXMLRepr
-	if x := definition.xmlRepr; x != nil {
-		xmlRepr = &swagXMLRepr{
-			Name:      x.name,
-			Namespace: x.namespace,
-			Prefix:    x.prefix,
-			Attribute: x.attribute,
-			Wrapped:   x.wrapped,
-		}
-	}
 	return &swagDefinition{
 		Type:        OBJECT, // fixed schema type to object
-		Description: definition.desc,
-		XMLRepr:     xmlRepr,
 		Required:    required,
+		Description: definition.desc,
+		XMLRepr:     buildSwaggerXMLRepr(definition.xmlRepr),
 		Properties:  properties,
 	}
 }
@@ -532,15 +531,10 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 		securities := make([]map[string][]string, 0, len(op.securities))
 		for _, s := range op.securities {
 			secReq := map[string][]string{s: {}}
-			scopes, ok := op.secsScopes[s]
-			if ok {
+			if scopes, ok := op.secsScopes[s]; ok {
 				secReq[s] = scopes
 			}
 			securities = append(securities, secReq)
-		}
-		var externalDocs *swagExternalDocs
-		if e := op.externalDocs; e != nil {
-			externalDocs = &swagExternalDocs{Description: e.desc, Url: e.url}
 		}
 
 		_, ok := out[op.route]
@@ -557,7 +551,7 @@ func buildSwaggerOperations(doc *Document) map[string]map[string]*swagOperation 
 			Tags:         op.tags,
 			Securities:   securities,
 			Deprecated:   op.deprecated,
-			ExternalDocs: externalDocs,
+			ExternalDocs: buildSwaggerExternalDocs(op.externalDocs),
 			Parameters:   buildSwaggerParams(op.params),
 			Responses:    buildSwaggerResponses(op.responses),
 		}
@@ -610,17 +604,13 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 	}
 
 	// option
-	if doc.option != nil {
-		tags := make([]*swagTag, 0, len(doc.option.tags))
-		for _, t := range doc.option.tags {
-			tag := &swagTag{Name: t.name, Description: t.desc}
-			if e := t.externalDocs; e != nil {
-				tag.ExternalDocs = &swagExternalDocs{Description: e.desc, Url: e.url}
-			}
-			tags = append(tags, tag)
+	if opt := doc.option; opt != nil {
+		tags := make([]*swagTag, 0, len(opt.tags))
+		for _, t := range opt.tags {
+			tags = append(tags, &swagTag{Name: t.name, Description: t.desc, ExternalDocs: buildSwaggerExternalDocs(t.externalDocs)})
 		}
-		securities := make(map[string]*swagSecurity, len(doc.option.securities))
-		for _, s := range doc.option.securities {
+		securities := make(map[string]*swagSecurity, len(opt.securities))
+		for _, s := range opt.securities {
 			if s.typ == APIKEY {
 				securities[s.title] = &swagSecurity{Type: APIKEY, Description: s.desc, Name: s.name, In: s.in}
 			} else if s.typ == BASIC {
@@ -629,17 +619,14 @@ func buildSwaggerDocument(doc *Document) *swagDocument {
 				securities[s.title] = &swagSecurity{Type: OAUTH2, Description: s.desc, Flow: s.flow, AuthorizationUrl: s.authorizationUrl, TokenUrl: s.tokenUrl, Scopes: s.scopes}
 			}
 		}
-		var externalDocs *swagExternalDocs
-		if e := doc.option.externalDocs; e != nil {
-			externalDocs = &swagExternalDocs{Description: e.desc, Url: e.url}
-		}
+		docs := buildSwaggerExternalDocs(opt.externalDocs)
 
-		out.Schemes = doc.option.schemes
-		out.Consumes = doc.option.consumes
-		out.Produces = doc.option.produces
+		out.Schemes = opt.schemes
+		out.Consumes = opt.consumes
+		out.Produces = opt.produces
 		out.Tags = tags
 		out.Securities = securities
-		out.ExternalDocs = externalDocs
+		out.ExternalDocs = docs
 	}
 
 	// definitions & operations

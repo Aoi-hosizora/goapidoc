@@ -33,10 +33,6 @@
       "description": "Access to Petstore orders"
     },
     {
-      "name": "store",
-      "description": "Access to Petstore orders"
-    },
-    {
       "name": "user",
       "description": "Operations about user",
       "externalDocs": {
@@ -50,6 +46,10 @@
       "type": "apiKey",
       "name": "api_key",
       "in": "header"
+    },
+    "b": {
+      "type": "basic",
+      "description": "A demo basic security definition"
     },
     "petstore_auth": {
       "type": "oauth2",
@@ -315,6 +315,9 @@
         "security": [
           {
             "api_key": []
+          },
+          {
+            "b": []
           }
         ],
         "parameters": [
@@ -460,6 +463,11 @@
         "tags": [
           "store"
         ],
+        "security": [
+          {
+            "b": []
+          }
+        ],
         "parameters": [
           {
             "name": "body",
@@ -496,6 +504,11 @@
         "tags": [
           "store"
         ],
+        "security": [
+          {
+            "b": []
+          }
+        ],
         "parameters": [
           {
             "name": "orderId",
@@ -526,6 +539,11 @@
         ],
         "tags": [
           "store"
+        ],
+        "security": [
+          {
+            "b": []
+          }
         ],
         "parameters": [
           {

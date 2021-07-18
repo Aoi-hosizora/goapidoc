@@ -1,7 +1,6 @@
 package goapidoc
 
 import (
-	"errors"
 	"testing"
 )
 
@@ -121,31 +120,6 @@ func TestMarshal(t *testing.T) {
 			}
 			if (err == nil && tc.wantErr) || (err != nil && !tc.wantErr) {
 				failNow(t, "yamlMarshal get an unexpected result for error")
-			}
-		})
-	}
-}
-
-func TestBsErrToStrErr(t *testing.T) {
-	for _, tc := range []struct {
-		name    string
-		giveBs  []byte
-		giveErr error
-		wantStr string
-		wantErr error
-	}{
-		{"empty string, nil error", nil, nil, "", nil},
-		{"string, nil error", []byte("test test"), nil, "test test", nil},
-		{"empty string, error", nil, errors.New("error error"), "", errors.New("error error")},
-		{"string, error", []byte("test test"), errors.New("error error"), "test test", errors.New("error error")},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			str, err := bsErrToStrErr(tc.giveBs, tc.giveErr)
-			if str != tc.wantStr {
-				failNow(t, "bsErrToStrErr get an unexpected result")
-			}
-			if (err == nil && tc.wantErr != nil) || (err != nil && tc.wantErr == nil) || (err != nil && err.Error() != tc.wantErr.Error()) {
-				failNow(t, "bsErrToStrErr get an unexpected result")
 			}
 		})
 	}

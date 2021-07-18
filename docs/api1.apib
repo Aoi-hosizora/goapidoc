@@ -3,7 +3,7 @@ HOST: petstore.swagger.io/v2
 
 # Swagger Petstore (1.0.0)
 
-> This is a sample server Petstore server.
+This is a sample server Petstore server.
 
 [Terms of service](http://swagger.io/terms/)
 
@@ -18,11 +18,12 @@ HOST: petstore.swagger.io/v2
 + petstore_auth: oauth2
     + flow: implicit
     + authUrl: http://petstore.swagger.io/oauth/dialog
-    + scope: write:pets - modify pets in your account
     + scope: read:pets - read your pets
+    + scope: write:pets - modify pets in your account
 + api_key: apiKey
     + name: api_key
     + in: header
++ b: basic - A demo basic security definition
 
 ## Supported schemes
 
@@ -31,77 +32,81 @@ HOST: petstore.swagger.io/v2
 
 # Group pet
 
-> Everything about your Pets
+Everything about your Pets
 
 [Find out more](http://swagger.io)
 
 ## Add a new pet to the store | Update an existing pet [/pet]
 
+> `/pet`
+
 ### Add a new pet to the store [POST]
 
-`POST /pet`
+> `POST /pet`
 
-+ Security requirement: petstore_auth
+Security requirement: petstore_auth
 
 + Request (application/json)
+
+    + Attributes (Pet)
 
     + Headers
 
             Authorization: (string, optional) - petstore_auth, oauth2
 
-    + Attributes (Pet)
-
     + Body
 
 + Response 405 (application/xml)
 
-    > Invalid input
+    Invalid input
 
     + Body
 
 ### Update an existing pet [PUT]
 
-`PUT /pet`
+> `PUT /pet`
 
-+ Security requirement: petstore_auth
+Security requirement: petstore_auth
 
 + Request (application/json)
+
+    + Attributes (Pet)
 
     + Headers
 
             Authorization: (string, optional) - petstore_auth, oauth2
 
-    + Attributes (Pet)
-
     + Body
 
 + Response 400 (application/xml)
 
-    > Invalid ID supplied
+    Invalid ID supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > Pet not found
+    Pet not found
 
     + Body
 
 + Response 405 (application/xml)
 
-    > Validation exception
+    Validation exception
 
     + Body
 
 ## Finds Pets by status [/pet/findByStatus{?status}]
 
+> `/pet/findByStatus`
+
 ### Finds Pets by status [GET]
 
-`GET /pet/findByStatus`
+> `GET /pet/findByStatus`
 
-> Multiple status values can be provided with comma separated strings.
+Multiple status values can be provided with comma separated strings.
 
-+ Security requirement: petstore_auth
+Security requirement: petstore_auth
 
 + Parameters
 
@@ -118,7 +123,7 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Attributes (array[Pet])
 
@@ -126,21 +131,23 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid status value
+    Invalid status value
 
     + Body
 
 ## Finds Pets by tags [/pet/findByTags{?tags}]
 
+> `/pet/findByTags`
+
 ### Finds Pets by tags [GET]
 
-`GET /pet/findByTags`
+> `GET /pet/findByTags`
 
-> Multiple tags can be provided with comma separated strings.
+Multiple tags can be provided with comma separated strings.
 
-+ Security requirement: petstore_auth
+**Attention: This api is deprecated!**
 
-+ **Attention: This api is deprecated!**
+Security requirement: petstore_auth
 
 + Parameters
 
@@ -157,7 +164,7 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Attributes (array[Pet])
 
@@ -165,19 +172,21 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid tag value
+    Invalid tag value
 
     + Body
 
 ## Find pet by ID | Updates a pet in the store with form data | Deletes a pet [/pet/{petId}]
 
+> `/pet/{petId}`
+
 ### Find pet by ID [GET]
 
-`GET /pet/{petId}`
+> `GET /pet/{petId}`
 
-> Returns a single pet.
+Returns a single pet.
 
-+ Security requirement: api_key
+Security requirement: api_key
 
 + Parameters
 
@@ -194,7 +203,7 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Attributes (Pet)
 
@@ -202,21 +211,21 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid ID supplied
+    Invalid ID supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > Pet not found
+    Pet not found
 
     + Body
 
 ### Updates a pet in the store with form data [POST]
 
-`POST /pet/{petId}`
+> `POST /pet/{petId}`
 
-+ Security requirement: petstore_auth
+Security requirement: petstore_auth
 
 + Parameters
 
@@ -225,28 +234,28 @@ HOST: petstore.swagger.io/v2
 
 + Request (application/x-www-form-urlencoded)
 
-    + Headers
-
-            Authorization: (string, optional) - petstore_auth, oauth2
-
     + Attributes (object)
 
         + name (string, optional) - Updated name of the pet
         + status (string, optional) - Updated status of the pet
 
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
     + Body
 
 + Response 405 (application/xml)
 
-    > Invalid input
+    Invalid input
 
     + Body
 
 ### Deletes a pet [DELETE]
 
-`DELETE /pet/{petId}`
+> `DELETE /pet/{petId}`
 
-+ Security requirement: petstore_auth
+Security requirement: petstore_auth
 
 + Parameters
 
@@ -264,23 +273,25 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid ID supplied
+    Invalid ID supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > Pet not found
+    Pet not found
 
     + Body
 
 ## Uploads an image [/pet/{petId}/uploadImage]
 
+> `/pet/{petId}/uploadImage`
+
 ### Uploads an image [POST]
 
-`POST /pet/{petId}/uploadImage`
+> `POST /pet/{petId}/uploadImage`
 
-+ Security requirement: petstore_auth
+Security requirement: petstore_auth
 
 + Parameters
 
@@ -289,20 +300,20 @@ HOST: petstore.swagger.io/v2
 
 + Request (multipart/form-data)
 
-    + Headers
-
-            Authorization: (string, optional) - petstore_auth, oauth2
-
     + Attributes (object)
 
         + additionalMetadata (string, optional) - Additional data to pass to server
         + file (string, optional) - file to upload
 
+    + Headers
+
+            Authorization: (string, optional) - petstore_auth, oauth2
+
     + Body
 
 + Response 200 (application/json)
 
-    > successful operation
+    successful operation
 
     + Attributes (ApiResponse)
 
@@ -310,23 +321,31 @@ HOST: petstore.swagger.io/v2
 
 # Group store
 
-> Access to Petstore orders
+Access to Petstore orders
 
 ## Place an order for a pet [/store/order]
 
+> `/store/order`
+
 ### Place an order for a pet [POST]
 
-`POST /store/order`
+> `POST /store/order`
+
+Security requirement: b
 
 + Request (application/json)
 
     + Attributes (Order)
 
+    + Headers
+
+            Authorization: (string, optional) - b (A demo basic security definition), basic
+
     + Body
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Attributes (Order)
 
@@ -334,17 +353,21 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid Order
+    Invalid Order
 
     + Body
 
 ## Find purchase order by ID | Delete purchase order by ID [/store/order/{orderId}]
 
+> `/store/order/{orderId}`
+
 ### Find purchase order by ID [GET]
 
-`GET /store/order/{orderId}`
+> `GET /store/order/{orderId}`
 
-> For valid response try integer IDs with value >= 1 and <= 10.
+For valid response try integer IDs with value >= 1 and <= 10.
+
+Security requirement: b
 
 + Parameters
 
@@ -353,11 +376,15 @@ HOST: petstore.swagger.io/v2
 
 + Request (application/json)
 
+    + Headers
+
+            Authorization: (string, optional) - b (A demo basic security definition), basic
+
     + Body
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Attributes (Order)
 
@@ -365,21 +392,23 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid ID supplied
+    Invalid ID supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > Order not found
+    Order not found
 
     + Body
 
 ### Delete purchase order by ID [DELETE]
 
-`DELETE /store/order/{orderId}`
+> `DELETE /store/order/{orderId}`
 
-> For valid response try integer IDs with positive integer value.
+For valid response try integer IDs with positive integer value.
+
+Security requirement: b
 
 + Parameters
 
@@ -388,127 +417,39 @@ HOST: petstore.swagger.io/v2
 
 + Request (application/json)
 
+    + Headers
+
+            Authorization: (string, optional) - b (A demo basic security definition), basic
+
     + Body
 
 + Response 400 (application/xml)
 
-    > Invalid ID supplied
+    Invalid ID supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > Order not found
-
-    + Body
-
-# Group store
-
-> Access to Petstore orders
-
-## Place an order for a pet [/store/order]
-
-### Place an order for a pet [POST]
-
-`POST /store/order`
-
-+ Request (application/json)
-
-    + Attributes (Order)
-
-    + Body
-
-+ Response 200 (application/xml)
-
-    > successful operation
-
-    + Attributes (Order)
-
-    + Body
-
-+ Response 400 (application/xml)
-
-    > Invalid Order
-
-    + Body
-
-## Find purchase order by ID | Delete purchase order by ID [/store/order/{orderId}]
-
-### Find purchase order by ID [GET]
-
-`GET /store/order/{orderId}`
-
-> For valid response try integer IDs with value >= 1 and <= 10.
-
-+ Parameters
-
-    + orderId (number, required) - ID of pet that needs to be fetched
-        (format: int64, 1.000 <= val <= 10.000)
-
-+ Request (application/json)
-
-    + Body
-
-+ Response 200 (application/xml)
-
-    > successful operation
-
-    + Attributes (Order)
-
-    + Body
-
-+ Response 400 (application/xml)
-
-    > Invalid ID supplied
-
-    + Body
-
-+ Response 404 (application/xml)
-
-    > Order not found
-
-    + Body
-
-### Delete purchase order by ID [DELETE]
-
-`DELETE /store/order/{orderId}`
-
-> For valid response try integer IDs with positive integer value.
-
-+ Parameters
-
-    + orderId (number, required) - ID of the order that needs to be deleted
-        (format: int64, val >= 1.000)
-
-+ Request (application/json)
-
-    + Body
-
-+ Response 400 (application/xml)
-
-    > Invalid ID supplied
-
-    + Body
-
-+ Response 404 (application/xml)
-
-    > Order not found
+    Order not found
 
     + Body
 
 # Group user
 
-> Operations about user
+Operations about user
 
 [Find out more about our store](http://swagger.io)
 
 ## Create user [/user]
 
+> `/user`
+
 ### Create user [POST]
 
-`POST /user`
+> `POST /user`
 
-> This can only be done by the logged in user.
+This can only be done by the logged in user.
 
 + Request (application/json)
 
@@ -518,15 +459,17 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Body
 
 ## Creates list of users with given input array [/user/createWithArray]
 
+> `/user/createWithArray`
+
 ### Creates list of users with given input array [POST]
 
-`POST /user/createWithArray`
+> `POST /user/createWithArray`
 
 + Request (application/json)
 
@@ -536,15 +479,17 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Body
 
 ## Logs user into the system [/user/login{?username,password}]
 
+> `/user/login`
+
 ### Logs user into the system [GET]
 
-`GET /user/login`
+> `GET /user/login`
 
 + Parameters
 
@@ -557,28 +502,30 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Attributes (string)
 
     + Headers
 
-            <nil>
-            <nil>
+            X-Rate-Limit: (number, required) - calls per hour allowed by the user
+            X-Expires-After: (string, required) - date in UTC when token expires
 
     + Body
 
 + Response 400 (application/xml)
 
-    > Invalid username/password supplied
+    Invalid username/password supplied
 
     + Body
 
 ## Logs out current logged in user session [/user/logout]
 
+> `/user/logout`
+
 ### Logs out current logged in user session [GET]
 
-`GET /user/logout`
+> `GET /user/logout`
 
 + Request (application/json)
 
@@ -586,15 +533,17 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Body
 
 ## Get user by user name | Update user | Delete user [/user/{username}]
 
+> `/user/{username}`
+
 ### Get user by user name [GET]
 
-`GET /user/{username}`
+> `GET /user/{username}`
 
 + Parameters
 
@@ -606,7 +555,7 @@ HOST: petstore.swagger.io/v2
 
 + Response 200 (application/xml)
 
-    > successful operation
+    successful operation
 
     + Attributes (User)
 
@@ -614,21 +563,21 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid username supplied
+    Invalid username supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > User not found
+    User not found
 
     + Body
 
 ### Update user [PUT]
 
-`PUT /user/{username}`
+> `PUT /user/{username}`
 
-> This can only be done by the logged in user.
+This can only be done by the logged in user.
 
 + Parameters
 
@@ -642,21 +591,21 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid user supplied
+    Invalid user supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > User not found
+    User not found
 
     + Body
 
 ### Delete user [DELETE]
 
-`DELETE /user/{username}`
+> `DELETE /user/{username}`
 
-> This can only be done by the logged in user.
+This can only be done by the logged in user.
 
 + Parameters
 
@@ -668,13 +617,13 @@ HOST: petstore.swagger.io/v2
 
 + Response 400 (application/xml)
 
-    > Invalid username supplied
+    Invalid username supplied
 
     + Body
 
 + Response 404 (application/xml)
 
-    > User not found
+    User not found
 
     + Body
 

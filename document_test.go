@@ -99,12 +99,13 @@ func TestSetGet(t *testing.T) {
 				Desc("Find out more about this api").
 				Url("https://github.com/Aoi-hosizora")).
 			AdditionalDoc("## Error States\n\nPlease visit [xxx](xxx).").
-			AddRoutesAlias("", "").
-			RoutesAliases(map[string]string{"/user": "Operations about user list"}).
-			AddRoutesAlias("/user/{id}", "Operations about specific user").
-			AddRoutesAdditionalDoc("", "").
-			RoutesAdditionalDocs(map[string]string{"/user": "This is /user"}).
-			AddRoutesAdditionalDoc("/user/{id}", "This is /user/{id}"))
+			RoutesOptions(NewRoutesOption("").
+				Route("/user").
+				Summary("User collection").
+				AdditionalDoc("This is endpoint /user")).
+			AddRoutesOptions(NewRoutesOption("/user/{id}").
+				Summary("Specific user").
+				AdditionalDoc("This is endpoint /user/{id}")))
 		AddOperations(NewOperation("", "", ""))
 		SetOperations(NewOperation("", "", ""),
 			NewOperation("", "", ""))
@@ -171,11 +172,18 @@ func TestSetGet(t *testing.T) {
 		if GetOption().GetAdditionalDoc() != "## Error States\n\nPlease visit [xxx](xxx)." {
 			failNow(t, "Option.AdditionalDoc has a wrong behavior")
 		}
-		if a := GetOption().GetRoutesAliases(); a["/user"] != "Operations about user list" || a["/user/{id}"] != "Operations about specific user" {
-			failNow(t, "Option.RoutesAliases or Option.AddRoutesAliases has a wrong behavior")
+		if len(GetOption().GetRoutesOptions()) != 2 {
+			failNow(t, "Option.RoutesOptions or Option.AddRoutesOptions has a wrong behavior")
 		}
-		if d := GetOption().GetRoutesAdditionalDocs(); d["/user"] != "This is /user" || d["/user/{id}"] != "This is /user/{id}" {
-			failNow(t, "Option.RoutesAdditionalDocs or Option.AddRoutesAdditionalDoc has a wrong behavior")
+		ro := GetOption().GetRoutesOptions()
+		if ro[0].GetRoute() != "/user" || ro[1].GetRoute() != "/user/{id}" {
+			failNow(t, "NewRoutesOption or RoutesOption.Routes has a wrong behavior")
+		}
+		if ro[0].GetSummary() != "User collection" || ro[1].GetSummary() != "Specific user" {
+			failNow(t, "RoutesOption.Summary has a wrong behavior")
+		}
+		if ro[0].GetAdditionalDoc() != "This is endpoint /user" || ro[1].GetAdditionalDoc() != "This is endpoint /user/{id}" {
+			failNow(t, "RoutesOption.AdditionalDoc has a wrong behavior")
 		}
 		if len(GetOperations()) != 2 {
 			failNow(t, "AddOperations or SetOperations has a wrong behavior")
@@ -219,6 +227,7 @@ func TestSetGet(t *testing.T) {
 			SecuritiesScopes(map[string][]string{"oauth2": {"read", "write"}}).
 			AddSecurityScopes("another_oauth2", "xx", "yy").
 			Deprecated(true).
+			Example(map[string]interface{}{"key": "value"}).
 			ExternalDocs(NewExternalDocs("Find out more this operation", "https://github.com/Aoi-hosizora")).
 			AdditionalDoc("This is GET /user/{id}'s additional document").
 			Responses(NewResponse(404, "Result")).
@@ -226,6 +235,7 @@ func TestSetGet(t *testing.T) {
 				Code(200).
 				Type("_Result<User>").
 				Desc("200 OK").
+				AdditionalDoc("The response is a result model").
 				AddExample(XML, nil).
 				Examples(map[string]interface{}{JSON: map[string]interface{}{"code": 200, "message": "success", "data": map[string]interface{}{"id": 1, "name": "user1"}}}).
 				AddExample(XML, map[string]interface{}{"code": 200, "message": "ok"}).
@@ -319,6 +329,9 @@ func TestSetGet(t *testing.T) {
 		if op.GetDeprecated() != true {
 			failNow(t, "Operation.Deprecated has a wrong behavior")
 		}
+		if op.GetExample() == nil || op.GetExample().(map[string]interface{})["key"] != "value" {
+			failNow(t, "Operation.Example has a wrong behavior")
+		}
 		if e := op.GetExternalDocs(); e.GetDesc() != "Find out more this operation" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
 			failNow(t, "Operation.ExternalDocs has a wrong behavior")
 		}
@@ -337,6 +350,9 @@ func TestSetGet(t *testing.T) {
 		}
 		if resp.GetDesc() != "200 OK" {
 			failNow(t, "Response.Desc has a wrong behavior")
+		}
+		if resp.GetAdditionalDoc() != "The response is a result model" {
+			failNow(t, "Response.AdditionalDoc has a wrong behavior")
 		}
 		if e := resp.GetExamples(); e["application/json"].(map[string]interface{})["message"] != "success" ||
 			e["application/xml"].(map[string]interface{})["message"] != "ok" || e["text/plain"].(string) != "hello world" {

@@ -224,15 +224,14 @@ func (c *Contact) Email(email string) *Contact {
 // Option represents an extra options of Document.
 // TODO BREAK CHANGES
 type Option struct {
-	schemes              []string
-	consumes             []string
-	produces             []string
-	tags                 []*Tag
-	securities           []*Security
-	externalDocs         *ExternalDocs
-	additionalDoc        string
-	routesAliases        map[string]string
-	routesAdditionalDocs map[string]string
+	schemes       []string
+	consumes      []string
+	produces      []string
+	tags          []*Tag
+	securities    []*Security
+	externalDocs  *ExternalDocs
+	additionalDoc string
+	routesOptions []*RoutesOption
 }
 
 // NewOption creates an empty document Option.
@@ -240,15 +239,14 @@ func NewOption() *Option {
 	return &Option{}
 }
 
-func (o *Option) GetSchemes() []string                       { return o.schemes }
-func (o *Option) GetConsumes() []string                      { return o.consumes }
-func (o *Option) GetProduces() []string                      { return o.produces }
-func (o *Option) GetTags() []*Tag                            { return o.tags }
-func (o *Option) GetSecurities() []*Security                 { return o.securities }
-func (o *Option) GetExternalDocs() *ExternalDocs             { return o.externalDocs }
-func (o *Option) GetAdditionalDoc() string                   { return o.additionalDoc }
-func (o *Option) GetRoutesAliases() map[string]string        { return o.routesAliases }
-func (o *Option) GetRoutesAdditionalDocs() map[string]string { return o.routesAdditionalDocs }
+func (o *Option) GetSchemes() []string              { return o.schemes }
+func (o *Option) GetConsumes() []string             { return o.consumes }
+func (o *Option) GetProduces() []string             { return o.produces }
+func (o *Option) GetTags() []*Tag                   { return o.tags }
+func (o *Option) GetSecurities() []*Security        { return o.securities }
+func (o *Option) GetExternalDocs() *ExternalDocs    { return o.externalDocs }
+func (o *Option) GetAdditionalDoc() string          { return o.additionalDoc }
+func (o *Option) GetRoutesOptions() []*RoutesOption { return o.routesOptions }
 
 // Schemes sets the whole schemes in Option.
 func (o *Option) Schemes(schemes ...string) *Option {
@@ -322,33 +320,15 @@ func (o *Option) AdditionalDoc(doc string) *Option {
 	return o
 }
 
-// RoutesAliases sets the whole routes' aliases in Option, this is only supported in API Blueprint.
-func (o *Option) RoutesAliases(aliases map[string]string) *Option {
-	o.routesAliases = aliases
+// RoutesOptions sets the whole routes' options in Option, this is only supported in API Blueprint.
+func (o *Option) RoutesOptions(options ...*RoutesOption) *Option {
+	o.routesOptions = options
 	return o
 }
 
-// AddRoutesAlias adds a routes' alias in Option, this is only supported in API Blueprint.
-func (o *Option) AddRoutesAlias(route, alias string) *Option {
-	if o.routesAliases == nil {
-		o.routesAliases = make(map[string]string, 0)
-	}
-	o.routesAliases[route] = alias
-	return o
-}
-
-// RoutesAdditionalDocs sets the routes' additional documents in Option, this is only supported in API Blueprint.
-func (o *Option) RoutesAdditionalDocs(aliases map[string]string) *Option {
-	o.routesAdditionalDocs = aliases
-	return o
-}
-
-// AddRoutesAlias adds a routes' additional document in Option, this is only supported in API Blueprint.
-func (o *Option) AddRoutesAdditionalDoc(route, doc string) *Option {
-	if o.routesAdditionalDocs == nil {
-		o.routesAdditionalDocs = make(map[string]string, 0)
-	}
-	o.routesAdditionalDocs[route] = doc
+// AddRoutesOptions adds some routes' options in Option, this is only supported in API Blueprint.
+func (o *Option) AddRoutesOptions(options ...*RoutesOption) *Option {
+	o.routesOptions = append(o.routesOptions, options...)
 	return o
 }
 
@@ -406,7 +386,7 @@ type Security struct {
 	flow             string            // only for oauth2
 	authorizationUrl string            // only for oauth2
 	tokenUrl         string            // only for oauth2
-	scopes           map[string]string // only for oauth2
+	scopes           map[string]string // only for oauth2 // TODO use new type
 }
 
 // NewSecurity creates a default Security with given arguments.
@@ -531,6 +511,44 @@ func (e *ExternalDocs) Desc(desc string) *ExternalDocs {
 func (e *ExternalDocs) Url(url string) *ExternalDocs {
 	e.url = url
 	return e
+}
+
+// ============
+// RoutesOption
+// ============
+
+// RoutesOption represents a routes' option of Document.
+type RoutesOption struct {
+	route         string
+	summary       string
+	additionalDoc string
+}
+
+// NewRoutesOption creates a default RoutesOption with given arguments.
+func NewRoutesOption(route string) *RoutesOption {
+	return &RoutesOption{route: route}
+}
+
+func (r *RoutesOption) GetRoute() string         { return r.route }
+func (r *RoutesOption) GetSummary() string       { return r.summary }
+func (r *RoutesOption) GetAdditionalDoc() string { return r.additionalDoc }
+
+// Route sets the route in RoutesOption.
+func (r *RoutesOption) Route(route string) *RoutesOption {
+	r.route = route
+	return r
+}
+
+// Summary sets the summary in RoutesOption.
+func (r *RoutesOption) Summary(summary string) *RoutesOption {
+	r.summary = summary
+	return r
+}
+
+// AdditionalDoc sets the additional document in RoutesOption.
+func (r *RoutesOption) AdditionalDoc(additionalDoc string) *RoutesOption {
+	r.additionalDoc = additionalDoc
+	return r
 }
 
 // ===============

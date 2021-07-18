@@ -1,15 +1,17 @@
 package goapidoc
 
 import (
+	"fmt"
 	"strings"
+	"sync/atomic"
 )
 
 func checkDocument(doc *Document) {
 	if doc.host == "" {
 		panic("Host is required")
 	}
-	if !strings.HasSuffix(doc.basePath, "/") {
-		panic("BasePath must end with a slash")
+	if !strings.HasPrefix(doc.basePath, "/") {
+		panic("BasePath must begin with a slash")
 	}
 	if doc.info == nil {
 		panic("Info is required")
@@ -223,4 +225,29 @@ func SaveSwaggerJson(path string) ([]byte, error) {
 // SaveApib generates apib script and saves into file.
 func SaveApib(path string) ([]byte, error) {
 	return _document.SaveApib(path)
+}
+
+// warningLogger is a global switcher for logger when warning.
+var warningLogger atomic.Value
+
+func init() {
+	// warningLogger initializes to true, defaults to log the warning message
+	warningLogger.Store(true)
+}
+
+// DisableWarningLogger disables the warning logger switcher.
+func DisableWarningLogger() {
+	warningLogger.Store(false)
+}
+
+// EnableWarningLogger enables the warning logger switcher.
+func EnableWarningLogger() {
+	warningLogger.Store(true)
+}
+
+// logWarning logs the warning message.
+func logWarning(s string) {
+	if warningLogger.Load().(bool) {
+		fmt.Printf("Warning: %s\n", s)
+	}
 }

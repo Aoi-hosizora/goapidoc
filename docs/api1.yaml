@@ -22,8 +22,6 @@ tags:
     url: http://swagger.io
 - name: store
   description: Access to Petstore orders
-- name: store
-  description: Access to Petstore orders
 - name: user
   description: Operations about user
   externalDocs:
@@ -34,6 +32,9 @@ securityDefinitions:
     type: apiKey
     name: api_key
     in: header
+  b:
+    type: basic
+    description: A demo basic security definition
   petstore_auth:
     type: oauth2
     flow: implicit
@@ -140,6 +141,7 @@ paths:
       - pet
       security:
       - api_key: []
+      - b: []
       parameters:
       - name: petId
         in: path
@@ -305,6 +307,8 @@ paths:
       - application/json
       tags:
       - store
+      security:
+      - b: []
       parameters:
       - name: body
         in: body
@@ -329,6 +333,8 @@ paths:
       - application/json
       tags:
       - store
+      security:
+      - b: []
       parameters:
       - name: orderId
         in: path
@@ -351,6 +357,8 @@ paths:
       - application/json
       tags:
       - store
+      security:
+      - b: []
       parameters:
       - name: orderId
         in: path

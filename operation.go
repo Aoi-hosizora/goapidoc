@@ -19,6 +19,7 @@ type Operation struct {
 	securities    []string
 	secsScopes    map[string][]string
 	deprecated    bool
+	example       interface{}
 	externalDocs  *ExternalDocs
 	additionalDoc string
 	params        []*Param
@@ -77,6 +78,7 @@ func (o *Operation) GetTags() []string                        { return o.tags }
 func (o *Operation) GetSecurities() []string                  { return o.securities }
 func (o *Operation) GetSecuritiesScopes() map[string][]string { return o.secsScopes }
 func (o *Operation) GetDeprecated() bool                      { return o.deprecated }
+func (o *Operation) GetExample() interface{}                  { return o.example }
 func (o *Operation) GetExternalDocs() *ExternalDocs           { return o.externalDocs }
 func (o *Operation) GetAdditionalDoc() string                 { return o.additionalDoc }
 func (o *Operation) GetParams() []*Param                      { return o.params }
@@ -193,6 +195,12 @@ func (o *Operation) Deprecated(deprecated bool) *Operation {
 	return o
 }
 
+// Example sets the example in Operation, this is only supported in API Blueprint.
+func (o *Operation) Example(example interface{}) *Operation {
+	o.example = example
+	return o
+}
+
 // ExternalDocs sets the externalDocs in Operation.
 func (o *Operation) ExternalDocs(docs *ExternalDocs) *Operation {
 	o.externalDocs = docs
@@ -238,9 +246,10 @@ type Response struct {
 	code int
 	typ  string
 
-	desc     string
-	examples map[string]interface{}
-	headers  []*Header
+	desc          string
+	examples      map[string]interface{}
+	headers       []*Header
+	additionalDoc string
 }
 
 // NewResponse creates a default Response with given arguments.
@@ -253,6 +262,7 @@ func (r *Response) GetType() string                     { return r.typ }
 func (r *Response) GetDesc() string                     { return r.desc }
 func (r *Response) GetExamples() map[string]interface{} { return r.examples }
 func (r *Response) GetHeaders() []*Header               { return r.headers }
+func (r *Response) GetAdditionalDoc() string            { return r.additionalDoc }
 
 // Code sets the code in Response.
 func (r *Response) Code(code int) *Response {
@@ -297,6 +307,12 @@ func (r *Response) Headers(headers ...*Header) *Response {
 // AddHeaders add some headers in Response.
 func (r *Response) AddHeaders(headers ...*Header) *Response {
 	r.headers = append(r.headers, headers...)
+	return r
+}
+
+// AdditionalDoc sets the additional document in Response, this is only supported in API Blueprint.
+func (r *Response) AdditionalDoc(doc string) *Response {
+	r.additionalDoc = doc
 	return r
 }
 
@@ -583,7 +599,7 @@ func (p *Param) MultipleOf(multipleOf float64) *Param {
 	return p
 }
 
-// ItemOption sets the itemOption in Param.
+// ItemOption sets the itemOption in Param, this is only supported in Swagger.
 func (p *Param) ItemOption(itemOption *ItemOption) *Param {
 	p.itemOption = itemOption
 	return p
