@@ -224,9 +224,8 @@ func TestSetGet(t *testing.T) {
 			AddTags("Authorized", "Information").
 			Securities("jwt").
 			AddSecurities("basic", "oauth2", "another_oauth2").
-			AddSecurityScopes("x").
-			SecuritiesScopes(map[string][]string{"oauth2": {"read", "write"}}).
-			AddSecurityScopes("another_oauth2", "xx", "yy").
+			SecurityScopes("oauth2","read", "write").
+			SecurityScopes("another_oauth2", "xx", "yy").
 			Deprecated(true).
 			RequestExample(map[string]interface{}{"key": "value"}).
 			ExternalDocs(NewExternalDocs("Find out more this operation", "https://github.com/Aoi-hosizora")).

@@ -38,10 +38,10 @@ func checkDocument(doc *Document) {
 			}
 		}
 		for _, s := range doc.option.securities {
+			if s.title == "" {
+				panic("Security title is required")
+			}
 			if s.typ == APIKEY {
-				if s.title == "" {
-					panic("Security title is required")
-				}
 				if s.name == "" {
 					panic("Security name is required")
 				}
@@ -62,6 +62,11 @@ func checkDocument(doc *Document) {
 				}
 				if len(s.scopes) == 0 {
 					panic("Empty security scopes is not allowed")
+				}
+				for _, c := range s.scopes {
+					if c.scope == "" {
+						panic("Security scope name is required")
+					}
 				}
 			} else {
 				panic("Security type `" + s.typ + "` is not supported")
@@ -93,8 +98,8 @@ func checkDocument(doc *Document) {
 			if p.in == "" {
 				panic("Request param in-location is required")
 			}
-			if p.in == PATH && !p.required && !p.allowEmpty {
-				panic("Path param's must be non-optional and non-empty")
+			if p.in == PATH && !p.required {
+				panic("Path param's must be non-optional")
 			}
 			if p.typ == "" {
 				panic("Request param type is required")

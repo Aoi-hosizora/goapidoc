@@ -1,6 +1,7 @@
 package goapidoc
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 )
@@ -50,7 +51,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(405, "").Desc("Invalid input"),
 			).
 			Securities("petstore_auth").
-			AddSecurityScopes("petstore_auth", "write:pets", "read:pets"),
+			SecurityScopes("petstore_auth", "write:pets", "read:pets"),
 
 		NewPutOperation("/pet", "Update an existing pet").
 			Tags("pet").
@@ -66,7 +67,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(405, "").Desc("Validation exception"),
 			).
 			Securities("petstore_auth").
-			AddSecurityScopes("petstore_auth", "write:pets", "read:pets"),
+			SecurityScopes("petstore_auth", "write:pets", "read:pets"),
 
 		NewGetOperation("/pet/findByStatus", "Finds Pets by status").
 			Tags("pet").
@@ -82,7 +83,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(400, "").Desc("Invalid status value"),
 			).
 			Securities("petstore_auth").
-			AddSecurityScopes("petstore_auth", "write:pets", "read:pets"),
+			SecurityScopes("petstore_auth", "write:pets", "read:pets"),
 
 		NewGetOperation("/pet/findByTags", "Finds Pets by tags").
 			Tags("pet").
@@ -97,7 +98,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(400, "").Desc("Invalid tag value"),
 			).
 			Securities("petstore_auth").
-			AddSecurityScopes("petstore_auth", "write:pets", "read:pets").
+			SecurityScopes("petstore_auth", "write:pets", "read:pets").
 			Deprecated(true),
 
 		NewGetOperation("/pet/{petId}", "Find pet by ID").
@@ -129,7 +130,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(405, "").Desc("Invalid input"),
 			).
 			Securities("petstore_auth").
-			AddSecurityScopes("petstore_auth", "write:pets", "read:pets"),
+			SecurityScopes("petstore_auth", "write:pets", "read:pets"),
 
 		NewDeleteOperation("/pet/{petId}", "Deletes a pet").
 			Tags("pet").
@@ -144,7 +145,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(404, "").Desc("Pet not found"),
 			).
 			Securities("petstore_auth").
-			AddSecurityScopes("petstore_auth", "write:pets", "read:pets"),
+			SecurityScopes("petstore_auth", "write:pets", "read:pets"),
 
 		NewPostOperation("/pet/{petId}/uploadImage", "Uploads an image").
 			Tags("pet").
@@ -160,7 +161,7 @@ func TestGenerate1(t *testing.T) {
 				NewResponse(200, "ApiResponse").Desc("successful operation"),
 			).
 			Securities("petstore_auth").
-			AddSecurityScopes("petstore_auth", "write:pets", "read:pets"),
+			SecurityScopes("petstore_auth", "write:pets", "read:pets"),
 	)
 
 	AddOperations(
@@ -617,4 +618,158 @@ func TestGenerate2(t *testing.T) {
 
 func TestGenerate3(t *testing.T) {
 
+}
+
+func TestCheckDocument(t *testing.T) {
+	demoOp := func() *Operation { return NewOperation("get", "/", "summary").Responses(NewResponse(200, "")) }
+	demoDoc := func() *Document { return NewDocument("host", "/", NewInfo("title", "", "1.0")) }
+	demoResp := func() *Response { return NewResponse(200, "") }
+
+	for _, tc := range []struct {
+		name    string
+		giveDoc *Document
+	}{
+		{"doc.host", NewDocument("", "", nil)},
+		{"doc.basePath", NewDocument("host", "", nil)},
+		{"doc.info", NewDocument("host", "/", nil)},
+		{"doc.info.title", NewDocument("host", "/", NewInfo("", "", ""))},
+		{"doc.info.version", NewDocument("host", "/", NewInfo("title", "", ""))},
+		{"success", NewDocument("host", "/", NewInfo("title", "", "v1.0.0")).Operations(demoOp())},
+		{"doc.info.license.name", NewDocument("host", "/", NewInfo("title", "", "1.0.0").
+			License(NewLicense("", "")))},
+		{"success", NewDocument("host", "/", NewInfo("title", "", "1.0.0").
+			License(NewLicense("name", ""))).Operations(demoOp())},
+		{"doc.info.option.tags.name", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Tags(NewTag("", "")))},
+		{"doc.info.option.tags.externalDocs.url", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Tags(NewTag("tag", "").ExternalDocs(NewExternalDocs("", ""))))},
+		{"success", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Tags(NewTag("tag", "").ExternalDocs(NewExternalDocs("", "url")))).Operations(demoOp())},
+		{"doc.info.option.securities.title", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("", "")))},
+		{"doc.info.option.securities.typ", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "")))},
+		{"doc.info.option.securities.name", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "apiKey").Name("").InLoc("")))},
+		{"doc.info.option.securities.in", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "apiKey").Name("name").InLoc("")))},
+		{"success", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "apiKey").Name("name").InLoc("in"))).Operations(demoOp())},
+		{"success", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "basic"))).Operations(demoOp())},
+		{"doc.info.option.securities.flow", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "oauth2").Flow("")))},
+		{"doc.info.option.securities.authorizationUrl", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "oauth2").Flow("implicit").AuthorizationUrl("")))},
+		{"doc.info.option.securities.tokenUrl", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "oauth2").Flow("password").TokenUrl("")))},
+		{"doc.info.option.securities.scopes", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "oauth2").Flow("password").TokenUrl("token").Scopes()))},
+		{"doc.info.option.securities.scopes.name", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "oauth2").Flow("application").TokenUrl("token").Scopes(NewSecurityScope("", ""))))},
+		{"success", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().Securities(NewSecurity("title", "oauth2").Flow("accessCode").AuthorizationUrl("auth").TokenUrl("token").Scopes(NewSecurityScope("scope", "")))).Operations(demoOp())},
+		{"doc.info.option.externalDocs.url", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().ExternalDocs(NewExternalDocs("", "")))},
+		{"success", NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+			Option(NewOption().ExternalDocs(NewExternalDocs("", "url"))).Operations(demoOp())},
+
+		{"doc.operations", demoDoc()},
+		{"doc.operations.method", demoDoc().Operations(NewOperation("", "", ""))},
+		{"doc.operations.route", demoDoc().Operations(NewOperation("get", "", ""))},
+		{"doc.operations.route", demoDoc().Operations(NewOperation("get", "x", ""))},
+		{"doc.operations.summary", demoDoc().Operations(NewOperation("get", "/", ""))},
+		{"doc.operations.response", demoDoc().Operations(NewOperation("get", "/", "summary").Responses())},
+		{"doc.operations.response.code", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(NewResponse(0, "")))},
+		{"doc.operations.response.headers.name", demoDoc().Operations(NewOperation("get", "/", "summary").
+			Responses(NewResponse(200, "").Headers(NewResponseHeader("", "", ""))))},
+		{"doc.operations.response.headers.type", demoDoc().Operations(NewOperation("get", "/", "summary").
+			Responses(NewResponse(200, "").Headers(NewResponseHeader("name", "", ""))))},
+		{"success", demoDoc().Operations(NewOperation("get", "/", "summary").
+			Responses(NewResponse(200, "").Headers(NewResponseHeader("name", "integer", ""))))},
+		{".externalDocs.url", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(demoResp()).
+			ExternalDocs(NewExternalDocs("", "")))},
+		{"success", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(demoResp()).
+			ExternalDocs(NewExternalDocs("", "url")))},
+		{"doc.operations.params.name", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(demoResp()).
+			Params(NewParam("", "", "", true, "")))},
+		{"doc.operations.params.in", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(demoResp()).
+			Params(NewParam("name", "", "", true, "")))},
+		{"doc.operations.params.required", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(demoResp()).
+			Params(NewParam("name", "path", "", false, "")))},
+		{"doc.operations.params.typ", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(demoResp()).
+			Params(NewParam("name", "path", "", true, "")))},
+		{"success", demoDoc().Operations(NewOperation("get", "/", "summary").Responses(demoResp()).
+			Params(NewParam("name", "body", "string", false, "")))},
+
+		{"doc.definitions.name", demoDoc().Operations(demoOp().Responses(demoResp())).Definitions(NewDefinition("", ""))},
+		{"success", demoDoc().Operations(demoOp().Responses(demoResp())).Definitions(NewDefinition("name", ""))},
+		{"doc.definitions.properties.name", demoDoc().Operations(demoOp().Responses(demoResp())).Definitions(NewDefinition("name", "").
+			Properties(NewProperty("", "", true, "")))},
+		{"doc.definitions.properties.typ", demoDoc().Operations(demoOp().Responses(demoResp())).Definitions(NewDefinition("name", "").
+			Properties(NewProperty("name", "", true, "")))},
+		{"success", demoDoc().Operations(demoOp().Responses(demoResp())).Definitions(NewDefinition("name", "").
+			Properties(NewProperty("name", "integer", true, "")))},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testPanic(t, tc.name != "success", func() {
+				_, _ = tc.giveDoc.GenerateSwaggerJson()
+			}, tc.name)
+		})
+	}
+
+}
+
+type customType struct{}
+
+func (c customType) MarshalYAML() (interface{}, error) {
+	return nil, errors.New("demo")
+}
+
+func TestRenderAndSave(t *testing.T) {
+	d11 := NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+		Operations(NewOperation("get", "/", "summary").
+			Responses(NewResponse(200, "").Examples(NewResponseExample("", func() {})))) // <<<
+	d12 := NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+		Operations(NewOperation("get", "/", "summary").
+			Responses(NewResponse(200, "").Examples(NewResponseExample("", customType{})))) // <<<
+	d2 := NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
+		Operations(NewOperation("get", "/", "summary").Responses(NewResponse(200, "")))
+
+	t.Run("json marshal error", func(t *testing.T) {
+		_, err := d11.SaveSwaggerJson("docs/error.json")
+		if err == nil {
+			failNow(t, "SaveSwaggerJson should return error but no error returned 1")
+		}
+		_, err = d2.SaveSwaggerJson("docs")
+		if err == nil {
+			failNow(t, "SaveSwaggerJson should return error but no error returned 2")
+		}
+	})
+
+	t.Run("yaml marshal error", func(t *testing.T) {
+		_, err := d12.SaveSwaggerYaml("docs/error.yaml")
+		if err == nil {
+			failNow(t, "SaveSwaggerYaml should return error but no error returned 1")
+		}
+		_, err = d2.SaveSwaggerYaml("docs")
+		if err == nil {
+			failNow(t, "SaveSwaggerYaml should return error but no error returned 2")
+		}
+	})
+
+	t.Run("apib template error", func(t *testing.T) {
+		_bak := apibDocumentTemplate
+		defer func() { apibDocumentTemplate = _bak }()
+		apibDocumentTemplate = `{{ . }`
+		_, err := d11.SaveApib("docs/error.yaml")
+		if err == nil {
+			failNow(t, "SaveApib should return error but no error returned 1")
+		}
+		apibDocumentTemplate = `{{ . }}`
+		_, err = d2.SaveApib("docs")
+		if err == nil {
+			failNow(t, "SaveApib should return error but no error returned 2")
+		}
+	})
 }

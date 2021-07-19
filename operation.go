@@ -17,7 +17,7 @@ type Operation struct {
 	produces      []string
 	tags          []string
 	securities    []string
-	secsScopes    map[string][]string // TODO new type
+	secsScopes    map[string][]string
 	deprecated    bool
 	reqExample    interface{}
 	externalDocs  *ExternalDocs
@@ -174,14 +174,8 @@ func (o *Operation) AddSecurities(securities ...string) *Operation {
 	return o
 }
 
-// SecuritiesScopes sets the whole securities' scopes in Operation.
-func (o *Operation) SecuritiesScopes(scopes map[string][]string) *Operation {
-	o.secsScopes = scopes
-	return o
-}
-
-// AddSecurityScopes adds a security's scopes in Operation.
-func (o *Operation) AddSecurityScopes(security string, scopes ...string) *Operation {
+// SecurityScopes adds a security's scopes in Operation.
+func (o *Operation) SecurityScopes(security string, scopes ...string) *Operation {
 	if o.secsScopes == nil {
 		o.secsScopes = make(map[string][]string)
 	}
@@ -236,6 +230,10 @@ func (o *Operation) AddResponses(responses ...*Response) *Operation {
 	o.responses = append(o.responses, responses...)
 	return o
 }
+
+// =============
+// SecurityScope
+// =============
 
 // ========
 // Response
