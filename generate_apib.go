@@ -20,7 +20,7 @@ type apibDocument struct {
 	License        string
 	ContactUrl     string
 	ContactEmail   string
-	ExternalDocs   string
+	ExternalDoc    string
 
 	Securities    []string
 	Schemes       []string
@@ -33,10 +33,10 @@ type apibDocument struct {
 }
 
 type apibGroup struct {
-	Tag          string
-	Description  string
-	ExternalDocs string
-	Routes       []*apibRoute
+	Tag         string
+	Description string
+	ExternalDoc string
+	Routes      []*apibRoute
 }
 
 type apibRoute struct {
@@ -57,7 +57,7 @@ type apibMethod struct {
 	Example       string
 	Consume       string
 	Produce       string
-	ExternalDocs  string
+	ExternalDoc   string
 	AdditionalDoc string
 
 	Parameters []string
@@ -107,9 +107,9 @@ type apibSchema struct {
 	multipleOf       float64
 }
 
-// ======================================
-// type & schema & externalDocs & example
-// ======================================
+// =====================================
+// type & schema & externalDoc & example
+// =====================================
 
 func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
@@ -125,9 +125,6 @@ func buildApibType(typ string) (string, *apiType) {
 		return t, at
 	case apiArrayKind:
 		t, _ := buildApibType(at.array.item.name)
-		if t == INTEGER {
-			t = NUMBER
-		}
 		return fmt.Sprintf("array[%s]", t), at
 	case apiObjectKind:
 		return typ, at
@@ -202,16 +199,16 @@ func buildApibSchema(schema *apibSchema, in string) string {
 		options = append(options, fmt.Sprintf("#items <= %d", *schema.maxItems))
 	}
 	if schema.uniqueItems {
-		options = append(options, "items must be unique")
+		options = append(options, "unique items")
 	}
 	if schema.collectionFormat != "" {
 		options = append(options, fmt.Sprintf("collection format: %s", schema.collectionFormat))
 	}
 	ltSign, gtSign, gtSignR := "<=", ">=", "<="
-	if schema.exclusiveMin {
+	if schema.exclusiveMax {
 		ltSign = "<"
 	}
-	if schema.exclusiveMax {
+	if schema.exclusiveMin {
 		gtSign, gtSignR = ">", "<"
 	}
 	if schema.maximum != nil && schema.minimum != nil {
@@ -221,11 +218,8 @@ func buildApibSchema(schema *apibSchema, in string) string {
 	} else if schema.maximum != nil {
 		options = append(options, fmt.Sprintf("val %s %.3f", ltSign, *schema.maximum))
 	}
-	if schema.collectionFormat != "" {
-		options = append(options, fmt.Sprintf("collection format: %s", schema.collectionFormat))
-	}
 	if schema.multipleOf != 0 {
-		options = append(options, fmt.Sprintf("value should be multiple of %.3f", schema.multipleOf))
+		options = append(options, fmt.Sprintf("multiple of %.3f", schema.multipleOf))
 	}
 	if len(options) > 0 {
 		out.WriteString(fmt.Sprintf("\n    (%s)", strings.Join(options, ", ")))
@@ -243,15 +237,15 @@ func buildApibSchema(schema *apibSchema, in string) string {
 	return out.String()
 }
 
-func buildApiExternalDocs(docs *ExternalDocs) string {
-	if docs == nil {
+func buildApiExternalDoc(doc *ExternalDoc) string {
+	if doc == nil {
 		return ""
 	}
-	desc := docs.desc
+	desc := doc.desc
 	if desc == "" {
-		desc = docs.url
+		desc = doc.url
 	}
-	return fmt.Sprintf("[%s](%s)", desc, docs.url)
+	return fmt.Sprintf("[%s](%s)", desc, doc.url)
 }
 
 func buildApibExample(e interface{}, produce string) string {
@@ -291,7 +285,7 @@ var apibOperationTemplate = `
 
 {{ if .Security }}Security requirement: {{ .Security }}{{ end }}
 
-{{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
+{{ if .ExternalDoc }}{{ .ExternalDoc }}{{ end }}
 
 {{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
 
@@ -388,7 +382,7 @@ func buildApibOperation(op *Operation, securities map[string]*Security) ([]byte,
 		Example:       spaceIndent(3, buildApibExample(op.reqExample, produce)),
 		Consume:       consume,
 		Produce:       produce,
-		ExternalDocs:  buildApiExternalDocs(op.externalDocs),
+		ExternalDoc:   buildApiExternalDoc(op.externalDoc),
 		AdditionalDoc: op.additionalDoc,
 		Parameters:    make([]string, 0, 2),
 		Headers:       make([]string, 0, 2),
@@ -469,7 +463,7 @@ var apibGroupsTemplate = `
 
 {{ if .Description }}{{ .Description }}{{ end }}
 
-{{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
+{{ if .ExternalDoc }}{{ .ExternalDoc }}{{ end }}
 
 {{ range .Routes }}
 ## {{ .Summary }} [{{ .Route }}]
@@ -578,7 +572,12 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 				Methods:       strings.Join(moStrings, "\n\n"),
 			})
 		}
-		out = append(out, &apibGroup{Tag: tag.name, Description: tag.desc, ExternalDocs: buildApiExternalDocs(tag.externalDocs), Routes: outRoutes})
+		out = append(out, &apibGroup{
+			Tag:         tag.name,
+			Description: tag.desc,
+			ExternalDoc: buildApiExternalDoc(tag.externalDoc),
+			Routes:      outRoutes,
+		})
 	}
 
 	return renderTemplate(apibGroupsTemplate, out)
@@ -658,7 +657,7 @@ HOST: {{ .Host }}{{ .BasePath }}
 
 {{ if .ContactEmail }}{{ .ContactEmail }}{{ end }}
 
-{{ if .ExternalDocs }}{{ .ExternalDocs }}{{ end }}
+{{ if .ExternalDoc }}{{ .ExternalDoc }}{{ end }}
 
 {{ if .Securities }}## Securities defined
 
@@ -761,7 +760,7 @@ func buildApibDocument(doc *Document) ([]byte, error) {
 			securities = append(securities, s)
 		}
 
-		out.ExternalDocs = buildApiExternalDocs(opt.externalDocs)
+		out.ExternalDoc = buildApiExternalDoc(opt.externalDoc)
 		out.Securities = securities
 		out.Schemes = opt.schemes
 		out.Consumes = opt.consumes

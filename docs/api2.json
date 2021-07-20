@@ -435,6 +435,91 @@
           }
         }
       }
+    },
+    "/test": {
+      "post": {
+        "summary": "Test the most difficult operation",
+        "operationId": "-test-post",
+        "consumes": [
+          "formData"
+        ],
+        "externalDocs": {
+          "url": "https://apiblueprint.org/documentation/specification.html"
+        },
+        "parameters": [
+          {
+            "name": "query1",
+            "in": "formData",
+            "required": false,
+            "type": "array",
+            "allowEmptyValue": true,
+            "pattern": "^.+$",
+            "maxLength": 8,
+            "minLength": 0,
+            "maxItems": 5,
+            "minItems": 0,
+            "uniqueItems": true,
+            "collectionFormat": "csv",
+            "maximum": 10,
+            "minimum": 0,
+            "items": {
+              "type": "string",
+              "format": "password"
+            }
+          },
+          {
+            "name": "query2",
+            "in": "formData",
+            "required": true,
+            "type": "number",
+            "format": "double",
+            "minLength": 0,
+            "minItems": 0,
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "multipleOf": 3.3
+          },
+          {
+            "name": "query3",
+            "in": "formData",
+            "required": true,
+            "type": "array",
+            "maxLength": 8,
+            "maxItems": 5,
+            "maximum": 10,
+            "exclusiveMaximum": true,
+            "items": {
+              "type": "array",
+              "maximum": 5,
+              "minimum": -5,
+              "exclusiveMinimum": true,
+              "exclusiveMaximum": true,
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          },
+          {
+            "name": "query4",
+            "in": "formData",
+            "required": false,
+            "description": "some desc",
+            "type": "integer",
+            "format": "int64",
+            "maxLength": 8,
+            "maximum": 10,
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "exclusiveMaximum": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK"
+          }
+        }
+      }
     }
   }
 }

@@ -7,18 +7,18 @@ import (
 )
 
 type swagDocument struct {
-	Swagger      string                               `yaml:"swagger"                       json:"swagger"`
-	Host         string                               `yaml:"host"                          json:"host"`
-	BasePath     string                               `yaml:"basePath"                      json:"basePath"`
-	Info         *swagInfo                            `yaml:"info"                          json:"info"`
-	Schemes      []string                             `yaml:"schemes,omitempty"             json:"schemes,omitempty"`
-	Consumes     []string                             `yaml:"consumes,omitempty"            json:"consumes,omitempty"`
-	Produces     []string                             `yaml:"produces,omitempty"            json:"produces,omitempty"`
-	Tags         []*swagTag                           `yaml:"tags,omitempty"                json:"tags,omitempty"`
-	Securities   map[string]*swagSecurity             `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
-	ExternalDocs *swagExternalDocs                    `yaml:"externalDocs,omitempty"        json:"externalDocs,omitempty"`
-	Operations   map[string]map[string]*swagOperation `yaml:"paths,omitempty"               json:"paths,omitempty"`
-	Definitions  map[string]*swagDefinition           `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
+	Swagger     string                               `yaml:"swagger"                       json:"swagger"`
+	Host        string                               `yaml:"host"                          json:"host"`
+	BasePath    string                               `yaml:"basePath"                      json:"basePath"`
+	Info        *swagInfo                            `yaml:"info"                          json:"info"`
+	Schemes     []string                             `yaml:"schemes,omitempty"             json:"schemes,omitempty"`
+	Consumes    []string                             `yaml:"consumes,omitempty"            json:"consumes,omitempty"`
+	Produces    []string                             `yaml:"produces,omitempty"            json:"produces,omitempty"`
+	Tags        []*swagTag                           `yaml:"tags,omitempty"                json:"tags,omitempty"`
+	Securities  map[string]*swagSecurity             `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
+	ExternalDoc *swagExternalDoc                     `yaml:"externalDocs,omitempty"        json:"externalDocs,omitempty"`
+	Operations  map[string]map[string]*swagOperation `yaml:"paths,omitempty"               json:"paths,omitempty"`
+	Definitions map[string]*swagDefinition           `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
 }
 
 type swagInfo struct {
@@ -42,9 +42,9 @@ type swagContact struct {
 }
 
 type swagTag struct {
-	Name         string            `yaml:"name"                   json:"name"`
-	Description  string            `yaml:"description,omitempty"  json:"description,omitempty"`
-	ExternalDocs *swagExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Name        string           `yaml:"name"                   json:"name"`
+	Description string           `yaml:"description,omitempty"  json:"description,omitempty"`
+	ExternalDoc *swagExternalDoc `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type swagSecurity struct {
@@ -58,24 +58,24 @@ type swagSecurity struct {
 	Scopes           map[string]string `yaml:"scopes,omitempty"           json:"scopes,omitempty"`
 }
 
-type swagExternalDocs struct {
+type swagExternalDoc struct {
 	Url         string `yaml:"url"                   json:"url"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 }
 
 type swagOperation struct {
-	Summary      string                   `yaml:"summary"                json:"summary"`
-	OperationId  string                   `yaml:"operationId"            json:"operationId"`
-	Description  string                   `yaml:"description,omitempty"  json:"description,omitempty"`
-	Schemes      []string                 `yaml:"schemes,omitempty"      json:"schemes,omitempty"`
-	Consumes     []string                 `yaml:"consumes,omitempty"     json:"consumes,omitempty"`
-	Produces     []string                 `yaml:"produces,omitempty"     json:"produces,omitempty"`
-	Tags         []string                 `yaml:"tags,omitempty"         json:"tags,omitempty"`
-	Securities   []map[string][]string    `yaml:"security,omitempty"     json:"security,omitempty"`
-	Deprecated   bool                     `yaml:"deprecated,omitempty"   json:"deprecated,omitempty"`
-	ExternalDocs *swagExternalDocs        `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
-	Parameters   []*swagParam             `yaml:"parameters,omitempty"   json:"parameters,omitempty"`
-	Responses    map[string]*swagResponse `yaml:"responses,omitempty"    json:"responses,omitempty"`
+	Summary     string                   `yaml:"summary"                json:"summary"`
+	OperationId string                   `yaml:"operationId"            json:"operationId"`
+	Description string                   `yaml:"description,omitempty"  json:"description,omitempty"`
+	Schemes     []string                 `yaml:"schemes,omitempty"      json:"schemes,omitempty"`
+	Consumes    []string                 `yaml:"consumes,omitempty"     json:"consumes,omitempty"`
+	Produces    []string                 `yaml:"produces,omitempty"     json:"produces,omitempty"`
+	Tags        []string                 `yaml:"tags,omitempty"         json:"tags,omitempty"`
+	Securities  []map[string][]string    `yaml:"security,omitempty"     json:"security,omitempty"`
+	Deprecated  bool                     `yaml:"deprecated,omitempty"   json:"deprecated,omitempty"`
+	ExternalDoc *swagExternalDoc         `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Parameters  []*swagParam             `yaml:"parameters,omitempty"   json:"parameters,omitempty"`
+	Responses   map[string]*swagResponse `yaml:"responses,omitempty"    json:"responses,omitempty"`
 }
 
 type swagParam struct {
@@ -199,11 +199,11 @@ type swagItems struct {
 	Ref       string     `yaml:"$ref,omitempty"  json:"$ref,omitempty"`
 }
 
-// ==============
-// items & schema & xmlRepr & externalDocs
-// ==============
+// ======================================
+// items & schema & externalDoc & xmlRepr
+// ======================================
 
-func buildSwagItems(arr *apiArray, opt *ItemOption, allowFile bool) *swagItems {
+func buildSwagItems(arr *apiArray, opt *ItemOption) *swagItems {
 	/*
 		"items": {
 		  "type": "integer",
@@ -247,8 +247,8 @@ func buildSwagItems(arr *apiArray, opt *ItemOption, allowFile bool) *swagItems {
 	switch arr.item.kind {
 	case apiPrimeKind:
 		prime := arr.item.prime
-		if prime.typ == FILE && !allowFile {
-			panic("Invalid file type used in non-request-parameter")
+		if prime.typ == FILE {
+			panic("Invalid file type used in non-request parameter")
 		}
 		items.Type = prime.typ
 		items.Format = prime.format
@@ -259,7 +259,7 @@ func buildSwagItems(arr *apiArray, opt *ItemOption, allowFile bool) *swagItems {
 		if opt != nil {
 			o = opt.itemOption
 		}
-		items.Items = buildSwagItems(arr.item.array, o, allowFile)
+		items.Items = buildSwagItems(arr.item.array, o)
 		return items
 	case apiObjectKind:
 		origin := arr.item.name
@@ -291,14 +291,14 @@ func buildSwagSchema(typ string, option *ItemOption, allowFile bool) (outType, o
 	switch at.kind {
 	case apiPrimeKind:
 		if at.prime.typ == FILE && !allowFile {
-			panic("Invalid file type used in non-request-parameter")
+			panic("Invalid file type used in non-request parameter")
 		}
 		outType = at.prime.typ
 		outFmt = at.prime.format
 		return
 	case apiArrayKind:
 		outType = ARRAY
-		items = buildSwagItems(at.array, option, allowFile)
+		items = buildSwagItems(at.array, option)
 		return
 	case apiObjectKind:
 		origin = at.name
@@ -307,6 +307,13 @@ func buildSwagSchema(typ string, option *ItemOption, allowFile bool) (outType, o
 	default:
 		return // unreachable
 	}
+}
+
+func buildSwagExternalDoc(doc *ExternalDoc) *swagExternalDoc {
+	if doc == nil {
+		return nil
+	}
+	return &swagExternalDoc{Url: doc.url, Description: doc.desc}
 }
 
 func buildSwagXMLRepr(xml *XMLRepr) *swagXMLRepr {
@@ -320,13 +327,6 @@ func buildSwagXMLRepr(xml *XMLRepr) *swagXMLRepr {
 		Attribute: xml.attribute,
 		Wrapped:   xml.wrapped,
 	}
-}
-
-func buildSwagExternalDocs(docs *ExternalDocs) *swagExternalDocs {
-	if docs == nil {
-		return nil
-	}
-	return &swagExternalDocs{Url: docs.url, Description: docs.desc}
 }
 
 // ===============================
@@ -535,18 +535,18 @@ func buildSwagOperations(doc *Document) map[string]map[string]*swagOperation {
 			out[op.route] = make(map[string]*swagOperation, 4) // cap defaults to 4
 		}
 		out[op.route][method] = &swagOperation{
-			Summary:      op.summary,
-			OperationId:  operationId,
-			Description:  op.desc,
-			Schemes:      op.schemes,
-			Consumes:     op.consumes,
-			Produces:     op.produces,
-			Tags:         op.tags,
-			Securities:   securities,
-			Deprecated:   op.deprecated,
-			ExternalDocs: buildSwagExternalDocs(op.externalDocs),
-			Parameters:   buildSwagParams(op.params),
-			Responses:    buildSwagResponses(op.responses),
+			Summary:     op.summary,
+			OperationId: operationId,
+			Description: op.desc,
+			Schemes:     op.schemes,
+			Consumes:    op.consumes,
+			Produces:    op.produces,
+			Tags:        op.tags,
+			Securities:  securities,
+			Deprecated:  op.deprecated,
+			ExternalDoc: buildSwagExternalDoc(op.externalDoc),
+			Parameters:  buildSwagParams(op.params),
+			Responses:   buildSwagResponses(op.responses),
 		}
 	}
 	return out
@@ -600,7 +600,7 @@ func buildSwagDocument(doc *Document) *swagDocument {
 	if opt := doc.option; opt != nil {
 		tags := make([]*swagTag, 0, len(opt.tags))
 		for _, t := range opt.tags {
-			tags = append(tags, &swagTag{Name: t.name, Description: t.desc, ExternalDocs: buildSwagExternalDocs(t.externalDocs)})
+			tags = append(tags, &swagTag{Name: t.name, Description: t.desc, ExternalDoc: buildSwagExternalDoc(t.externalDoc)})
 		}
 		securities := make(map[string]*swagSecurity, len(opt.securities))
 		for _, s := range opt.securities {
@@ -616,14 +616,13 @@ func buildSwagDocument(doc *Document) *swagDocument {
 				securities[s.title] = &swagSecurity{Type: OAUTH2, Description: s.desc, Flow: s.flow, AuthorizationUrl: s.authorizationUrl, TokenUrl: s.tokenUrl, Scopes: scopes}
 			}
 		}
-		docs := buildSwagExternalDocs(opt.externalDocs)
 
 		out.Schemes = opt.schemes
 		out.Consumes = opt.consumes
 		out.Produces = opt.produces
 		out.Tags = tags
 		out.Securities = securities
-		out.ExternalDocs = docs
+		out.ExternalDoc = buildSwagExternalDoc(opt.externalDoc)
 	}
 
 	// definitions & operations

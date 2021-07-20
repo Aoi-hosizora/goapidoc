@@ -52,8 +52,7 @@ func jsonMarshal(t interface{}) ([]byte, error) {
 func saveFile(path string, data []byte) error {
 	dir := filepath.Dir(path)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0644)
-		if err != nil {
+		if err = os.MkdirAll(dir, 0644); err != nil {
 			return err
 		}
 	}

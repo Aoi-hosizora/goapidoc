@@ -33,8 +33,8 @@ func checkDocument(doc *Document) {
 			if t.name == "" {
 				panic("Tag name is required")
 			}
-			if t.externalDocs != nil && t.externalDocs.url == "" {
-				panic("Empty externalDocs url is not allowed")
+			if t.externalDoc != nil && t.externalDoc.url == "" {
+				panic("Tag external documentation url is required")
 			}
 		}
 		for _, s := range doc.option.securities {
@@ -72,8 +72,13 @@ func checkDocument(doc *Document) {
 				panic("Security type `" + s.typ + "` is not supported")
 			}
 		}
-		if doc.option.externalDocs != nil && doc.option.externalDocs.url == "" {
-			panic("Empty externalDocs url is not allowed")
+		if doc.option.externalDoc != nil && doc.option.externalDoc.url == "" {
+			panic("Document option external documentation url is required")
+		}
+		for _, ro := range doc.option.routesOptions {
+			if !strings.HasPrefix(ro.route, "/") {
+				panic("Routes options route path must begin with a slash")
+			}
 		}
 	}
 
@@ -81,8 +86,8 @@ func checkDocument(doc *Document) {
 		panic("Empty operations is not allowed")
 	}
 	for _, op := range doc.operations {
-		if op.method == "" || op.route == "" {
-			panic("Operation method and route path is required")
+		if op.method == "" {
+			panic("Operation method is required")
 		}
 		if !strings.HasPrefix(op.route, "/") {
 			panic("Operation route path must begin with a slash")
@@ -98,8 +103,8 @@ func checkDocument(doc *Document) {
 			if p.in == "" {
 				panic("Request param in-location is required")
 			}
-			if p.in == PATH && !p.required {
-				panic("Path param's must be non-optional")
+			if p.in == PATH && (!p.required || p.allowEmpty) {
+				panic("Path param's must be non-optional and non-empty")
 			}
 			if p.typ == "" {
 				panic("Request param type is required")
@@ -121,9 +126,14 @@ func checkDocument(doc *Document) {
 					panic("Response header type is required")
 				}
 			}
+			for _, e := range r.examples {
+				if e.mime == "" {
+					panic("Response example mime is required")
+				}
+			}
 		}
-		if op.externalDocs != nil && op.externalDocs.url == "" {
-			panic("Empty externalDocs url is not allowed")
+		if op.externalDoc != nil && op.externalDoc.url == "" {
+			panic("Operation external documentation url is required")
 		}
 	}
 
