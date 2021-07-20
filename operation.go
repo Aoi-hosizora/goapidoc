@@ -20,7 +20,7 @@ type Operation struct {
 	secsScopes    map[string][]string
 	deprecated    bool
 	reqExample    interface{}
-	externalDocs  *ExternalDocs
+	externalDoc   *ExternalDoc
 	additionalDoc string
 	params        []*Param
 	responses     []*Response
@@ -79,7 +79,7 @@ func (o *Operation) GetSecurities() []string                  { return o.securit
 func (o *Operation) GetSecuritiesScopes() map[string][]string { return o.secsScopes }
 func (o *Operation) GetDeprecated() bool                      { return o.deprecated }
 func (o *Operation) GetRequestExample() interface{}           { return o.reqExample }
-func (o *Operation) GetExternalDocs() *ExternalDocs           { return o.externalDocs }
+func (o *Operation) GetExternalDoc() *ExternalDoc             { return o.externalDoc }
 func (o *Operation) GetAdditionalDoc() string                 { return o.additionalDoc }
 func (o *Operation) GetParams() []*Param                      { return o.params }
 func (o *Operation) GetResponses() []*Response                { return o.responses }
@@ -174,8 +174,8 @@ func (o *Operation) AddSecurities(securities ...string) *Operation {
 	return o
 }
 
-// SecurityScopes adds a security's scopes in Operation.
-func (o *Operation) SecurityScopes(security string, scopes ...string) *Operation {
+// SetSecurityScopes sets a security's scopes in Operation.
+func (o *Operation) SetSecurityScopes(security string, scopes ...string) *Operation {
 	if o.secsScopes == nil {
 		o.secsScopes = make(map[string][]string)
 	}
@@ -195,9 +195,9 @@ func (o *Operation) RequestExample(reqExample interface{}) *Operation {
 	return o
 }
 
-// ExternalDocs sets the external documents in Operation.
-func (o *Operation) ExternalDocs(docs *ExternalDocs) *Operation {
-	o.externalDocs = docs
+// ExternalDoc sets the external documentation in Operation.
+func (o *Operation) ExternalDoc(doc *ExternalDoc) *Operation {
+	o.externalDoc = doc
 	return o
 }
 
@@ -230,10 +230,6 @@ func (o *Operation) AddResponses(responses ...*Response) *Operation {
 	o.responses = append(o.responses, responses...)
 	return o
 }
-
-// =============
-// SecurityScope
-// =============
 
 // ========
 // Response

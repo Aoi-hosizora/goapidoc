@@ -76,7 +76,7 @@ func TestSetGet(t *testing.T) {
 			Tags(NewTag("", "").
 				Name("Authorization").
 				Desc("auth-controller").
-				ExternalDocs(NewExternalDocs("Find out more", "https://github.com/Aoi-hosizora"))).
+				ExternalDoc(NewExternalDoc("Find out more", "https://github.com/Aoi-hosizora"))).
 			AddTags(NewTag("User", "user-controller"),
 				NewTag("Resource", "resource-controller")).
 			Securities(NewSecurity("", "").
@@ -96,7 +96,7 @@ func TestSetGet(t *testing.T) {
 						NewSecurityScope("", "").
 						Scope("rw").
 						Desc("for reading and writing"))).
-			ExternalDocs(NewExternalDocs("", "").
+			ExternalDoc(NewExternalDoc("", "").
 				Desc("Find out more about this api").
 				Url("https://github.com/Aoi-hosizora")).
 			AdditionalDoc("## Error States\n\nPlease visit [xxx](xxx).").
@@ -157,7 +157,7 @@ func TestSetGet(t *testing.T) {
 			failNow(t, "Option.Produces or Option.AddProduces has a wrong behavior")
 		}
 		if a := GetOption().GetTags(); a[0].GetName() != "Authorization" || a[0].GetDesc() != "auth-controller" ||
-			a[0].GetExternalDocs().GetDesc() != "Find out more" || a[0].GetExternalDocs().GetUrl() != "https://github.com/Aoi-hosizora" ||
+			a[0].GetExternalDoc().GetDesc() != "Find out more" || a[0].GetExternalDoc().GetUrl() != "https://github.com/Aoi-hosizora" ||
 			a[1].GetName() != "User" || a[1].GetDesc() != "user-controller" || a[2].GetName() != "Resource" || a[2].GetDesc() != "resource-controller" {
 			failNow(t, "Option.Tags or Option.AddTags or Tags.XXX has a wrong behavior")
 		}
@@ -167,8 +167,8 @@ func TestSetGet(t *testing.T) {
 			s[3].GetScopes()[0].GetScope() != "read" || s[3].GetScopes()[0].GetDesc() != "only for reading" || s[3].GetScopes()[1].GetScope() != "write" || s[3].GetScopes()[1].GetDesc() != "only for writing" || s[3].GetScopes()[2].GetScope() != "rw" || s[3].GetScopes()[2].GetDesc() != "for reading and writing" {
 			failNow(t, "Option.Securities or Option.AddSecurities or Security.XXX has a wrong behavior")
 		}
-		if e := GetOption().GetExternalDocs(); e.GetDesc() != "Find out more about this api" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
-			failNow(t, "Option.ExternalDocs or ExternalDocs.XXX has a wrong behavior")
+		if e := GetOption().GetExternalDoc(); e.GetDesc() != "Find out more about this api" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
+			failNow(t, "Option.ExternalDoc or ExternalDoc.XXX has a wrong behavior")
 		}
 		if GetOption().GetAdditionalDoc() != "## Error States\n\nPlease visit [xxx](xxx)." {
 			failNow(t, "Option.AdditionalDoc has a wrong behavior")
@@ -224,11 +224,11 @@ func TestSetGet(t *testing.T) {
 			AddTags("Authorized", "Information").
 			Securities("jwt").
 			AddSecurities("basic", "oauth2", "another_oauth2").
-			SecurityScopes("oauth2","read", "write").
-			SecurityScopes("another_oauth2", "xx", "yy").
+			SetSecurityScopes("oauth2","read", "write").
+			SetSecurityScopes("another_oauth2", "xx", "yy").
 			Deprecated(true).
 			RequestExample(map[string]interface{}{"key": "value"}).
-			ExternalDocs(NewExternalDocs("Find out more this operation", "https://github.com/Aoi-hosizora")).
+			ExternalDoc(NewExternalDoc("Find out more this operation", "https://github.com/Aoi-hosizora")).
 			AdditionalDoc("This is GET /user/{id}'s additional document").
 			Responses(NewResponse(404, "Result")).
 			AddResponses(NewResponse(0, "").
@@ -333,8 +333,8 @@ func TestSetGet(t *testing.T) {
 		if op.GetRequestExample() == nil || op.GetRequestExample().(map[string]interface{})["key"] != "value" {
 			failNow(t, "Operation.RequestExample has a wrong behavior")
 		}
-		if e := op.GetExternalDocs(); e.GetDesc() != "Find out more this operation" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
-			failNow(t, "Operation.ExternalDocs has a wrong behavior")
+		if e := op.GetExternalDoc(); e.GetDesc() != "Find out more this operation" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
+			failNow(t, "Operation.ExternalDoc has a wrong behavior")
 		}
 		if op.GetAdditionalDoc() != "This is GET /user/{id}'s additional document" {
 			failNow(t, "Operation.AdditionalDoc has a wrong behavior")

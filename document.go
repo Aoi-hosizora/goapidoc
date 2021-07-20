@@ -27,7 +27,7 @@ func (d *Document) GetOption() *Option            { return d.option }
 func (d *Document) GetOperations() []*Operation   { return d.operations }
 func (d *Document) GetDefinitions() []*Definition { return d.definitions }
 
-// Cleanup cleans up Document.
+// Cleanup cleans up the Document.
 func (d *Document) Cleanup() *Document {
 	d.host = ""
 	d.basePath = ""
@@ -90,7 +90,7 @@ func (d *Document) AddDefinitions(definitions ...*Definition) *Document {
 // Info
 // ====
 
-// Info represents a basic api information of Document.
+// Info represents a basic information of Document.
 // TODO BREAK CHANGES
 type Info struct {
 	title   string
@@ -132,7 +132,7 @@ func (i *Info) Version(version string) *Info {
 	return i
 }
 
-// TermsOfService sets the termsOfService in Info.
+// TermsOfService sets the terms of service in Info.
 func (i *Info) TermsOfService(terms string) *Info {
 	i.termsOfService = terms
 	return i
@@ -222,14 +222,14 @@ func (c *Contact) Email(email string) *Contact {
 // Option
 // ======
 
-// Option represents an api's extra option of Document.
+// Option represents an api extra option of Document.
 type Option struct {
 	schemes       []string
 	consumes      []string
 	produces      []string
 	tags          []*Tag
 	securities    []*Security
-	externalDocs  *ExternalDocs
+	externalDoc   *ExternalDoc
 	additionalDoc string
 	routesOptions []*RoutesOption
 }
@@ -244,7 +244,7 @@ func (o *Option) GetConsumes() []string             { return o.consumes }
 func (o *Option) GetProduces() []string             { return o.produces }
 func (o *Option) GetTags() []*Tag                   { return o.tags }
 func (o *Option) GetSecurities() []*Security        { return o.securities }
-func (o *Option) GetExternalDocs() *ExternalDocs    { return o.externalDocs }
+func (o *Option) GetExternalDoc() *ExternalDoc      { return o.externalDoc }
 func (o *Option) GetAdditionalDoc() string          { return o.additionalDoc }
 func (o *Option) GetRoutesOptions() []*RoutesOption { return o.routesOptions }
 
@@ -308,9 +308,9 @@ func (o *Option) AddSecurities(securities ...*Security) *Option {
 	return o
 }
 
-// ExternalDocs sets the external documents in Option.
-func (o *Option) ExternalDocs(docs *ExternalDocs) *Option {
-	o.externalDocs = docs
+// ExternalDoc sets the external documentation in Option.
+func (o *Option) ExternalDoc(doc *ExternalDoc) *Option {
+	o.externalDoc = doc
 	return o
 }
 
@@ -320,13 +320,13 @@ func (o *Option) AdditionalDoc(doc string) *Option {
 	return o
 }
 
-// RoutesOptions sets the whole routes' options in Option, this is only supported in API Blueprint.
+// RoutesOptions sets the whole routes group options in Option, this is only supported in API Blueprint.
 func (o *Option) RoutesOptions(options ...*RoutesOption) *Option {
 	o.routesOptions = options
 	return o
 }
 
-// AddRoutesOptions adds some routes' options in Option, this is only supported in API Blueprint.
+// AddRoutesOptions adds some routes group options in Option, this is only supported in API Blueprint.
 func (o *Option) AddRoutesOptions(options ...*RoutesOption) *Option {
 	o.routesOptions = append(o.routesOptions, options...)
 	return o
@@ -338,9 +338,9 @@ func (o *Option) AddRoutesOptions(options ...*RoutesOption) *Option {
 
 // Tag represents a tag information of Document.
 type Tag struct {
-	name         string
-	desc         string
-	externalDocs *ExternalDocs
+	name        string
+	desc        string
+	externalDoc *ExternalDoc
 }
 
 // NewTag creates a default Tag with given arguments.
@@ -348,9 +348,9 @@ func NewTag(name, desc string) *Tag {
 	return &Tag{name: name, desc: desc}
 }
 
-func (t *Tag) GetName() string                { return t.name }
-func (t *Tag) GetDesc() string                { return t.desc }
-func (t *Tag) GetExternalDocs() *ExternalDocs { return t.externalDocs }
+func (t *Tag) GetName() string              { return t.name }
+func (t *Tag) GetDesc() string              { return t.desc }
+func (t *Tag) GetExternalDoc() *ExternalDoc { return t.externalDoc }
 
 // Name sets the name in Tag.
 func (t *Tag) Name(name string) *Tag {
@@ -364,9 +364,9 @@ func (t *Tag) Desc(desc string) *Tag {
 	return t
 }
 
-// ExternalDocs sets the external documents in Tag.
-func (t *Tag) ExternalDocs(docs *ExternalDocs) *Tag {
-	t.externalDocs = docs
+// ExternalDoc sets the external documentation in Tag.
+func (t *Tag) ExternalDoc(doc *ExternalDoc) *Tag {
+	t.externalDoc = doc
 	return t
 }
 
@@ -474,7 +474,7 @@ func (s *Security) Scopes(scopes ...*SecurityScope) *Security {
 	return s
 }
 
-// AddScope add some security scopes into Security.
+// AddScopes add some security scopes into Security.
 func (s *Security) AddScopes(scopes ...*SecurityScope) *Security {
 	s.scopes = append(s.scopes, scopes...)
 	return s
@@ -510,32 +510,32 @@ func (s *SecurityScope) Desc(desc string) *SecurityScope {
 	return s
 }
 
-// ============
-// ExternalDocs
-// ============
+// ===========
+// ExternalDoc
+// ===========
 
-// ExternalDocs represents an external documentation information of Document, Tag and Operation.
-type ExternalDocs struct {
+// ExternalDoc represents an external documentation information of Document, Tag and Operation.
+type ExternalDoc struct {
 	desc string
 	url  string
 }
 
-// NewExternalDocs creates a default ExternalDocs with given arguments.
-func NewExternalDocs(desc, url string) *ExternalDocs {
-	return &ExternalDocs{desc: desc, url: url}
+// NewExternalDoc creates a default ExternalDoc with given arguments.
+func NewExternalDoc(desc, url string) *ExternalDoc {
+	return &ExternalDoc{desc: desc, url: url}
 }
 
-func (e *ExternalDocs) GetDesc() string { return e.desc }
-func (e *ExternalDocs) GetUrl() string  { return e.url }
+func (e *ExternalDoc) GetDesc() string { return e.desc }
+func (e *ExternalDoc) GetUrl() string  { return e.url }
 
-// Desc sets the desc in ExternalDocs.
-func (e *ExternalDocs) Desc(desc string) *ExternalDocs {
+// Desc sets the desc in ExternalDoc.
+func (e *ExternalDoc) Desc(desc string) *ExternalDoc {
 	e.desc = desc
 	return e
 }
 
-// Url sets the url in ExternalDocs.
-func (e *ExternalDocs) Url(url string) *ExternalDocs {
+// Url sets the url in ExternalDoc.
+func (e *ExternalDoc) Url(url string) *ExternalDoc {
 	e.url = url
 	return e
 }
@@ -544,7 +544,7 @@ func (e *ExternalDocs) Url(url string) *ExternalDocs {
 // RoutesOption
 // ============
 
-// RoutesOption represents a routes-group option of Document.
+// RoutesOption represents a routes group option of Document, this is only supported in API Blueprint.
 type RoutesOption struct {
 	route         string
 	summary       string
@@ -572,7 +572,7 @@ func (r *RoutesOption) Summary(summary string) *RoutesOption {
 	return r
 }
 
-// AdditionalDoc sets the additional document in RoutesOption.
+// AdditionalDoc sets the additional document in RoutesOption, this is only supported in API Blueprint.
 func (r *RoutesOption) AdditionalDoc(additionalDoc string) *RoutesOption {
 	r.additionalDoc = additionalDoc
 	return r

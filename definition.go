@@ -65,7 +65,7 @@ func (d *Definition) AddProperties(properties ...*Property) *Definition {
 // XMLRepr
 // =======
 
-// XMLRepr represents a xml representation format information of Definition, Property, Param an ItemOption.
+// XMLRepr represents a xml representation format information of Definition, Property, Param an ItemOption, this is only supported in Swagger.
 type XMLRepr struct {
 	name      string
 	namespace string
@@ -335,7 +335,7 @@ func (p *Property) XMLRepr(repr *XMLRepr) *Property {
 // ItemOption
 // ==========
 
-// ItemOption represents an array type's item option of Param, Property and ItemOption itself.
+// ItemOption represents an array type's item option of Param, Property and ItemOption itself, this is only supported in Swagger.
 type ItemOption struct {
 	allowEmpty       bool
 	defaul           interface{}
