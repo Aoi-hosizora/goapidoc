@@ -355,26 +355,7 @@ func TestGenerate1(t *testing.T) {
 			),
 	)
 
-	if _, err := GenerateSwaggerYaml(); err != nil {
-		failNow(t, fmt.Sprintf("GenerateSwaggerYaml error: %v", err))
-	}
-	if _, err := GenerateSwaggerJson(); err != nil {
-		failNow(t, fmt.Sprintf("GenerateSwaggerJson error: %v", err))
-	}
-	EnableWarningLogger()
-	if _, err := GenerateApib(); err != nil {
-		failNow(t, fmt.Sprintf("GenerateApib error: %v", err))
-	}
-	DisableWarningLogger()
-	if _, err := SaveSwaggerYaml("./docs/api1.yaml"); err != nil {
-		failNow(t, fmt.Sprintf("SaveSwaggerYaml error: %v", err))
-	}
-	if _, err := SaveSwaggerJson("./docs/api1.json"); err != nil {
-		failNow(t, fmt.Sprintf("SaveSwaggerJson error: %v", err))
-	}
-	if _, err := SaveApib("./docs/api1.apib"); err != nil {
-		failNow(t, fmt.Sprintf("SaveApib error: %v", err))
-	}
+	_generate(t, "api1")
 }
 
 func TestGenerate2(t *testing.T) {
@@ -389,14 +370,25 @@ func TestGenerate2(t *testing.T) {
 		Tags(
 			NewTag("Gist", "Gist-related resources of *Gist Fox API*."),
 			NewTag("Access Authorization and Control", "Access and Control of *Gist Fox API* OAuth token."),
+			NewTag("Test more functions", "Operations in this group is only used for testing.").AdditionalDoc("## Example\n\nGET /test is used to test more parameters style in api blueprint."),
 		).
 		AdditionalDoc("## Authentication\n*Gist Fox API* uses OAuth Authorization. First you create a new (or acquire existing) OAuth token using Basic Authentication. After you have acquired your token you can use it to access other resources within token' scope.\n\n## Media Types\nWhere applicable this API uses the [HAL+JSON](https://github.com/mikekelly/hal_specification/blob/master/hal_specification.md) media-type to represent resources states and affordances.\n\nRequests with a message-body are using plain JSON to set or update resource states.\n\n## Error States\nThe common [HTTP Response Status Codes](https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md) are used.").
 		RoutesOptions(
-			NewRoutesOption("/").Summary("Gist Fox API Root").AdditionalDoc("Gist Fox API entry point.\n\nThis resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and\nHAL links."),
-			NewRoutesOption("/gists/{id}{?access_token}").Summary("Gist").AdditionalDoc("A single Gist object. The Gist resource is the central resource in the Gist Fox API. It represents one paste - a single text note.\n\nThe Gist resource has the following attributes:\n\n+ id\n+ created_at\n+ description\n+ content\n\nThe states *id* and *created_at* are assigned by the Gist Fox API at the moment of creation."),
-			NewRoutesOption("/gists{?since,access_token}").Summary("Gists Collection").AdditionalDoc("Collection of all Gists.\n\nThe Gist Collection resource has the following attribute:\n\n+ total\n\nIn addition it **embeds** *Gist Resources* in the Gist Fox API."),
-			NewRoutesOption("/gists/{id}/star{?access_token}").Summary("Star").AdditionalDoc("Star resource represents a Gist starred status.\n\nThe Star resource has the following attribute:\n\n+ starred"),
-			NewRoutesOption("/authorization").Summary("Authorization").AdditionalDoc("Authorization Resource represents an authorization granted to the user. You can **only** access your own authorization, and only through **Basic Authentication**.\n\nThe Authorization Resource has the following attribute:\n\n+ token\n+ scopes\n\nWhere *token* represents an OAuth token and *scopes* is an array of scopes granted for the given authorization. At this moment the only available scope is `gist_write`."),
+			NewRoutesOption("/").
+				Summary("Gist Fox API Root").
+				AdditionalDoc("Gist Fox API entry point.\n\nThis resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and\nHAL links."),
+			NewRoutesOption("/gists/{id}{?access_token}").
+				Summary("Gist").
+				AdditionalDoc("A single Gist object. The Gist resource is the central resource in the Gist Fox API. It represents one paste - a single text note.\n\nThe Gist resource has the following attributes:\n\n+ id\n+ created_at\n+ description\n+ content\n\nThe states *id* and *created_at* are assigned by the Gist Fox API at the moment of creation."),
+			NewRoutesOption("/gists{?since,access_token}").
+				Summary("Gists Collection").
+				AdditionalDoc("Collection of all Gists.\n\nThe Gist Collection resource has the following attribute:\n\n+ total\n\nIn addition it **embeds** *Gist Resources* in the Gist Fox API."),
+			NewRoutesOption("/gists/{id}/star{?access_token}").
+				Summary("Star").
+				AdditionalDoc("Star resource represents a Gist starred status.\n\nThe Star resource has the following attribute:\n\n+ starred"),
+			NewRoutesOption("/authorization").
+				Summary("Authorization").
+				AdditionalDoc("Authorization Resource represents an authorization granted to the user. You can **only** access your own authorization, and only through **Basic Authentication**.\n\nThe Authorization Resource has the following attribute:\n\n+ token\n+ scopes\n\nWhere *token* represents an OAuth token and *scopes* is an array of scopes granted for the given authorization. At this moment the only available scope is `gist_write`."),
 		),
 	)
 
@@ -597,9 +589,10 @@ func TestGenerate2(t *testing.T) {
 	// only for test
 	AddOperations(
 		NewPostOperation("/test", "Test the most difficult operation").
+			Tags("Test more functions").
 			ExternalDoc(NewExternalDoc("", "https://apiblueprint.org/documentation/specification.html")).
 			RequestExample(struct{ A int }{1}).
-			Consumes(FORM).
+			Consumes(MPFD).
 			Params(
 				NewFormParam("query1", "string#password[]", false, "").AllowEmpty(true).Pattern("^.+$").UniqueItems(true).
 					CollectionFormat("csv").ValueRange(0, 10).ItemsRange(0, 5).LengthRange(0, 8),
@@ -613,25 +606,185 @@ func TestGenerate2(t *testing.T) {
 			),
 	)
 
+	_generate(t, "api2")
+}
+
+func TestGenerate3(t *testing.T) {
+	CleanupDocument()
+	SetDocument("localhost:60001", "/",
+		NewInfo("Demo api", "This is a demo api only for testing goapidoc.", "1.0.0").
+		License(NewLicense("MIT", "")).
+		Contact(NewContact("", "https://github.com/Aoi-hosizora", "")),
+	)
+
+	SetOption(NewOption().
+		Schemes("http").
+		Tags(
+			NewTag("Authorization", "auth-controller"),
+			NewTag("User", "user-controller"),
+		).
+		Securities(
+			NewApiKeySecurity("jwt", HEADER, "Authorization"),
+		),
+	)
+
+	AddOperations(
+		NewPostOperation("/auth/register", "Sign up").
+			Tags("Authorization").
+			Params(
+				NewBodyParam("param", "RegisterParam", true, "register param"),
+			).
+			Responses(
+				NewResponse(200, "Result"),
+			),
+
+		NewPostOperation("/auth/login", "Sign in").
+			Tags("Authorization").
+			Params(
+				NewBodyParam("param", "LoginParam", true, "login param"),
+			).
+			Responses(
+				NewResponse(200, "_Result<LoginDto>"),
+			),
+
+		NewGetOperation("/auth/me", "Get the authorized user").
+			Tags("Authorization").
+			Securities("jwt").
+			Responses(
+				NewResponse(200, "_Result<UserDto>"),
+			),
+
+		NewDeleteOperation("/auth/logout", "Sign out").
+			Tags("Authorization").
+			Securities("jwt").
+			Responses(
+				NewResponse(200, "Result"),
+			),
+	)
+
+	AddOperations(
+		NewGetOperation("/user", "Query all users").
+			Tags("User").
+			Securities("jwt").
+			Params(
+				NewQueryParam("page", "integer#int32", false, "query page").Default(1),
+				NewQueryParam("limit", "integer#int32", false, "page size").Default(20),
+			).
+			Responses(
+				NewResponse(200, "_Result<_Page<UserDto>>"),
+			),
+
+		NewGetOperation("/user/{id}", "Query the specific user").
+			Tags("User").
+			Securities("jwt").
+			Params(
+				NewPathParam("id", "integer#int64", true, "user id"),
+			).
+			Responses(
+				NewResponse(200, "_Result<UserDto>"),
+			),
+
+		NewPutOperation("/user", "Update the authorized user").
+			Tags("User").
+			Securities("jwt").
+			Params(
+				NewBodyParam("param", "UpdateUserParam", true, "update user param"),
+			).
+			Responses(
+				NewResponse(200, "Result"),
+			),
+
+		NewDeleteOperation("/user", "Delete the authorized user").
+			Tags("User").
+			Securities("jwt").
+			Responses(
+				NewResponse(200, "Result"),
+			),
+	)
+
+	AddDefinitions(
+		NewDefinition("Result", "Global response").
+			Properties(
+				NewProperty("code", "integer#int32", true, "status code"),
+				NewProperty("message", "string", true, "status message"),
+			),
+
+		NewDefinition("_Result", "Global generic response").
+			Generics("T").
+			Properties(
+				NewProperty("code", "integer#int32", true, "status code"),
+				NewProperty("message", "string", true, "status message"),
+				NewProperty("data", "T", true, "response data"),
+			),
+
+		NewDefinition("_Page", "Global generic page response").
+			Generics("T").
+			Properties(
+				NewProperty("page", "integer#int32", true, "current page"),
+				NewProperty("limit", "integer#int32", true, "page size"),
+				NewProperty("total", "integer#int32", true, "total count"),
+				NewProperty("data", "T[]", true, "response data"),
+			),
+
+		NewDefinition("LoginParam", "Login parameter").
+			Properties(
+				NewProperty("username", "string", true, "username"),
+				NewProperty("password", "string", true, "password"),
+			),
+
+		NewDefinition("RegisterParam", "Register parameter").
+			Properties(
+				NewProperty("username", "string", true, "username"),
+				NewProperty("password", "string", true, "password"),
+			),
+
+		NewDefinition("UpdateUserParam", "Update user parameter").
+			Properties(
+				NewProperty("username", "string", true, "username"),
+				NewProperty("bio", "string", true, "user bio"),
+				NewProperty("gender", "string", true, "user gender").Enum("Secret", "Male", "Female"),
+				NewProperty("birthday", "string#date", true, "user birthday"),
+			),
+
+		NewDefinition("LoginDto", "Login response").
+			Properties(
+				NewProperty("user", "UserDto", true, "authorized user"),
+				NewProperty("token", "string", true, "access token"),
+			),
+
+		NewDefinition("UserDto", "User response").
+			Properties(
+				NewProperty("id", "integer#int64", true, "user id"),
+				NewProperty("username", "string", true, "username"),
+				NewProperty("bio", "string", true, "user bio"),
+				NewProperty("gender", "string", true, "user gender").Enum("Secret", "Male", "Female"),
+				NewProperty("birthday", "string#date", true, "user birthday"),
+			),
+	)
+
+	_generate(t, "api3")
+}
+
+func _generate(t *testing.T, name string) {
 	if _, err := GenerateSwaggerYaml(); err != nil {
-		failNow(t, fmt.Sprintf("GenerateSwaggerYaml error: %v", err))
+		failNow(t, fmt.Sprintf("GenerateSwaggerYaml (%s) error: %v", name, err))
 	}
 	if _, err := GenerateSwaggerJson(); err != nil {
-		failNow(t, fmt.Sprintf("GenerateSwaggerJson error: %v", err))
+		failNow(t, fmt.Sprintf("GenerateSwaggerJson (%s) error: %v", name, err))
 	}
 	EnableWarningLogger()
 	if _, err := GenerateApib(); err != nil {
-		failNow(t, fmt.Sprintf("GenerateApib error: %v", err))
+		failNow(t, fmt.Sprintf("GenerateApib (%s) error: %v", name, err))
 	}
 	DisableWarningLogger()
-	if _, err := SaveSwaggerYaml("./docs/api2.yaml"); err != nil {
-		failNow(t, fmt.Sprintf("SaveSwaggerYaml error: %v", err))
+	if _, err := SaveSwaggerYaml("./docs/" + name + ".yaml"); err != nil {
+		failNow(t, fmt.Sprintf("SaveSwaggerYaml (%s) error: %v", name, err))
 	}
-	if _, err := SaveSwaggerJson("./docs/api2.json"); err != nil {
-		failNow(t, fmt.Sprintf("SaveSwaggerJson error: %v", err))
+	if _, err := SaveSwaggerJson("./docs/" + name + ".json"); err != nil {
+		failNow(t, fmt.Sprintf("SaveSwaggerJson (%s) error: %v", name, err))
 	}
-	if _, err := SaveApib("./docs/api2.apib"); err != nil {
-		failNow(t, fmt.Sprintf("SaveApib error: %v", err))
+	if _, err := SaveApib("./docs/" + name + ".apib"); err != nil {
+		failNow(t, fmt.Sprintf("SaveApib (%s) error: %v", name, err))
 	}
 }
 

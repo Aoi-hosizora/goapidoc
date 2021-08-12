@@ -33,10 +33,11 @@ type apibDocument struct {
 }
 
 type apibGroup struct {
-	Tag         string
-	Description string
-	ExternalDoc string
-	Routes      []*apibRoute
+	Tag           string
+	Description   string
+	ExternalDoc   string
+	AdditionalDoc string
+	Routes        []*apibRoute
 }
 
 type apibRoute struct {
@@ -143,13 +144,13 @@ func buildApibSchema(schema *apibSchema, in string) string {
 	case BODY:
 		return typ
 	case HEADER:
-		if schema.example == nil {
-			if schema.desc == "" {
-				return fmt.Sprintf("%s: (%s, %s)", schema.name, typ, req)
-			}
-			return fmt.Sprintf("%s: (%s, %s) - %s", schema.name, typ, req, schema.desc)
+		if schema.example != nil {
+			return fmt.Sprintf("%s: %v", schema.name, schema.example)
 		}
-		return fmt.Sprintf("%s: %v", schema.name, schema.example)
+		if schema.desc == "" {
+			return fmt.Sprintf("%s: (%s, %s)", schema.name, typ, req)
+		}
+		return fmt.Sprintf("%s: (%s, %s) - %s", schema.name, typ, req, schema.desc)
 	case PATH, QUERY, FORM:
 		// pass
 	}
@@ -465,6 +466,8 @@ var apibGroupsTemplate = `
 
 {{ if .ExternalDoc }}{{ .ExternalDoc }}{{ end }}
 
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
+
 {{ range .Routes }}
 ## {{ .Summary }} [{{ .Route }}]
 
@@ -573,10 +576,11 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 			})
 		}
 		out = append(out, &apibGroup{
-			Tag:         tag.name,
-			Description: tag.desc,
-			ExternalDoc: buildApiExternalDoc(tag.externalDoc),
-			Routes:      outRoutes,
+			Tag:           tag.name,
+			Description:   tag.desc,
+			ExternalDoc:   buildApiExternalDoc(tag.externalDoc),
+			AdditionalDoc: tag.additionalDoc,
+			Routes:        outRoutes,
 		})
 	}
 

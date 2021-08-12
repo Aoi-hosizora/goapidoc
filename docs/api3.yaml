@@ -1,0 +1,352 @@
+swagger: "2.0"
+host: localhost:60001
+basePath: /
+info:
+  title: Demo api
+  version: 1.0.0
+  description: This is a demo api only for testing goapidoc.
+  license:
+    name: MIT
+  contact:
+    url: https://github.com/Aoi-hosizora
+schemes:
+- http
+tags:
+- name: Authorization
+  description: auth-controller
+- name: User
+  description: user-controller
+securityDefinitions:
+  jwt:
+    type: apiKey
+    name: Authorization
+    in: header
+paths:
+  /auth/login:
+    post:
+      summary: Sign in
+      operationId: -auth-login-post
+      tags:
+      - Authorization
+      parameters:
+      - name: param
+        in: body
+        required: true
+        description: login param
+        schema:
+          $ref: '#/definitions/LoginParam'
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/_Result<LoginDto>'
+  /auth/logout:
+    delete:
+      summary: Sign out
+      operationId: -auth-logout-delete
+      tags:
+      - Authorization
+      security:
+      - jwt: []
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/Result'
+  /auth/me:
+    get:
+      summary: Get the authorized user
+      operationId: -auth-me-get
+      tags:
+      - Authorization
+      security:
+      - jwt: []
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/_Result<UserDto>'
+  /auth/register:
+    post:
+      summary: Sign up
+      operationId: -auth-register-post
+      tags:
+      - Authorization
+      parameters:
+      - name: param
+        in: body
+        required: true
+        description: register param
+        schema:
+          $ref: '#/definitions/RegisterParam'
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/Result'
+  /user:
+    delete:
+      summary: Delete the authorized user
+      operationId: -user-delete
+      tags:
+      - User
+      security:
+      - jwt: []
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/Result'
+    get:
+      summary: Query all users
+      operationId: -user-get
+      tags:
+      - User
+      security:
+      - jwt: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        description: query page
+        type: integer
+        format: int32
+        default: 1
+      - name: limit
+        in: query
+        required: false
+        description: page size
+        type: integer
+        format: int32
+        default: 20
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/_Result<_Page<UserDto>>'
+    put:
+      summary: Update the authorized user
+      operationId: -user-put
+      tags:
+      - User
+      security:
+      - jwt: []
+      parameters:
+      - name: param
+        in: body
+        required: true
+        description: update user param
+        schema:
+          $ref: '#/definitions/UpdateUserParam'
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/Result'
+  /user/{id}:
+    get:
+      summary: Query the specific user
+      operationId: -user-:id-get
+      tags:
+      - User
+      security:
+      - jwt: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: user id
+        type: integer
+        format: int64
+      responses:
+        "200":
+          description: 200 OK
+          schema:
+            $ref: '#/definitions/_Result<UserDto>'
+definitions:
+  _Page<UserDto>:
+    type: object
+    required:
+    - page
+    - limit
+    - total
+    - data
+    description: Global generic page response
+    properties:
+      page:
+        type: integer
+        format: int32
+        description: current page
+      limit:
+        type: integer
+        format: int32
+        description: page size
+      total:
+        type: integer
+        format: int32
+        description: total count
+      data:
+        type: array
+        description: response data
+        items:
+          $ref: '#/definitions/UserDto'
+  _Result<_Page<UserDto>>:
+    type: object
+    required:
+    - code
+    - message
+    - data
+    description: Global generic response
+    properties:
+      code:
+        type: integer
+        format: int32
+        description: status code
+      message:
+        type: string
+        description: status message
+      data:
+        $ref: '#/definitions/_Page<UserDto>'
+  _Result<LoginDto>:
+    type: object
+    required:
+    - code
+    - message
+    - data
+    description: Global generic response
+    properties:
+      code:
+        type: integer
+        format: int32
+        description: status code
+      message:
+        type: string
+        description: status message
+      data:
+        $ref: '#/definitions/LoginDto'
+  _Result<UserDto>:
+    type: object
+    required:
+    - code
+    - message
+    - data
+    description: Global generic response
+    properties:
+      code:
+        type: integer
+        format: int32
+        description: status code
+      message:
+        type: string
+        description: status message
+      data:
+        $ref: '#/definitions/UserDto'
+  LoginDto:
+    type: object
+    required:
+    - user
+    - token
+    description: Login response
+    properties:
+      user:
+        $ref: '#/definitions/UserDto'
+      token:
+        type: string
+        description: access token
+  LoginParam:
+    type: object
+    required:
+    - username
+    - password
+    description: Login parameter
+    properties:
+      username:
+        type: string
+        description: username
+      password:
+        type: string
+        description: password
+  RegisterParam:
+    type: object
+    required:
+    - username
+    - password
+    description: Register parameter
+    properties:
+      username:
+        type: string
+        description: username
+      password:
+        type: string
+        description: password
+  Result:
+    type: object
+    required:
+    - code
+    - message
+    description: Global response
+    properties:
+      code:
+        type: integer
+        format: int32
+        description: status code
+      message:
+        type: string
+        description: status message
+  UpdateUserParam:
+    type: object
+    required:
+    - username
+    - bio
+    - gender
+    - birthday
+    description: Update user parameter
+    properties:
+      username:
+        type: string
+        description: username
+      bio:
+        type: string
+        description: user bio
+      gender:
+        type: string
+        description: user gender
+        enum:
+        - Secret
+        - Male
+        - Female
+      birthday:
+        type: string
+        format: date
+        description: user birthday
+  UserDto:
+    type: object
+    required:
+    - id
+    - username
+    - bio
+    - gender
+    - birthday
+    description: User response
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: user id
+      username:
+        type: string
+        description: username
+      bio:
+        type: string
+        description: user bio
+      gender:
+        type: string
+        description: user gender
+        enum:
+        - Secret
+        - Male
+        - Female
+      birthday:
+        type: string
+        format: date
+        description: user birthday

@@ -422,6 +422,49 @@ Where *token* represents an OAuth token and *scopes* is an array of scopes grant
 
     + Body
 
+# Group Test more functions
+
+Operations in this group is only used for testing.
+
+## Example
+
+GET /test is used to test more parameters style in api blueprint.
+
+## Test the most difficult operation [/test]
+
+> `/test`
+
+### Test the most difficult operation [POST]
+
+> `POST /test`
+
+[https://apiblueprint.org/documentation/specification.html](https://apiblueprint.org/documentation/specification.html)
+
++ Request (multipart/form-data)
+
+    + Attributes (object)
+
+        + query1 (array[string], optional)
+            (allow empty value, pattern: /^.+$/, 0 <= len <= 8, 0 <= #items <= 5, unique items, collection format: csv, 0.000 <= val <= 10.000)
+        + query2 (number, required)
+            (format: double, len >= 0, #items >= 0, val > 0.000, multiple of 3.300)
+        + query3 (array[array[number]], required)
+            (len <= 8, #items <= 5, val < 10.000)
+        + query4 (number, optional) - some desc
+            (format: int64, len <= 8, 0.000 < val < 10.000)
+
+    + Body
+
+            {
+              "A": 1
+            }
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Body
+
 # Group Default
 
 ## Gist Fox API Root [/]
@@ -458,40 +501,5 @@ HAL links.
                     "authorization": { "href": "/authorization"}
                 }
             }
-
-## Test the most difficult operation [/test]
-
-> `/test`
-
-### Test the most difficult operation [POST]
-
-> `POST /test`
-
-[https://apiblueprint.org/documentation/specification.html](https://apiblueprint.org/documentation/specification.html)
-
-+ Request (formData)
-
-    + Attributes (object)
-
-        + query1 (array[string], optional)
-            (allow empty value, pattern: /^.+$/, 0 <= len <= 8, 0 <= #items <= 5, unique items, collection format: csv, 0.000 <= val <= 10.000)
-        + query2 (number, required)
-            (format: double, len >= 0, #items >= 0, val > 0.000, multiple of 3.300)
-        + query3 (array[array[number]], required)
-            (len <= 8, #items <= 5, val < 10.000)
-        + query4 (number, optional) - some desc
-            (format: int64, len <= 8, 0.000 < val < 10.000)
-
-    + Body
-
-            {
-              "A": 1
-            }
-
-+ Response 200 (application/json)
-
-    200 OK
-
-    + Body
 
 # Data Structures

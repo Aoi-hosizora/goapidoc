@@ -338,9 +338,10 @@ func (o *Option) AddRoutesOptions(options ...*RoutesOption) *Option {
 
 // Tag represents a tag information of Document.
 type Tag struct {
-	name        string
-	desc        string
-	externalDoc *ExternalDoc
+	name          string
+	desc          string
+	externalDoc   *ExternalDoc
+	additionalDoc string
 }
 
 // NewTag creates a default Tag with given arguments.
@@ -351,6 +352,7 @@ func NewTag(name, desc string) *Tag {
 func (t *Tag) GetName() string              { return t.name }
 func (t *Tag) GetDesc() string              { return t.desc }
 func (t *Tag) GetExternalDoc() *ExternalDoc { return t.externalDoc }
+func (t *Tag) GetAdditionalDoc() string     { return t.additionalDoc }
 
 // Name sets the name in Tag.
 func (t *Tag) Name(name string) *Tag {
@@ -367,6 +369,12 @@ func (t *Tag) Desc(desc string) *Tag {
 // ExternalDoc sets the external documentation in Tag.
 func (t *Tag) ExternalDoc(doc *ExternalDoc) *Tag {
 	t.externalDoc = doc
+	return t
+}
+
+// AdditionalDoc sets the additional document in Tag, this is only supported in API Blueprint.
+func (t *Tag) AdditionalDoc(doc string) *Tag {
+	t.additionalDoc = doc
 	return t
 }
 

@@ -76,7 +76,8 @@ func TestSetGet(t *testing.T) {
 			Tags(NewTag("", "").
 				Name("Authorization").
 				Desc("auth-controller").
-				ExternalDoc(NewExternalDoc("Find out more", "https://github.com/Aoi-hosizora"))).
+				ExternalDoc(NewExternalDoc("Find out more", "https://github.com/Aoi-hosizora")).
+				AdditionalDoc("# addition information")).
 			AddTags(NewTag("User", "user-controller"),
 				NewTag("Resource", "resource-controller")).
 			Securities(NewSecurity("", "").
@@ -94,8 +95,8 @@ func TestSetGet(t *testing.T) {
 					Scopes(NewSecurityScope("read", "only for reading")).
 					AddScopes(NewSecurityScope("write", "only for writing"),
 						NewSecurityScope("", "").
-						Scope("rw").
-						Desc("for reading and writing"))).
+							Scope("rw").
+							Desc("for reading and writing"))).
 			ExternalDoc(NewExternalDoc("", "").
 				Desc("Find out more about this api").
 				Url("https://github.com/Aoi-hosizora")).
@@ -157,7 +158,7 @@ func TestSetGet(t *testing.T) {
 			failNow(t, "Option.Produces or Option.AddProduces has a wrong behavior")
 		}
 		if a := GetOption().GetTags(); a[0].GetName() != "Authorization" || a[0].GetDesc() != "auth-controller" ||
-			a[0].GetExternalDoc().GetDesc() != "Find out more" || a[0].GetExternalDoc().GetUrl() != "https://github.com/Aoi-hosizora" ||
+			a[0].GetExternalDoc().GetDesc() != "Find out more" || a[0].GetExternalDoc().GetUrl() != "https://github.com/Aoi-hosizora" || a[0].GetAdditionalDoc() != "# addition information" ||
 			a[1].GetName() != "User" || a[1].GetDesc() != "user-controller" || a[2].GetName() != "Resource" || a[2].GetDesc() != "resource-controller" {
 			failNow(t, "Option.Tags or Option.AddTags or Tags.XXX has a wrong behavior")
 		}
@@ -224,7 +225,7 @@ func TestSetGet(t *testing.T) {
 			AddTags("Authorized", "Information").
 			Securities("jwt").
 			AddSecurities("basic", "oauth2", "another_oauth2").
-			SetSecurityScopes("oauth2","read", "write").
+			SetSecurityScopes("oauth2", "read", "write").
 			SetSecurityScopes("another_oauth2", "xx", "yy").
 			Deprecated(true).
 			RequestExample(map[string]interface{}{"key": "value"}).
@@ -239,8 +240,8 @@ func TestSetGet(t *testing.T) {
 				Examples(NewResponseExample(JSON, map[string]interface{}{"code": 200, "message": "success", "data": map[string]interface{}{"id": 1, "name": "user1"}})).
 				AddExamples(NewResponseExample(XML, map[string]interface{}{"code": 200, "message": "ok"}),
 					NewResponseExample("", "").
-					Mime(PLAIN).
-					Example("hello world")).
+						Mime(PLAIN).
+						Example("hello world")).
 				Headers(NewResponseHeader("X-RateLimit-Remaining", "integer#int64", "Request rate limit remaining")).
 				AddHeaders(NewResponseHeader("", "", "").
 					Name("X-RateLimit-Limit").

@@ -15,6 +15,10 @@
     {
       "name": "Access Authorization and Control",
       "description": "Access and Control of *Gist Fox API* OAuth token."
+    },
+    {
+      "name": "Test more functions",
+      "description": "Operations in this group is only used for testing."
     }
   ],
   "paths": {
@@ -441,7 +445,10 @@
         "summary": "Test the most difficult operation",
         "operationId": "-test-post",
         "consumes": [
-          "formData"
+          "multipart/form-data"
+        ],
+        "tags": [
+          "Test more functions"
         ],
         "externalDocs": {
           "url": "https://apiblueprint.org/documentation/specification.html"
