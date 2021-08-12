@@ -1,0 +1,451 @@
+swagger: "2.0"
+host: api.gistfox.com
+basePath: /
+info:
+  title: Gist Fox API
+  version: 1.0.0
+  description: Gist Fox API is a **pastes service** similar to [GitHub's Gist](http://gist.github.com).
+tags:
+- name: Gist
+  description: Gist-related resources of *Gist Fox API*.
+- name: Access Authorization and Control
+  description: Access and Control of *Gist Fox API* OAuth token.
+- name: Test more functions
+  description: Operations in this group is only used for testing.
+paths:
+  /:
+    get:
+      summary: Retrieve the Entry Point
+      operationId: --get
+      produces:
+      - application/hal+json
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/>;rel="self",<http:/api.gistfox.com/gists>;rel="gists",<http:/api.gistfox.com/authorization>;rel="authorization"
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/" },
+                      "gists": { "href": "/gists?{since}", "templated": true },
+                      "authorization": { "href": "/authorization"}
+                  }
+              }
+  /authorization:
+    delete:
+      summary: Remove an Authorization
+      operationId: -authorization-delete
+      tags:
+      - Access Authorization and Control
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        example: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+      responses:
+        "204":
+          description: 204 No Content
+    get:
+      summary: Retrieve Authorization
+      operationId: -authorization-get
+      produces:
+      - application/hal+json
+      tags:
+      - Access Authorization and Control
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        example: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/authorizations/1>;rel="self"
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/authorizations" },
+                  },
+                  "scopes": [
+                      "gist_write"
+                  ],
+                  "token": "abc123"
+              }
+    post:
+      summary: Create Authorization
+      operationId: -authorization-post
+      produces:
+      - application/hal+json
+      tags:
+      - Access Authorization and Control
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        example: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+      responses:
+        "201":
+          description: 201 Created
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/authorizations/1>;rel="self"
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/authorizations" },
+                  },
+                  "scopes": [
+                      "gist_write"
+                  ],
+                  "token": "abc123"
+              }
+  /gists:
+    get:
+      summary: List All Gists
+      operationId: -gists-get
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: since
+        in: query
+        required: false
+        description: 'Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists
+          updated at or after this time are returned.'
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: ' <http:/api.gistfox.com/gists>;rel="self"'
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/gists" }
+                  },
+                  "_embedded": {
+                      "gists": [
+                          {
+                              "_links" : {
+                                  "self": { "href": "/gists/42" }
+                              },
+                              "id": "42",
+                              "created_at": "2014-04-14T02:15:15Z",
+                              "description": "Description of Gist"
+                          }
+                      ]
+                  },
+                  "total": 1
+              }
+    post:
+      summary: Create a Gist
+      operationId: -gists-post
+      description: |-
+        To create a new Gist simply provide a JSON hash of the *description* and *content* attributes for the new Gist.
+
+        This action requires an `access_token` with `gist_write` scope.
+      consumes:
+      - application/json
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: since
+        in: query
+        required: false
+        description: 'Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only gists
+          updated at or after this time are returned.'
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      responses:
+        "201":
+          description: 201 Created
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/gists/42" },
+                      "star": { "href": "/gists/42/star" },
+                  },
+                  "id": "42",
+                  "created_at": "2014-04-14T02:15:15Z",
+                  "description": "Description of Gist",
+                  "content": "String contents"
+              }
+  /gists/{id}:
+    delete:
+      summary: Delete a Gist
+      operationId: -gists-:id-delete
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the Gist in the form of a hash.
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      responses:
+        "204":
+          description: 204 No Content
+    get:
+      summary: Retrieve a Single Gist
+      operationId: -gists-:id-get
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the Gist in the form of a hash.
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/gists/42" },
+                      "star": { "href": "/gists/42/star" },
+                  },
+                  "id": "42",
+                  "created_at": "2014-04-14T02:15:15Z",
+                  "description": "Description of Gist",
+                  "content": "String contents"
+              }
+    patch:
+      summary: Edit a Gist
+      operationId: -gists-:id-patch
+      description: To update a Gist send a JSON with updated value for one or more
+        of the Gist resource attributes. All attributes values (states) from the previous
+        version of this Gist are carried over by default if not included in the hash.
+      consumes:
+      - application/json
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the Gist in the form of a hash.
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token.
+        type: string
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/gists/42>;rel="self", <http:/api.gistfox.com/gists/42/star>;rel="star"
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/gists/42" },
+                      "star": { "href": "/gists/42/star" },
+                  },
+                  "id": "42",
+                  "created_at": "2014-04-14T02:15:15Z",
+                  "description": "Description of Gist",
+                  "content": "String contents"
+              }
+  /gists/{id}/star:
+    delete:
+      summary: Unstar a Gist
+      operationId: -gists-:id-star-delete
+      description: This action requires an `access_token` with `gist_write` scope.
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the gist in the form of a hash
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token
+        type: string
+      responses:
+        "204":
+          description: 204 No Content
+    get:
+      summary: Check if a Gist is Starred
+      operationId: -gists-:id-star-get
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the gist in the form of a hash
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token
+        type: string
+      responses:
+        "200":
+          description: 200 OK
+          headers:
+            Link:
+              type: string
+              example: <http:/api.gistfox.com/gists/42/star>;rel="self"
+          examples:
+            application/hal+json: |-
+              {
+                  "_links": {
+                      "self": { "href": "/gists/42/star" },
+                  },
+                  "starred": true
+              }
+    put:
+      summary: Star a Gist
+      operationId: -gists-:id-star-put
+      description: This action requires an `access_token` with `gist_write` scope.
+      produces:
+      - application/hal+json
+      tags:
+      - Gist
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID of the gist in the form of a hash
+        type: string
+      - name: access_token
+        in: query
+        required: false
+        description: Gist Fox API access token
+        type: string
+      responses:
+        "204":
+          description: 204 No Content
+  /test:
+    post:
+      summary: Test the most difficult operation
+      operationId: -test-post
+      consumes:
+      - multipart/form-data
+      tags:
+      - Test more functions
+      externalDocs:
+        url: https://apiblueprint.org/documentation/specification.html
+      parameters:
+      - name: query1
+        in: formData
+        required: false
+        type: array
+        allowEmptyValue: true
+        pattern: ^.+$
+        maxLength: 8
+        minLength: 0
+        maxItems: 5
+        minItems: 0
+        uniqueItems: true
+        collectionFormat: csv
+        maximum: 10
+        minimum: 0
+        items:
+          type: string
+          format: password
+      - name: query2
+        in: formData
+        required: true
+        type: number
+        format: double
+        minLength: 0
+        minItems: 0
+        minimum: 0
+        exclusiveMinimum: true
+        multipleOf: 3.3
+      - name: query3
+        in: formData
+        required: true
+        type: array
+        maxLength: 8
+        maxItems: 5
+        maximum: 10
+        exclusiveMaximum: true
+        items:
+          type: array
+          maximum: 5
+          minimum: -5
+          exclusiveMinimum: true
+          exclusiveMaximum: true
+          items:
+            type: number
+            format: double
+      - name: query4
+        in: formData
+        required: false
+        description: some desc
+        type: integer
+        format: int64
+        maxLength: 8
+        maximum: 10
+        minimum: 0
+        exclusiveMinimum: true
+        exclusiveMaximum: true
+      responses:
+        "200":
+          description: 200 OK

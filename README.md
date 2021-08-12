@@ -6,122 +6,126 @@
 [![License](http://img.shields.io/badge/license-mit-blue.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/Aoi-hosizora/goapidoc)](https://github.com/Aoi-hosizora/goapidoc/releases)
 
-+ A tool written in golang for generating api document (swagger2 & apib)
++ A golang library for generating api document, including swagger2 and apib.
 
 ### Function
 
-+ [x] Support basic information, route and definition
-+ [x] Support basic generic type
-+ [x] Support basic Swagger 2
-+ [x] Support basic API Blueprint 1A (compatible with swagger2)
-
-### Type tips
-
-```text
-Struct1<Struct2<Struct3, integer#int64>, string#date-time, Struct4[]>[]
-
-$basicType   := {integer, number, string, boolean, file, object, array}
-$basicFormat := {int32, int64, float, double, byte, binary, date, date-time, password}
-
-$type    := $basicType
-$type    := $basicType#$basicFormat
-$type    := $type[]
-$type    := $type<$generic>
-$generic := $type
-$generic := $generic, $type
-```
++ [x] Support api, routes and definitions information
++ [x] Support generic definition type
++ [x] Support most of the functions for swagger 2
++ [x] Support basic functions for API Blueprint 1A
 
 ### Usage
 
-+ See [generate_test,go](./generate_test.go)
++ Visit [generate_test.go](./generate_test.go) for detail examples, and [api1.json](./docs/api1.json) / [api2.apib](./docs/api2.apib) for generated documents.
 
 ```go
 package main
 
 import (
-    . "github.com/Aoi-hosizora/goapidoc"
+	. "github.com/Aoi-hosizora/goapidoc"
 )
 
 func main() {
-	SetDocument(
-		"localhost:65530", "/",
-		NewInfo("goapidoc", "goapidoc test api", "1.0").
-			TermsOfService("https://xxx.yyy.zzz.com/").
-			License(NewLicense("MIT", "https://xxx.yyy.zzz.com/")).
-			Contact(NewContact("xxx", "https://xxx.yyy.zzz.com/", "xxx@yyy.zzz")),
-	)
-	SetTags(
-		NewTag("Authorization", "auth-controller"),
-		NewTag("User", "user-controller"),
-		NewTag("Test", "test-controller"),
-	)
-	SetSecurities(
-		NewSecurity("Jwt", "header", "Authorization"),
+	SetDocument("localhost:60001", "/",
+		NewInfo("Demo api", "This is a demo api only for testing goapidoc.", "1.0.0").
+			License(NewLicense("MIT", "")).
+			Contact(NewContact("", "https://github.com/Aoi-hosizora", "")),
 	)
 
-	AddRoutePaths(
-		NewRoutePath("POST", "/auth/register", "Register").
-			Desc("Register.").
-			Tags("Authorization").
-			Params(NewBodyParam("param", "RegisterParam", true, "register param")).
-			Responses(NewResponse(200, "Result")),
+	SetOption(NewOption().
+		Schemes("http").
+		Tags(
+			NewTag("Authorization", "auth-controller"),
+			NewTag("User", "user-controller"),
+		).
+		Securities(
+			NewApiKeySecurity("jwt", HEADER, "Authorization"),
+		),
+	)
 
-		NewRoutePath("POST", "/auth/login", "Login").
-			Desc("Login.").
+	AddOperations(
+		NewPostOperation("/auth/register", "Sign up").
 			Tags("Authorization").
-			Params(NewBodyParam("param", "LoginParam", true, "login param")).
+			Params(
+				NewBodyParam("param", "RegisterParam", true, "register param"),
+			).
 			Responses(
-				NewResponse(200, "_Result<LoginDto>"),
-				NewResponse(400, "Result").Examples(map[string]string{"application/json": "{\n  \"code\": 400, \n  \"message\": \"Unauthorized\"\n}"}),
+				NewResponse(200, "Result"),
 			),
 
-		NewRoutePath("DELETE", "/auth/logout", "Logout").
+		NewPostOperation("/auth/login", "Sign in").
 			Tags("Authorization").
-			Securities("Jwt").
-			Responses(NewResponse(200, "Result")),
-
-		NewRoutePath("GET", "/user", "Get users").
-			Tags("User").
-			Securities("Jwt").
 			Params(
-				NewQueryParam("page", "integer#int32", false, "current page").Default(1).Example(1).Minimum(1),
-				NewQueryParam("limit", "integer#int32", false, "page size").Default(20).Example(20).Minimum(15),
+				NewBodyParam("param", "LoginParam", true, "login param"),
 			).
-			Responses(NewResponse(200, "_Result<_Page<UserDto>>")),
+			Responses(
+				NewResponse(200, "_Result<LoginDto>"),
+			),
 
-		NewRoutePath("GET", "/user/{username}", "Get a user").
-			Tags("User").
-			Securities("Jwt").
-			Params(NewPathParam("username", "string", true, "username")).
-			Responses(NewResponse(200, "_Result<UserDto>")),
+		NewGetOperation("/auth/me", "Get the authorized user").
+			Tags("Authorization").
+			Securities("jwt").
+			Responses(
+				NewResponse(200, "_Result<UserDto>"),
+			),
 
-		NewRoutePath("PUT", "/user/deprecated", "Update user").
-			Tags("User").
-			Securities("Jwt").
-			Deprecated(true).
-			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
-			Responses(NewResponse(200, "Result")),
+		NewDeleteOperation("/auth/logout", "Sign out").
+			Tags("Authorization").
+			Securities("jwt").
+			Responses(
+				NewResponse(200, "Result"),
+			),
+	)
 
-		NewRoutePath("PUT", "/user", "Update user").
+	AddOperations(
+		NewGetOperation("/user", "Query all users").
 			Tags("User").
-			Securities("Jwt").
-			Params(NewBodyParam("param", "UpdateUserParam", true, "update user param")).
-			Responses(NewResponse(200, "Result")),
+			Securities("jwt").
+			Params(
+				NewQueryParam("page", "integer#int32", false, "query page").Default(1),
+				NewQueryParam("limit", "integer#int32", false, "page size").Default(20),
+			).
+			Responses(
+				NewResponse(200, "_Result<_Page<UserDto>>"),
+			),
 
-		NewRoutePath("DELETE", "/user", "Delete user").
+		NewGetOperation("/user/{id}", "Query the specific user").
 			Tags("User").
-			Securities("Jwt").
-			Responses(NewResponse(200, "Result")),
+			Securities("jwt").
+			Params(
+				NewPathParam("id", "integer#int64", true, "user id"),
+			).
+			Responses(
+				NewResponse(200, "_Result<UserDto>"),
+			),
+
+		NewPutOperation("/user", "Update the authorized user").
+			Tags("User").
+			Securities("jwt").
+			Params(
+				NewBodyParam("param", "UpdateUserParam", true, "update user param"),
+			).
+			Responses(
+				NewResponse(200, "Result"),
+			),
+
+		NewDeleteOperation("/user", "Delete the authorized user").
+			Tags("User").
+			Securities("jwt").
+			Responses(
+				NewResponse(200, "Result"),
+			),
 	)
 
 	AddDefinitions(
-		NewDefinition("Result", "global response").
+		NewDefinition("Result", "Global response").
 			Properties(
-				NewProperty("code", "integer#int32", true, "status code").Example("200"),
-				NewProperty("message", "string", true, "status message").Example("success"),
+				NewProperty("code", "integer#int32", true, "status code"),
+				NewProperty("message", "string", true, "status message"),
 			),
 
-		NewDefinition("_Result", "global response").
+		NewDefinition("_Result", "Global generic response").
 			Generics("T").
 			Properties(
 				NewProperty("code", "integer#int32", true, "status code"),
@@ -129,7 +133,7 @@ func main() {
 				NewProperty("data", "T", true, "response data"),
 			),
 
-		NewDefinition("_Page", "global page response").
+		NewDefinition("_Page", "Global generic page response").
 			Generics("T").
 			Properties(
 				NewProperty("page", "integer#int32", true, "current page"),
@@ -138,47 +142,45 @@ func main() {
 				NewProperty("data", "T[]", true, "response data"),
 			),
 
-		NewDefinition("UserDto", "user response").
+		NewDefinition("LoginParam", "Login parameter").
 			Properties(
-				NewProperty("uid", "integer#int64", true, "user id"),
 				NewProperty("username", "string", true, "username"),
-				NewProperty("nickname", "string", true, "nickname"),
-				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+				NewProperty("password", "string", true, "password"),
 			),
 
-		NewDefinition("LoginDto", "login response").
+		NewDefinition("RegisterParam", "Register parameter").
+			Properties(
+				NewProperty("username", "string", true, "username"),
+				NewProperty("password", "string", true, "password"),
+			),
+
+		NewDefinition("UpdateUserParam", "Update user parameter").
+			Properties(
+				NewProperty("username", "string", true, "username"),
+				NewProperty("bio", "string", true, "user bio"),
+				NewProperty("gender", "string", true, "user gender").Enum("Secret", "Male", "Female"),
+				NewProperty("birthday", "string#date", true, "user birthday"),
+			),
+
+		NewDefinition("LoginDto", "Login response").
 			Properties(
 				NewProperty("user", "UserDto", true, "authorized user"),
 				NewProperty("token", "string", true, "access token"),
 			),
 
-		NewDefinition("RegisterParam", "register param").
+		NewDefinition("UserDto", "User response").
 			Properties(
-				NewProperty("username", "string", true, "username").MinLength(5).MaxLength(30),
-				NewProperty("password", "string", true, "password").MinLength(5).MaxLength(30),
-			),
-
-		NewDefinition("LoginParam", "login param").
-			Properties(
-				NewProperty("parameter", "string", true, "login parameter"),
-				NewProperty("password", "string", true, "password"),
-			),
-
-		NewDefinition("UpdateUserParam", "update user param").
-			Properties(
+				NewProperty("id", "integer#int64", true, "user id"),
 				NewProperty("username", "string", true, "username"),
-				NewProperty("nickname", "string", true, "nickname"),
-				NewProperty("profile", "string", true, "user profile").AllowEmpty(true),
-				NewProperty("gender", "string", true, "user gender").Enum("secret", "male", "female"),
+				NewProperty("bio", "string", true, "user bio"),
+				NewProperty("gender", "string", true, "user gender").Enum("Secret", "Male", "Female"),
+				NewProperty("birthday", "string#date", true, "user birthday"),
 			),
 	)
 
-	_, _ = GenerateSwaggerYaml("./docs/api.yaml")
-
-	_, _ = GenerateSwaggerJson("./docs/api.json")
-
-	_, _ = GenerateApib("./docs/api.apib")
+	_, _ = SaveSwaggerYaml("./docs/api3.yaml")
+	_, _ = SaveSwaggerJson("./docs/api3.json")
+	_, _ = SaveApib("./docs/api3.apib")
 }
 ```
 

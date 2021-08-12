@@ -1,5 +1,20 @@
 package goapidoc
 
+// security type
+const (
+	BASIC  = "basic"  // BASIC security type: basic authentication
+	APIKEY = "apiKey" // APIKEY security type: api key authentication
+	OAUTH2 = "oauth2" // OAUTH2 security type: oauth2 authentication
+)
+
+// oauth2 flow
+const (
+	IMPLICIT_FLOW    = "implicit"    // IMPLICIT_FLOW oauth2 flow: implicit
+	PASSWORD_FLOW    = "password"    // PASSWORD_FLOW oauth2 flow: password
+	APPLICATION_FLOW = "application" // APPLICATION_FLOW oauth2 flow: application
+	ACCESSCODE_FLOW  = "accessCode"  // ACCESSCODE_FLOW oauth2 flow: accessCode
+)
+
 // type
 const (
 	INTEGER = "integer" // INTEGER type: integer, long
@@ -8,7 +23,7 @@ const (
 	BOOLEAN = "boolean" // BOOLEAN type: boolean
 	ARRAY   = "array"   // ARRAY type: array
 	FILE    = "file"    // FILE type: file
-	OBJECT  = "object"  // OBJECT x
+	OBJECT  = "object"  // OBJECT type: object
 )
 
 // format
@@ -48,7 +63,7 @@ const (
 const (
 	ALL   = "*/*"                               // ALL mime data: */*
 	JSON  = "application/json"                  // JSON mime data: application/json
-	XML   = "text/xml"                          // XML mime data: text/xml
+	XML   = "application/xml"                   // XML mime data: application/xml
 	PLAIN = "text/plain"                        // PLAIN mime data: text/plain
 	HTML  = "text/html"                         // HTML mime data: text/html
 	MPFD  = "multipart/form-data"               // MPFD mime data: multipart/form-data
@@ -56,4 +71,12 @@ const (
 	PNG   = "image/png"                         // PNG mime data: image/png
 	JPEG  = "image/jpeg"                        // JPEG mime data: image/jpeg
 	GIF   = "image/gif"                         // GIF mime data: image/gif
+)
+
+const (
+	CSV   = "csv"   // CSV collection format: foo,bar
+	SSV   = "ssv"   // SSV collection format: foo bar
+	TSV   = "tsv"   // TSV collection format: foo\tbar
+	PIPES = "pipes" // PIPES collection format: foo|bar
+	MULTI = "multi" // MULTI collection format: foo=bar&foo=baz
 )

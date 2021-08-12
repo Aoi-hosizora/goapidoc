@@ -1,0 +1,320 @@
+FORMAT: 1A
+HOST: localhost:60001/
+
+# Demo api (1.0.0)
+
+This is a demo api only for testing goapidoc.
+
+License: MIT
+
+[the developer - Website](https://github.com/Aoi-hosizora)
+
+## Securities defined
+
++ jwt: apiKey
+    + name: Authorization
+    + in: header
+
+## Supported schemes
+
++ http
+
+# Group Authorization
+
+auth-controller
+
+## Sign up [/auth/register]
+
+> `/auth/register`
+
+### Sign up [POST]
+
+> `POST /auth/register`
+
++ Request (application/json)
+
+    + Attributes (RegisterParam)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (Result)
+
+    + Body
+
+## Sign in [/auth/login]
+
+> `/auth/login`
+
+### Sign in [POST]
+
+> `POST /auth/login`
+
++ Request (application/json)
+
+    + Attributes (LoginParam)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<LoginDto>)
+
+    + Body
+
+## Get the authorized user [/auth/me]
+
+> `/auth/me`
+
+### Get the authorized user [GET]
+
+> `GET /auth/me`
+
+Security requirement: jwt
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - jwt, apiKey
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<UserDto>)
+
+    + Body
+
+## Sign out [/auth/logout]
+
+> `/auth/logout`
+
+### Sign out [DELETE]
+
+> `DELETE /auth/logout`
+
+Security requirement: jwt
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - jwt, apiKey
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (Result)
+
+    + Body
+
+# Group User
+
+user-controller
+
+## Query all users [/user{?page,limit}]
+
+> `/user`
+
+### Query all users [GET]
+
+> `GET /user`
+
+Security requirement: jwt
+
++ Parameters
+
+    + page (number, optional) - query page
+        (format: int32)
+        + Default: `1`
+    + limit (number, optional) - page size
+        (format: int32)
+        + Default: `20`
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - jwt, apiKey
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<_Page<UserDto>>)
+
+    + Body
+
+## Query the specific user [/user/{id}]
+
+> `/user/{id}`
+
+### Query the specific user [GET]
+
+> `GET /user/{id}`
+
+Security requirement: jwt
+
++ Parameters
+
+    + id (number, required) - user id
+        (format: int64)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - jwt, apiKey
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<UserDto>)
+
+    + Body
+
+## Update the authorized user | Delete the authorized user [/user]
+
+> `/user`
+
+### Update the authorized user [PUT]
+
+> `PUT /user`
+
+Security requirement: jwt
+
++ Request (application/json)
+
+    + Attributes (UpdateUserParam)
+
+    + Headers
+
+            Authorization: (string, optional) - jwt, apiKey
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (Result)
+
+    + Body
+
+### Delete the authorized user [DELETE]
+
+> `DELETE /user`
+
+Security requirement: jwt
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, optional) - jwt, apiKey
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (Result)
+
+    + Body
+
+# Data Structures
+
+## Result (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
+
+## LoginParam (object)
+
++ username (string, required) - username
++ password (string, required) - password
+
+## RegisterParam (object)
+
++ username (string, required) - username
++ password (string, required) - password
+
+## UpdateUserParam (object)
+
++ username (string, required) - username
++ bio (string, required) - user bio
++ gender (enum[string], required) - user gender
+    + Members
+        + `Secret`
+        + `Male`
+        + `Female`
++ birthday (string, required) - user birthday
+    (format: date)
+
+## LoginDto (object)
+
++ user (UserDto, required) - authorized user
++ token (string, required) - access token
+
+## UserDto (object)
+
++ id (number, required) - user id
+    (format: int64)
++ username (string, required) - username
++ bio (string, required) - user bio
++ gender (enum[string], required) - user gender
+    + Members
+        + `Secret`
+        + `Male`
+        + `Female`
++ birthday (string, required) - user birthday
+    (format: date)
+
+## _Result<LoginDto> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (LoginDto, required) - response data
+
+## _Result<UserDto> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (UserDto, required) - response data
+
+## _Page<UserDto> (object)
+
++ page (number, required) - current page
+    (format: int32)
++ limit (number, required) - page size
+    (format: int32)
++ total (number, required) - total count
+    (format: int32)
++ data (array[UserDto], required) - response data
+
+## _Result<_Page<UserDto>> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (_Page<UserDto>, required) - response data

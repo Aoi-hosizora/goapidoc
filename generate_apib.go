@@ -2,403 +2,795 @@ package goapidoc
 
 import (
 	"fmt"
+	"net/http"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 )
 
+type apibDocument struct {
+	Host     string
+	BasePath string
+
+	Title          string
+	Description    string
+	Version        string
+	TermsOfService string
+	License        string
+	ContactUrl     string
+	ContactEmail   string
+	ExternalDoc    string
+
+	Securities    []string
+	Schemes       []string
+	Consumes      []string
+	Produces      []string
+	AdditionalDoc string
+
+	GroupsString      string
+	DefinitionsString string
+}
+
+type apibGroup struct {
+	Tag           string
+	Description   string
+	ExternalDoc   string
+	AdditionalDoc string
+	Routes        []*apibRoute
+}
+
+type apibRoute struct {
+	Route         string
+	RawRoute      string
+	Summary       string
+	AdditionalDoc string
+	Methods       string
+}
+
+type apibMethod struct {
+	Route         string
+	Method        string
+	Summary       string
+	Description   string
+	Security      string
+	Deprecated    bool
+	Example       string
+	Consume       string
+	Produce       string
+	ExternalDoc   string
+	AdditionalDoc string
+
+	Parameters []string
+	Headers    []string
+	AttrBody   string
+	Forms      []string
+	Responses  []*apibResponse
+}
+
+type apibResponse struct {
+	Code          int
+	Description   string
+	Produce       string
+	AdditionalDoc string
+
+	Headers  []string
+	AttrBody string
+	Example  string
+}
+
+type apibDefinition struct {
+	Name       string
+	Properties []string
+}
+
+type apibSchema struct {
+	name     string
+	typ      string
+	required bool
+	desc     string
+
+	allowEmpty       bool
+	defaul           interface{}
+	example          interface{}
+	pattern          string
+	enum             []interface{}
+	minLength        *int
+	maxLength        *int
+	minItems         *int
+	maxItems         *int
+	uniqueItems      bool
+	collectionFormat string
+	minimum          *float64
+	maximum          *float64
+	exclusiveMin     bool
+	exclusiveMax     bool
+	multipleOf       float64
+}
+
+// =====================================
+// type & schema & externalDoc & example
+// =====================================
+
 func buildApibType(typ string) (string, *apiType) {
 	at := parseApiType(typ)
-	// typ = strings.ReplaceAll(strings.ReplaceAll(typ, "<", "«"), ">", "»")
-	if at.kind == apiPrimeKind {
-		typ := at.prime.typ
-		if typ == "integer" {
-			typ = "number"
+	switch at.kind {
+	case apiPrimeKind:
+		t := at.prime.typ
+		if t == FILE {
+			logWarning("file type is not supported in API Blueprint, this will be replaced to string.")
+			t = STRING
+		} else if t == INTEGER {
+			t = NUMBER
 		}
+		return t, at
+	case apiArrayKind:
+		t, _ := buildApibType(at.array.item.name)
+		return fmt.Sprintf("array[%s]", t), at
+	case apiObjectKind:
 		return typ, at
-	} else if at.kind == apiObjectKind {
-		return typ, at
-	} else {
-		item, _ := buildApibType(at.array.item.name)
-		if typ == "integer" {
-			item = "number"
-		}
-		return fmt.Sprintf("array[%s]", item), at
+	default:
+		return "", nil // unreachable
 	}
 }
 
-func buildApibParam(param *Param) string {
+func buildApibSchema(schema *apibSchema, in string) string {
+	typ, at := buildApibType(schema.typ)
 	req := "required"
-	if !param.required {
+	if !schema.required {
 		req = "optional"
 	}
-	typ, at := buildApibType(param.typ)
-	if len(param.enum) != 0 {
-		typ = "enum[" + typ + "]"
+	switch in {
+	case BODY:
+		return typ
+	case HEADER:
+		if schema.example != nil {
+			return fmt.Sprintf("%s: %v", schema.name, schema.example)
+		}
+		if schema.desc == "" {
+			return fmt.Sprintf("%s: (%s, %s)", schema.name, typ, req)
+		}
+		return fmt.Sprintf("%s: (%s, %s) - %s", schema.name, typ, req, schema.desc)
+	case PATH, QUERY, FORM:
+		// pass
 	}
 
-	paramStr := fmt.Sprintf("+ %s (%s, %s) - %s", param.name, typ, req, param.desc) // center
-	if param.example != nil {
-		paramStr = fmt.Sprintf("+ %s: `%v` (%s, %s) - %s", param.name, param.example, typ, req, param.desc)
+	/*
+		+ <parameter name>: `<example value>` (<type> | enum[<type>], required | optional) - <description>
+		    <additional description>
+		    + Default: `<default value>`
+		    + Members
+		        + `<enumeration value 1>`
+		        + `<enumeration value 2>`
+	*/
+	out := strings.Builder{}
+	if len(schema.enum) != 0 {
+		typ = fmt.Sprintf("enum[%s]", typ)
 	}
-
-	options := make([]string, 0)
-
+	if schema.example != nil {
+		out.WriteString(fmt.Sprintf("+ %s: `%v` (%s, %s)", schema.name, schema.example, typ, req))
+	} else {
+		out.WriteString(fmt.Sprintf("+ %s (%s, %s)", schema.name, typ, req))
+	}
+	if schema.desc != "" {
+		out.WriteString(fmt.Sprintf(" - %s", schema.desc))
+	}
+	options := make([]string, 0, 4) // cap defaults to 4
 	if at.kind == apiPrimeKind && at.prime.format != "" {
-		options = append(options, "format: "+at.prime.format)
+		options = append(options, fmt.Sprintf("format: %s", at.prime.format))
 	}
-	if param.allowEmpty {
-		options = append(options, "allow empty")
+	if schema.allowEmpty {
+		options = append(options, "allow empty value")
 	}
-	if param.maxLength != 0 && param.minLength != 0 {
-		options = append(options, fmt.Sprintf("len in \\[%d, %d\\]", param.minLength, param.maxLength))
-	} else if param.minLength != 0 {
-		options = append(options, fmt.Sprintf("len >= %d", param.minLength))
-	} else if param.maxLength != 0 {
-		options = append(options, fmt.Sprintf("len <= %d", param.maxLength))
+	if schema.pattern != "" {
+		options = append(options, fmt.Sprintf("pattern: /%s/", schema.pattern))
 	}
-	if param.maximum != 0 && param.minimum != 0 {
-		options = append(options, fmt.Sprintf("val in \\[%d, %d\\]", param.minimum, param.maximum))
-	} else if param.minimum != 0 {
-		options = append(options, fmt.Sprintf("val >= %d", param.minimum))
-	} else if param.maximum != 0 {
-		options = append(options, fmt.Sprintf("val <= %d", param.maximum))
+	if schema.maxLength != nil && schema.minLength != nil {
+		options = append(options, fmt.Sprintf("%d <= len <= %d", *schema.minLength, *schema.maxLength))
+	} else if schema.minLength != nil {
+		options = append(options, fmt.Sprintf("len >= %d", *schema.minLength))
+	} else if schema.maxLength != nil {
+		options = append(options, fmt.Sprintf("len <= %d", *schema.maxLength))
 	}
-
-	if len(options) != 0 {
-		paramStr += fmt.Sprintf("\n    (%s)", strings.Join(options, ", "))
+	if schema.maxItems != nil && schema.minItems != nil {
+		options = append(options, fmt.Sprintf("%d <= #items <= %d", *schema.minItems, *schema.maxItems))
+	} else if schema.minItems != nil {
+		options = append(options, fmt.Sprintf("#items >= %d", *schema.minItems))
+	} else if schema.maxItems != nil {
+		options = append(options, fmt.Sprintf("#items <= %d", *schema.maxItems))
 	}
-
-	if param.def != nil {
-		paramStr += fmt.Sprintf("\n    + Default: `%v`", param.def)
+	if schema.uniqueItems {
+		options = append(options, "unique items")
 	}
-
-	if len(param.enum) != 0 {
-		paramStr += "\n    + Members"
-		for _, enum := range param.enum {
-			paramStr += fmt.Sprintf("\n        + `%v`", enum)
+	if schema.collectionFormat != "" {
+		options = append(options, fmt.Sprintf("collection format: %s", schema.collectionFormat))
+	}
+	ltSign, gtSign, gtSignR := "<=", ">=", "<="
+	if schema.exclusiveMax {
+		ltSign = "<"
+	}
+	if schema.exclusiveMin {
+		gtSign, gtSignR = ">", "<"
+	}
+	if schema.maximum != nil && schema.minimum != nil {
+		options = append(options, fmt.Sprintf("%.3f %s val %s %.3f", *schema.minimum, gtSignR, ltSign, *schema.maximum))
+	} else if schema.minimum != nil {
+		options = append(options, fmt.Sprintf("val %s %.3f", gtSign, *schema.minimum))
+	} else if schema.maximum != nil {
+		options = append(options, fmt.Sprintf("val %s %.3f", ltSign, *schema.maximum))
+	}
+	if schema.multipleOf != 0 {
+		options = append(options, fmt.Sprintf("multiple of %.3f", schema.multipleOf))
+	}
+	if len(options) > 0 {
+		out.WriteString(fmt.Sprintf("\n    (%s)", strings.Join(options, ", ")))
+	}
+	if schema.defaul != nil {
+		out.WriteString(fmt.Sprintf("\n    + Default: `%v`", schema.defaul))
+	}
+	if len(schema.enum) != 0 {
+		out.WriteString("\n    + Members")
+		for _, enum := range schema.enum {
+			out.WriteString(fmt.Sprintf("\n        + `%v`", enum))
 		}
 	}
 
-	return paramStr
+	return out.String()
 }
 
-func buildApibProperty(prop *Property) string {
-	return buildApibParam(&Param{
-		name:       prop.name,
-		typ:        prop.typ,
-		required:   prop.required,
-		desc:       prop.desc,
-		allowEmpty: prop.allowEmpty,
-		def:        prop.def,
-		example:    prop.example,
-		enum:       prop.enum,
-		minLength:  prop.minimum,
-		maxLength:  prop.maxLength,
-		minimum:    prop.minimum,
-		maximum:    prop.maxLength,
-	})
+func buildApiExternalDoc(doc *ExternalDoc) string {
+	if doc == nil {
+		return ""
+	}
+	desc := doc.desc
+	if desc == "" {
+		desc = doc.url
+	}
+	return fmt.Sprintf("[%s](%s)", desc, doc.url)
 }
 
-func buildApibPath(securities map[string]*Security, path *RoutePath) string {
-	// meta
-	method := strings.ToUpper(path.method)
-	metaStr := fmt.Sprintf("### %s [%s]\n\n`%s %s`", path.summary, method, method, path.route)
-	if path.desc != "" {
-		metaStr += "\n\n" + path.desc
+func buildApibExample(e interface{}, produce string) string {
+	if e == nil {
+		return ""
 	}
-	if path.deprecated {
-		metaStr += "\n\nAttention: This api is deprecated."
-	}
-
-	// request
-	consume := "application/json"
-	if len(path.consumes) >= 1 {
-		consume = path.consumes[0]
-	}
-	params := path.params
-	bodyParamString := ""
-	if len(path.securities) >= 1 {
-		securityString := path.securities[0]
-		if security, ok := securities[securityString]; ok {
-			params = append(params, &Param{name: security.name, in: security.in, typ: "string", desc: securityString + " " + security.typ})
+	str := ""
+	switch e.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, uintptr, string, bool:
+		str = fmt.Sprintf("%v", e)
+	default:
+		if produce != JSON {
+			logWarning(fmt.Sprintf("Example in %s mime is not supported in API Blueprint yet, this will be shown in json format.", produce))
+		}
+		bs, err := jsonMarshal(e)
+		if err != nil {
+			logWarning(fmt.Sprintf("Example in %T type is not supported in API Blueprint yet, this will be ignored.", e))
+		} else {
+			str = fastBtos(bs)
 		}
 	}
-	parameterStrings := make([]string, 0)
-	attributeStrings := make([]string, 0)
-	headerStrings := make([]string, 0)
-	for _, param := range params {
-		paramStr := buildApibParam(param)
-		paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
-		if param.in == "path" || param.in == "query" {
-			parameterStrings = append(parameterStrings, "    "+paramStr)
-		} else if param.in == "formData" {
-			paramStr = strings.ReplaceAll(paramStr, "\n", "\n    ")
-			attributeStrings = append(attributeStrings, "        "+paramStr)
-		} else if param.in == "body" {
-			bodyParamString = param.typ // allow one
-		} else if param.in == "header" {
-			req := "required"
-			if !param.required {
-				req = "optional"
-			}
-			headerStr := fmt.Sprintf("            %s: %s (%s, %s)", param.name, param.desc, param.typ, req)
-			headerStrings = append(headerStrings, headerStr)
-		}
-	}
-
-	// + Request <----------------- center
-	requestStr := fmt.Sprintf("+ Request (%s)", consume)
-	// + Parameters
-	if len(parameterStrings) != 0 {
-		parameterStr := strings.Join(parameterStrings, "\n")
-		requestStr = fmt.Sprintf("+ Parameters\n\n%s\n\n%s", parameterStr, requestStr)
-	}
-	// + Attributes (req)
-	requestStr += "\n\n    + Attributes"
-	if bodyParamString != "" && len(attributeStrings) != 0 {
-		attributeStr := strings.Join(attributeStrings, "\n")
-		requestStr += fmt.Sprintf(" (%s)\n\n%s", bodyParamString, attributeStr)
-	} else if len(attributeStrings) != 0 {
-		attributeStr := strings.Join(attributeStrings, "\n")
-		requestStr += fmt.Sprintf("\n\n%s", attributeStr)
-	} else if bodyParamString != "" {
-		requestStr += fmt.Sprintf(" (%s)", bodyParamString)
-	}
-	// + Headers (req)
-	requestStr += "\n\n    + Headers"
-	if len(headerStrings) != 0 {
-		headerStr := strings.Join(headerStrings, "\n")
-		requestStr += fmt.Sprintf("\n\n%s", headerStr)
-	}
-	// + Body (req)
-	requestStr += "\n\n    + Body"
-
-	// response
-	produce := "application/json"
-	if len(path.produces) >= 1 {
-		produce = path.produces[0]
-	}
-	responseStrings := make([]string, 0)
-	for _, response := range path.responses {
-		// + Response <----------------- center
-		responseStr := fmt.Sprintf("+ Response %d (%s)", response.code, produce)
-		if response.desc != "" {
-			responseStr += fmt.Sprintf("\n\n    %s", response.desc)
-		}
-		// + Attributes (resp)
-		responseStr += "\n\n    + Attributes"
-		if response.typ != "" {
-			typ, _ := buildApibType(response.typ)
-			responseStr += fmt.Sprintf(" (%s)", typ)
-		}
-		// + Headers (resp)
-		responseStr += "\n\n    + Headers"
-		headerStrings := make([]string, 0)
-		for _, header := range response.headers {
-			headerStr := fmt.Sprintf("            %s: %s (%s)", header.name, header.desc, header.typ)
-			headerStrings = append(headerStrings, headerStr)
-		}
-		if len(headerStrings) != 0 {
-			headerStr := strings.Join(headerStrings, "\n")
-			responseStr += fmt.Sprintf("\n\n%s", headerStr)
-		}
-		// + Body (resp)
-		responseStr += "\n\n    + Body"
-		if ex, ok := response.examples[produce]; ok {
-			ex = "\n" + ex
-			ex = strings.ReplaceAll(ex, "\n", "\n            ")
-			responseStr += "\n" + ex
-		}
-		responseStrings = append(responseStrings, responseStr)
-	}
-
-	responseStr := strings.Join(responseStrings, "\n\n")
-	return fmt.Sprintf("%s\n\n%s\n\n%s", metaStr, requestStr, responseStr)
+	return str
 }
 
-func buildApibGroups(d *Document) string {
-	// [#, #]
-	groupStrings := make([]string, 0)
+// ================================
+// operation & groups & definitions
+// ================================
 
-	tags := make(map[string]string)
-	for _, tag := range d.tags {
-		tags[tag.name] = tag.desc
-	}
-	securities := make(map[string]*Security)
-	for _, security := range d.securities {
-		securities[security.title] = security
-	}
+var apibOperationTemplate = `
+### {{ .Summary }} [{{ .Method }}]
 
-	groups := newLinkedHashMap() // map[string][]*RoutePath{}
-	for _, tag := range d.tags {
-		groups.Set(tag.name, make([]*RoutePath, 0))
-	}
-	for _, path := range d.paths {
-		tag := "Default"
-		if len(path.tags) > 0 {
-			tag = path.tags[0]
-		}
-		paths, ok := groups.Get(tag)
-		if !ok {
-			paths = make([]*RoutePath, 0)
-		}
-		paths = append(paths.([]*RoutePath), path)
-		groups.Set(tag, paths)
-	}
+` + "> `{{ .Method }} {{ .Route }}`" + `
 
-	for _, tag := range groups.Keys() {
-		// [##, ##]
-		pathStrings := make([]string, 0)
-		group := groups.MustGet(tag).([]*RoutePath)
+{{ if .Description }}{{ .Description }}{{ end }}
 
-		paths := newLinkedHashMap() // map[string]map[string]*RoutePath{}
-		for _, path := range group {
-			route := path.route
-			query := make([]string, 0)
-			for _, param := range path.params {
-				if param.in == "query" {
-					query = append(query, param.name)
-				}
-			}
-			if len(query) != 0 {
-				route += fmt.Sprintf("{?%s}", strings.Join(query, ","))
-			}
+{{ if .Deprecated }}**Attention: This api is deprecated!**{{ end }}
 
-			methods, ok := paths.Get(route)
-			if !ok {
-				methods = newLinkedHashMap() // make(map[string]*RoutePath)
-			}
-			methods.(*linkedHashMap).Set(path.method, path)
-			paths.Set(route, methods)
-		}
+{{ if .Security }}Security requirement: {{ .Security }}{{ end }}
 
-		for _, pathKey := range paths.Keys() {
-			// [###, ###]
-			methodStrings := make([]string, 0)
-			methods := paths.MustGet(pathKey).(*linkedHashMap)
+{{ if .ExternalDoc }}{{ .ExternalDoc }}{{ end }}
 
-			summaries := make([]string, 0)
-			for _, methodKey := range methods.Keys() {
-				routePath := methods.MustGet(methodKey).(*RoutePath)
-				summaries = append(summaries, routePath.summary)
-				methodStr := buildApibPath(securities, routePath)
-				methodStrings = append(methodStrings, methodStr)
-			}
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
 
-			summary := strings.Join(summaries, ", ")
-			pathStr := fmt.Sprintf("## %s [%s]\n\n%s", summary, pathKey, strings.Join(methodStrings, "\n\n"))
-			pathStrings = append(pathStrings, pathStr)
-		}
+{{ if .Parameters }}
++ Parameters
 
-		groupStr := fmt.Sprintf("# Group %s", tag)
-		if tagDesc, ok := tags[tag]; ok {
-			groupStr += fmt.Sprintf("\n\n%s", tagDesc)
-		}
-		if len(pathStrings) > 0 {
-			groupStr += fmt.Sprintf("\n\n%s", strings.Join(pathStrings, "\n\n"))
-		}
+{{ range .Parameters }}{{ . }}
+{{ end }}
+{{ end }}
 
-		groupStrings = append(groupStrings, groupStr)
-	}
++ Request ({{ .Consume }})
 
-	return strings.Join(groupStrings, "\n\n")
-}
+{{ if .AttrBody }}
+    + Attributes ({{ .AttrBody }})
 
-func buildApibDefinitions(d *Document) string {
-	propertyTypes := make([]string, 0)
-	for _, definition := range d.definitions {
-		prehandleGenericName(definition) // new name
-		if len(definition.generics) == 0 && len(definition.properties) > 0 {
-			for _, property := range definition.properties {
-				propertyTypes = append(propertyTypes, property.typ)
-			}
-		}
-	}
-	for _, path := range d.paths {
-		for _, param := range path.params {
-			propertyTypes = append(propertyTypes, param.typ)
-		}
-		for _, response := range path.responses {
-			propertyTypes = append(propertyTypes, response.typ)
-		}
-	}
+{{ range .Forms }}{{ . }}
+{{ end }}
+{{ end }}
 
-	newDefinitions := prehandleGenericList(d.definitions, propertyTypes) // new list
-	definitionStrings := make([]string, 0)
-	for _, definition := range newDefinitions {
-		if len(definition.generics) > 0 || len(definition.properties) == 0 {
-			continue
-		}
+{{ if .Headers }}
+    + Headers
 
-		propertyStrings := make([]string, 0)
-		for _, property := range definition.properties {
-			propertyStr := buildApibProperty(property)
-			propertyStrings = append(propertyStrings, propertyStr)
-		}
+{{ range .Headers }}{{ . }}
+{{ end }}
+{{ end }}
 
-		definitionStr := fmt.Sprintf("## %s (object)", definition.name)
-		definitionStr += fmt.Sprintf("\n\n%s", strings.Join(propertyStrings, "\n"))
-		definitionStrings = append(definitionStrings, definitionStr)
-	}
+    + Body
 
-	return "# Data Structures\n\n" + strings.Join(definitionStrings, "\n\n")
-}
+{{ .Example }}
 
-var apibTemplate = `FORMAT: 1A
-HOST: %s%s
+{{ range .Responses }}
 
-# %s (%s)
++ Response {{ .Code }} ({{ .Produce }})
 
-%s
+    {{ if .Description }}{{ .Description }}{{ end }}
 
-%s
+    {{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
 
-%s
+{{ if .AttrBody }}
+    + Attributes ({{ .AttrBody }})
+{{ end }}
 
-%s
+{{ if .Headers }}
+    + Headers
+
+{{ range .Headers }}{{ . }}
+{{ end }}
+{{ end }}
+
+    + Body
+
+{{ .Example }}
+
+{{ end }}
 `
 
-func buildApibDocument(d *Document) []byte {
-	// header
-	template := fmt.Sprintf(apibTemplate, d.host, d.basePath, d.info.title, d.info.version, d.info.desc, "%s", "%s", "%s")
-	infoArray := make([]string, 0)
-	if d.info.termsOfService != "" {
-		infoArray = append(infoArray, fmt.Sprintf("[Terms of service](%s)", d.info.termsOfService))
+func buildApibOperation(op *Operation, securities map[string]*Security) ([]byte, error) {
+	// prehandle operation fields
+	consume := JSON
+	if len(op.consumes) >= 1 {
+		consume = op.consumes[0]
 	}
-	if license := d.info.license; license != nil {
-		infoArray = append(infoArray, fmt.Sprintf("[License: %s](%s)", license.name, license.url))
+	produce := JSON
+	if len(op.produces) >= 1 {
+		produce = op.produces[0]
 	}
-	if contact := d.info.contact; contact != nil {
-		infoArray = append(infoArray, fmt.Sprintf("[%s - Website](%s)", contact.name, contact.url))
-		if contact.email != "" {
-			infoArray = append(infoArray, fmt.Sprintf("[Send email to %s](mailto:%s)", contact.name, contact.email))
+	params := op.params
+	secReqName := ""
+	if len(op.securities) > 0 {
+		secReqName = op.securities[0] // only support single security
+		if s, ok := securities[secReqName]; ok {
+			desc := fmt.Sprintf("%s, %s", secReqName, s.typ)
+			if s.desc != "" {
+				desc = fmt.Sprintf("%s (%s), %s", secReqName, s.desc, s.typ)
+			}
+			if s.typ == APIKEY {
+				params = append(params, &Param{name: s.name, in: s.in, typ: "string", desc: desc})
+			} else if s.typ == BASIC {
+				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc})
+			} else if s.typ == OAUTH2 {
+				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc}) // <<<
+			}
 		}
 	}
-	infoString := strings.Join(infoArray, "\n\n")
-	template = fmt.Sprintf(template, infoString, "%s", "%s")
 
-	// route path
-	routePathString := buildApibGroups(d)
-	template = fmt.Sprintf(template, routePathString, "%s")
+	// render operation to apibMethod
+	out := &apibMethod{
+		Route:         op.route,
+		Method:        strings.ToUpper(op.method),
+		Summary:       op.summary,
+		Description:   op.desc,
+		Security:      secReqName,
+		Deprecated:    op.deprecated,
+		Example:       spaceIndent(3, buildApibExample(op.reqExample, produce)),
+		Consume:       consume,
+		Produce:       produce,
+		ExternalDoc:   buildApiExternalDoc(op.externalDoc),
+		AdditionalDoc: op.additionalDoc,
+		Parameters:    make([]string, 0, 2),
+		Headers:       make([]string, 0, 2),
+		AttrBody:      "",
+		Forms:         make([]string, 0),
+		Responses:     make([]*apibResponse, 0, 1),
+	}
+	for _, p := range params {
+		s := buildApibSchema(&apibSchema{
+			name:     p.name,
+			typ:      p.typ,
+			required: p.required,
+			desc:     p.desc,
 
-	// definition
-	definitionString := buildApibDefinitions(d)
-	template = fmt.Sprintf(template, definitionString)
+			allowEmpty:       p.allowEmpty,
+			defaul:           p.defaul,
+			example:          p.example,
+			pattern:          p.pattern,
+			enum:             p.enum,
+			minLength:        p.minLength,
+			maxLength:        p.maxLength,
+			minItems:         p.minItems,
+			maxItems:         p.maxItems,
+			uniqueItems:      p.uniqueItems,
+			collectionFormat: p.collectionFormat,
+			minimum:          p.minimum,
+			maximum:          p.maximum,
+			exclusiveMin:     p.exclusiveMin,
+			exclusiveMax:     p.exclusiveMax,
+			multipleOf:       p.multipleOf,
+		}, p.in)
+		switch p.in {
+		case PATH, QUERY:
+			out.Parameters = append(out.Parameters, spaceIndent(1, s))
+		case FORM:
+			out.Forms = append(out.Forms, spaceIndent(2, s))
+			out.AttrBody = "object"
+		case HEADER:
+			out.Headers = append(out.Headers, spaceIndent(3, s))
+		case BODY:
+			out.AttrBody = s
+		}
+	}
+	for _, r := range op.responses {
+		desc := r.desc
+		if desc == "" {
+			desc = strconv.Itoa(r.code) + " " + http.StatusText(r.code)
+		}
+		headers := make([]string, 0, len(r.headers))
+		for _, h := range r.headers {
+			s := buildApibSchema(&apibSchema{name: h.name, typ: h.typ, desc: h.desc, required: true, example: h.example}, HEADER)
+			headers = append(headers, spaceIndent(3, s))
+		}
+		example := ""
+		for _, e := range r.examples {
+			if e.mime == produce {
+				example = spaceIndent(3, buildApibExample(e.example, produce))
+				break
+			}
+		}
+		out.Responses = append(out.Responses, &apibResponse{
+			Code:          r.code,
+			Description:   desc,
+			Produce:       produce,
+			AdditionalDoc: r.additionalDoc,
+			Headers:       headers,
+			AttrBody:      buildApibSchema(&apibSchema{typ: r.typ}, BODY),
+			Example:       example,
+		})
+	}
 
-	return []byte(template)
+	return renderTemplate(apibOperationTemplate, out)
 }
 
-// GenerateApib generates apib script and writes into file.
-func (d *Document) GenerateApib(path string) ([]byte, error) {
-	doc := buildApibDocument(d)
+var apibGroupsTemplate = `
+{{ range . }}
+# Group {{ .Tag }}
 
-	err := saveFile(path, doc)
+{{ if .Description }}{{ .Description }}{{ end }}
+
+{{ if .ExternalDoc }}{{ .ExternalDoc }}{{ end }}
+
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
+
+{{ range .Routes }}
+## {{ .Summary }} [{{ .Route }}]
+
+` + "> `{{ .RawRoute }}`" + `
+
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
+
+{{ .Methods }}
+
+{{ end }}
+
+{{ end }}`
+
+func buildApibGroups(doc *Document) ([]byte, error) {
+	// get tags and securities from document.option
+	var allTags []*Tag
+	var securities map[string]*Security
+	var routesOptions map[string]*RoutesOption
+	if opt := doc.option; opt != nil {
+		allTags = opt.tags
+		securities = make(map[string]*Security, len(opt.securities))
+		for _, sec := range opt.securities {
+			securities[sec.title] = sec
+		}
+		routesOptions = make(map[string]*RoutesOption, len(opt.routesOptions))
+		for _, ro := range opt.routesOptions {
+			routesOptions[ro.route] = ro
+		}
+	}
+
+	// put all operations to trmoMap splitting by tag, route and method
+	// trmo: tag - route - method - Operation
+	trmoMap := newOrderedMap(len(allTags)) // map[string]map[string]map[string]*Operation
+	for _, tag := range allTags {
+		trmoMap.Set(tag.name, newOrderedMap(2)) // cap defaults to 2
+	}
+	for _, op := range doc.operations {
+		// get and prehandle operation's tag, route, method
+		tag := "Default"
+		if len(op.tags) > 0 {
+			tag = op.tags[0]
+		}
+		queries := make([]string, 0, 3) // cap defaults to 3
+		for _, param := range op.params {
+			if param.in == "query" {
+				queries = append(queries, param.name)
+			}
+		}
+		route := op.route
+		if len(queries) > 0 {
+			route += fmt.Sprintf("{?%s}", strings.Join(queries, ","))
+		}
+		method := strings.ToUpper(op.method)
+
+		// rmo: route - method - Operation
+		rmoMap, ok := trmoMap.Get(tag) // map[string]map[string]*Operation
+		if !ok {
+			// new tag, need to append
+			rmoMap = newOrderedMap(2)
+			allTags = append(allTags, &Tag{name: tag, desc: ""})
+		}
+		// mo: method - Operation
+		moMap, ok := rmoMap.(*orderedMap).Get(route) // map[string]*Operation
+		if !ok {
+			moMap = newOrderedMap(4) // cap defaults to 4
+		}
+		moMap.(*orderedMap).Set(method, op)
+		rmoMap.(*orderedMap).Set(route, moMap)
+		trmoMap.Set(tag, rmoMap)
+	}
+
+	// render operations from trmoMap to apibGroup slice
+	out := make([]*apibGroup, 0, trmoMap.Length())
+	for _, tag := range allTags {
+		rmoMap := trmoMap.MustGet(tag.name).(*orderedMap)
+		outRoutes := make([]*apibRoute, 0, rmoMap.Length())
+		for _, route := range rmoMap.Keys() {
+			moMap := rmoMap.MustGet(route).(*orderedMap) // map[string]*Operation
+			rawRoute := route
+			summaries := make([]string, 0, moMap.Length())
+			moStrings := make([]string, 0, moMap.Length())
+			for _, method := range moMap.Keys() {
+				op := moMap.MustGet(method).(*Operation)
+				rawRoute = op.route
+				summaries = append(summaries, op.summary)
+				bs, err := buildApibOperation(op, securities)
+				if err != nil {
+					return nil, err
+				}
+				moStrings = append(moStrings, fastBtos(bs))
+			}
+			summary := strings.Join(summaries, " | ")
+			additionalDoc := ""
+			if opt, ok := routesOptions[route]; ok {
+				if opt.summary != "" {
+					summary = opt.summary
+				}
+				additionalDoc = opt.additionalDoc
+			}
+			outRoutes = append(outRoutes, &apibRoute{
+				Route:         route,
+				RawRoute:      rawRoute,
+				Summary:       summary,
+				AdditionalDoc: additionalDoc,
+				Methods:       strings.Join(moStrings, "\n\n"),
+			})
+		}
+		out = append(out, &apibGroup{
+			Tag:           tag.name,
+			Description:   tag.desc,
+			ExternalDoc:   buildApiExternalDoc(tag.externalDoc),
+			AdditionalDoc: tag.additionalDoc,
+			Routes:        outRoutes,
+		})
+	}
+
+	return renderTemplate(apibGroupsTemplate, out)
+}
+
+var apibDefinitionTemplate = `
+# Data Structures
+
+{{ range . }}
+## {{ .Name }} (object)
+
+{{ range .Properties }}{{ . }}
+{{ end }}
+
+{{ end }}`
+
+func buildApibDefinitions(doc *Document) ([]byte, error) {
+	// prehandle definition list
+	allSpecTypes := collectAllSpecTypes(doc)
+	clonedDefinitions := make([]*Definition, 0, len(doc.definitions))
+	for _, definition := range doc.definitions {
+		clonedDefinitions = append(clonedDefinitions, prehandleDefinition(definition)) // with generic name checked
+	}
+	newDefinitionList := prehandleDefinitionList(clonedDefinitions, allSpecTypes)
+
+	// render definitions to apibDefinition slice
+	out := make([]*apibDefinition, 0, len(newDefinitionList))
+	for _, def := range newDefinitionList {
+		props := make([]string, 0, len(def.properties))
+		for _, p := range def.properties {
+			props = append(props, buildApibSchema(&apibSchema{
+				name:     p.name,
+				typ:      p.typ,
+				required: p.required,
+				desc:     p.desc,
+
+				allowEmpty:       p.allowEmpty,
+				defaul:           p.defaul,
+				example:          p.example,
+				pattern:          p.pattern,
+				enum:             p.enum,
+				minLength:        p.minLength,
+				maxLength:        p.maxLength,
+				minItems:         p.minItems,
+				maxItems:         p.maxItems,
+				uniqueItems:      p.uniqueItems,
+				collectionFormat: p.collectionFormat,
+				minimum:          p.minimum,
+				maximum:          p.maximum,
+				exclusiveMin:     p.exclusiveMin,
+				exclusiveMax:     p.exclusiveMax,
+				multipleOf:       p.multipleOf,
+			}, PATH))
+		}
+		out = append(out, &apibDefinition{Name: def.name, Properties: props})
+	}
+
+	return renderTemplate(apibDefinitionTemplate, out)
+}
+
+// ========
+// document
+// ========
+
+var apibDocumentTemplate = `FORMAT: 1A
+HOST: {{ .Host }}{{ .BasePath }}
+
+# {{ .Title }} ({{ .Version }})
+
+{{ if .Description }}{{ .Description }}{{ end }}
+
+{{ if .TermsOfService }}{{ .TermsOfService }}{{ end }}
+
+{{ if .License }}{{ .License }}{{ end }}
+
+{{ if .ContactUrl }}{{ .ContactUrl }}{{ end }}
+
+{{ if .ContactEmail }}{{ .ContactEmail }}{{ end }}
+
+{{ if .ExternalDoc }}{{ .ExternalDoc }}{{ end }}
+
+{{ if .Securities }}## Securities defined
+
+{{ range .Securities }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Schemes }}## Supported schemes
+
+{{ range .Schemes }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Consumes }}## Available consumes
+
+{{ range .Consumes }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .Produces }}## Available produces
+
+{{ range .Produces }}+ {{ . }}
+{{ end }}{{ end }}
+
+{{ if .AdditionalDoc }}{{ .AdditionalDoc }}{{ end }}
+
+{{ .GroupsString }}
+
+{{ .DefinitionsString }}
+`
+
+func buildApibDocument(doc *Document) ([]byte, error) {
+	// check
+	checkDocument(doc)
+
+	// info
+	out := &apibDocument{
+		Host:        doc.host,
+		BasePath:    doc.basePath,
+		Title:       doc.info.title,
+		Version:     doc.info.version,
+		Description: doc.info.desc,
+	}
+	if doc.info.termsOfService != "" {
+		out.TermsOfService = fmt.Sprintf("[Terms of service](%s)", doc.info.termsOfService)
+	}
+	if license := doc.info.license; license != nil {
+		if license.url == "" {
+			out.License = fmt.Sprintf("License: %s", license.name)
+		} else {
+			out.License = fmt.Sprintf("[License: %s](%s)", license.name, license.url)
+		}
+	}
+	if contact := doc.info.contact; contact != nil {
+		name := contact.name
+		if name == "" {
+			name = "the developer"
+		}
+		if contact.url != "" {
+			out.ContactUrl = fmt.Sprintf("[%s - Website](%s)", name, contact.url)
+		}
+		if contact.email != "" {
+			out.ContactEmail = fmt.Sprintf("[Send email to %s](mailto:%s)", name, contact.email)
+		}
+	}
+	if opt := doc.option; opt != nil {
+		securities := make([]string, 0, len(opt.securities))
+		for _, sec := range opt.securities {
+			s := ""
+			opts := make([]string, 0, 2)
+			if sec.typ == APIKEY {
+				s = fmt.Sprintf("%s: apiKey", sec.title)
+				opts = append(opts, fmt.Sprintf("+ name: %s", sec.name))
+				opts = append(opts, fmt.Sprintf("+ in: %s", sec.in))
+			} else if sec.typ == BASIC {
+				s = fmt.Sprintf("%s: basic", sec.title)
+			} else if sec.typ == OAUTH2 {
+				s = fmt.Sprintf("%s: oauth2", sec.title)
+				opts = append(opts, fmt.Sprintf("+ flow: %s", sec.flow))
+				if sec.authorizationUrl != "" {
+					opts = append(opts, fmt.Sprintf("+ authUrl: %s", sec.authorizationUrl))
+				}
+				if sec.tokenUrl != "" {
+					opts = append(opts, fmt.Sprintf("+ tokenUrl: %s`", sec.tokenUrl))
+				}
+				scopes := make([][2]string, 0, len(sec.scopes))
+				for _, c := range sec.scopes {
+					scopes = append(scopes, [2]string{c.scope, c.desc})
+				}
+				sort.Slice(scopes, func(i, j int) bool { return scopes[i][0] < scopes[j][0] })
+				for _, kv := range scopes {
+					opts = append(opts, fmt.Sprintf("+ scope: %s - %s", kv[0], kv[1]))
+				}
+			} else {
+				continue // unreachable
+			}
+			if sec.desc != "" {
+				s += fmt.Sprintf(" - %s", sec.desc)
+			}
+			if len(opts) != 0 {
+				s += fmt.Sprintf("\n    %s", strings.Join(opts, "\n    "))
+			}
+			securities = append(securities, s)
+		}
+
+		out.ExternalDoc = buildApiExternalDoc(opt.externalDoc)
+		out.Securities = securities
+		out.Schemes = opt.schemes
+		out.Consumes = opt.consumes
+		out.Produces = opt.produces
+		out.AdditionalDoc = opt.additionalDoc
+	}
+
+	// definitions & operations
+	s1, err1 := buildApibDefinitions(doc)
+	s2, err2 := buildApibGroups(doc)
+	if err1 != nil {
+		return nil, err1
+	}
+	if err2 != nil {
+		return nil, err2
+	}
+	out.DefinitionsString = fastBtos(s1)
+	out.GroupsString = fastBtos(s2)
+
+	// execute template and format
+	bs, err := renderTemplate(apibDocumentTemplate, out)
 	if err != nil {
 		return nil, err
 	}
-	return doc, nil
-}
-
-// GenerateApib generates apib script and writes into file.
-func GenerateApib(path string) ([]byte, error) {
-	return _document.GenerateApib(path)
+	bs = regexp.MustCompile(`[ \t]+\n`).ReplaceAll(bs, []byte("\n"))
+	bs = regexp.MustCompile(`\n{3,}`).ReplaceAll(bs, []byte("\n\n"))
+	bs = regexp.MustCompile(`\n+$`).ReplaceAll(bs, []byte("\n"))
+	return bs, nil
 }

@@ -1,25 +1,33 @@
 package goapidoc
 
 import (
-	"gopkg.in/yaml.v2"
+	"net/http"
 	"strconv"
 	"strings"
 )
 
 type swagDocument struct {
-	Swagger     string                          `yaml:"swagger"                       json:"swagger"`
-	Host        string                          `yaml:"host"                          json:"host"`
-	BasePath    string                          `yaml:"basePath"                      json:"basePath"`
-	Info        *swagInfo                       `yaml:"info"                          json:"info"`
-	Tags        []*swagTag                      `yaml:"tags,omitempty"                json:"tags,omitempty"`
-	Securities  map[string]*swagSecurity        `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
-	Paths       map[string]map[string]*swagPath `yaml:"paths,omitempty"               json:"paths,omitempty"`
-	Definitions map[string]*swagDefinition      `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
+	Swagger     string                               `yaml:"swagger"                       json:"swagger"`
+	Host        string                               `yaml:"host"                          json:"host"`
+	BasePath    string                               `yaml:"basePath"                      json:"basePath"`
+	Info        *swagInfo                            `yaml:"info"                          json:"info"`
+	Schemes     []string                             `yaml:"schemes,omitempty"             json:"schemes,omitempty"`
+	Consumes    []string                             `yaml:"consumes,omitempty"            json:"consumes,omitempty"`
+	Produces    []string                             `yaml:"produces,omitempty"            json:"produces,omitempty"`
+	Tags        []*swagTag                           `yaml:"tags,omitempty"                json:"tags,omitempty"`
+	Securities  map[string]*swagSecurity             `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
+	ExternalDoc *swagExternalDoc                     `yaml:"externalDocs,omitempty"        json:"externalDocs,omitempty"`
+	Operations  map[string]map[string]*swagOperation `yaml:"paths,omitempty"               json:"paths,omitempty"`
+	Definitions map[string]*swagDefinition           `yaml:"definitions,omitempty"         json:"definitions,omitempty"`
 }
 
-type swagTag struct {
-	Name        string `yaml:"name"                  json:"name"`
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+type swagInfo struct {
+	Title          string       `yaml:"title"                    json:"title"`
+	Version        string       `yaml:"version"                  json:"version"`
+	Description    string       `yaml:"description,omitempty"    json:"description,omitempty"`
+	TermsOfService string       `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
+	License        *swagLicense `yaml:"license,omitempty"        json:"license,omitempty"`
+	Contact        *swagContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
 }
 
 type swagLicense struct {
@@ -28,490 +36,598 @@ type swagLicense struct {
 }
 
 type swagContact struct {
-	Name  string `yaml:"name"            json:"name"`
+	Name  string `yaml:"name,omitempty"  json:"name,omitempty"`
 	Url   string `yaml:"url,omitempty"   json:"url,omitempty"`
 	Email string `yaml:"email,omitempty" json:"email,omitempty"`
 }
 
-type swagInfo struct {
-	Title          string       `yaml:"title"                    json:"title"`
-	Description    string       `yaml:"description"              json:"description"`
-	Version        string       `yaml:"version"                  json:"version"`
-	TermsOfService string       `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
-	License        *swagLicense `yaml:"license,omitempty"        json:"license,omitempty"`
-	Contact        *swagContact `yaml:"contact,omitempty"        json:"contact,omitempty"`
+type swagTag struct {
+	Name        string           `yaml:"name"                   json:"name"`
+	Description string           `yaml:"description,omitempty"  json:"description,omitempty"`
+	ExternalDoc *swagExternalDoc `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type swagSecurity struct {
-	Type string `yaml:"type" json:"type"`
-	Name string `yaml:"name" json:"name"`
-	In   string `yaml:"in"   json:"in"`
+	Type             string            `yaml:"type"                       json:"type"`
+	Description      string            `yaml:"description,omitempty"      json:"description,omitempty"`
+	Name             string            `yaml:"name,omitempty"             json:"name,omitempty"`
+	In               string            `yaml:"in,omitempty"               json:"in,omitempty"`
+	Flow             string            `yaml:"flow,omitempty"             json:"flow,omitempty"`
+	AuthorizationUrl string            `yaml:"authorizationUrl,omitempty" json:"authorizationUrl,omitempty"`
+	TokenUrl         string            `yaml:"tokenUrl,omitempty"         json:"tokenUrl,omitempty"`
+	Scopes           map[string]string `yaml:"scopes,omitempty"           json:"scopes,omitempty"`
 }
 
-type swagPath struct {
-	Summary     string                     `yaml:"summary"               json:"summary"`
-	OperationId string                     `yaml:"operationId"           json:"operationId"`
-	Description string                     `yaml:"description,omitempty" json:"description,omitempty"`
-	Tags        []string                   `yaml:"tags,omitempty"        json:"tags,omitempty"`
-	Consumes    []string                   `yaml:"consumes,omitempty"    json:"consumes,omitempty"`
-	Produces    []string                   `yaml:"produces,omitempty"    json:"produces,omitempty"`
-	Securities  []map[string][]interface{} `yaml:"security,omitempty"    json:"security,omitempty"`
-	Deprecated  bool                       `yaml:"deprecated,omitempty"  json:"deprecated,omitempty"`
-	Parameters  []*swagParam               `yaml:"parameters,omitempty"  json:"parameters,omitempty"`
-	Responses   map[string]*swagResponse   `yaml:"responses,omitempty"   json:"responses,omitempty"`
+type swagExternalDoc struct {
+	Url         string `yaml:"url"                   json:"url"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+}
+
+type swagOperation struct {
+	Summary     string                   `yaml:"summary"                json:"summary"`
+	OperationId string                   `yaml:"operationId"            json:"operationId"`
+	Description string                   `yaml:"description,omitempty"  json:"description,omitempty"`
+	Schemes     []string                 `yaml:"schemes,omitempty"      json:"schemes,omitempty"`
+	Consumes    []string                 `yaml:"consumes,omitempty"     json:"consumes,omitempty"`
+	Produces    []string                 `yaml:"produces,omitempty"     json:"produces,omitempty"`
+	Tags        []string                 `yaml:"tags,omitempty"         json:"tags,omitempty"`
+	Securities  []map[string][]string    `yaml:"security,omitempty"     json:"security,omitempty"`
+	Deprecated  bool                     `yaml:"deprecated,omitempty"   json:"deprecated,omitempty"`
+	ExternalDoc *swagExternalDoc         `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Parameters  []*swagParam             `yaml:"parameters,omitempty"   json:"parameters,omitempty"`
+	Responses   map[string]*swagResponse `yaml:"responses,omitempty"    json:"responses,omitempty"`
 }
 
 type swagParam struct {
-	Name            string        `yaml:"name"                      json:"name"`
-	In              string        `yaml:"in"                        json:"in"`
-	Required        bool          `yaml:"required"                  json:"required"`
-	Type            string        `yaml:"type,omitempty"            json:"type,omitempty"`
-	Description     string        `yaml:"description,omitempty"     json:"description,omitempty"`
-	Format          string        `yaml:"format,omitempty"          json:"format,omitempty"`
-	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
-	Default         interface{}   `yaml:"default,omitempty"         json:"default,omitempty"`
-	Example         interface{}   `yaml:"example,omitempty"         json:"example,omitempty"`
-	Enum            []interface{} `yaml:"enum,omitempty"            json:"enum,omitempty"`
-	Maximum         int           `yaml:"maximum,omitempty"         json:"maximum,omitempty"`
-	Minimum         int           `yaml:"minimum,omitempty"         json:"minimum,omitempty"`
-	MaxLength       int           `yaml:"maxLength,omitempty"       json:"maxLength,omitempty"`
-	MinLength       int           `yaml:"minLength,omitempty"       json:"minLength,omitempty"`
+	Name             string        `yaml:"name"                       json:"name"`
+	In               string        `yaml:"in"                         json:"in"`
+	Required         bool          `yaml:"required"                   json:"required"`
+	Description      string        `yaml:"description,omitempty"      json:"description,omitempty"`
+	Type             string        `yaml:"type,omitempty"             json:"type,omitempty"`
+	Format           string        `yaml:"format,omitempty"           json:"format,omitempty"`
+	AllowEmpty       bool          `yaml:"allowEmptyValue,omitempty"  json:"allowEmptyValue,omitempty"`
+	Default          interface{}   `yaml:"default,omitempty"          json:"default,omitempty"`
+	Example          interface{}   `yaml:"example,omitempty"          json:"example,omitempty"` // ?
+	Pattern          string        `yaml:"pattern,omitempty"          json:"pattern,omitempty"`
+	Enum             []interface{} `yaml:"enum,omitempty"             json:"enum,omitempty"`
+	MaxLength        *int          `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
+	MinLength        *int          `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
+	MaxItems         *int          `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
+	MinItems         *int          `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
+	UniqueItems      bool          `yaml:"uniqueItems,omitempty"      json:"uniqueItems,omitempty"`
+	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
+	Minimum          *float64      `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
+	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
+	XMLRepr          *swagXMLRepr  `yaml:"xml,omitempty"              json:"xml,omitempty"`
 
-	Schema *swagSchema `yaml:"schema,omitempty" json:"schema,omitempty"`
 	Items  *swagItems  `yaml:"items,omitempty"  json:"items,omitempty"`
+	Schema *swagSchema `yaml:"schema,omitempty" json:"schema,omitempty"`
 }
 
 type swagResponse struct {
-	Description string                 `yaml:"description,omitempty" json:"description,omitempty"`
-	Headers     map[string]*swagHeader `yaml:"headers,omitempty"     json:"headers,omitempty"`
-	Examples    map[string]string      `yaml:"examples,omitempty"    json:"examples,omitempty"`
-	Schema      *swagSchema            `yaml:"schema,omitempty"      json:"schema,omitempty"`
+	Description string                         `yaml:"description"        json:"description"`
+	Headers     map[string]*swagResponseHeader `yaml:"headers,omitempty"  json:"headers,omitempty"`
+	Examples    map[string]interface{}         `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Schema      *swagResponseSchema            `yaml:"schema,omitempty"   json:"schema,omitempty"`
 }
 
-type swagHeader struct {
-	Type        string      `yaml:"type,omitempty"        json:"type,omitempty"`
-	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
+type swagResponseHeader struct {
+	Type        string      `yaml:"type"                  json:"type"`
 	Format      string      `yaml:"format,omitempty"      json:"format,omitempty"`
-	Default     interface{} `yaml:"default,omitempty"     json:"default,omitempty"`
+	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
+	Example     interface{} `yaml:"example,omitempty"     json:"example,omitempty"` // ?
+}
+
+type swagResponseSchema struct {
+	Type      string     `yaml:"type,omitempty"   json:"type,omitempty"`
+	Format    string     `yaml:"format,omitempty" json:"format,omitempty"`
+	Items     *swagItems `yaml:"items,omitempty"  json:"items,omitempty"`
+	OriginRef string     `yaml:"-"                json:"-"`
+	Ref       string     `yaml:"$ref,omitempty"   json:"$ref,omitempty"`
 }
 
 type swagDefinition struct {
-	Type        string         `yaml:"type"                  json:"type"`
-	Required    []string       `yaml:"required"              json:"required"`
-	Description string         `yaml:"description,omitempty" json:"description,omitempty"`
-	Properties  *linkedHashMap `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
+	Type        string       `yaml:"type"                  json:"type"`
+	Required    []string     `yaml:"required,omitempty"    json:"required,omitempty"`
+	Description string       `yaml:"description,omitempty" json:"description,omitempty"`
+	XMLRepr     *swagXMLRepr `yaml:"xml,omitempty"         json:"xml,omitempty"`
+	Properties  *orderedMap  `yaml:"properties,omitempty"  json:"properties,omitempty"` // map[string]*swagSchema
+}
+
+type swagXMLRepr struct {
+	Name      string `yaml:"name,omitempty"      json:"name,omitempty"`
+	Namespace string `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Prefix    string `yaml:"prefix,omitempty"    json:"prefix,omitempty"`
+	Attribute bool   `yaml:"attribute,omitempty" json:"attribute,omitempty"`
+	Wrapped   bool   `yaml:"wrapped,omitempty"   json:"wrapped,omitempty"`
 }
 
 type swagSchema struct {
-	Type            string        `yaml:"type,omitempty"            json:"type,omitempty"`
-	Required        bool          `yaml:"required,omitempty"        json:"required,omitempty"`
-	Description     string        `yaml:"description,omitempty"     json:"description,omitempty"`
-	Format          string        `yaml:"format,omitempty"          json:"format,omitempty"`
-	AllowEmptyValue bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
-	Default         interface{}   `yaml:"default,omitempty"         json:"default,omitempty"`
-	Example         interface{}   `yaml:"example,omitempty"         json:"example,omitempty"`
-	Enum            []interface{} `yaml:"enum,omitempty"            json:"enum,omitempty"`
-	Maximum         int           `yaml:"maximum,omitempty"         json:"maximum,omitempty"`
-	Minimum         int           `yaml:"minimum,omitempty"         json:"minimum,omitempty"`
-	MaxLength       int           `yaml:"maxLength,omitempty"       json:"maxLength,omitempty"`
-	MinLength       int           `yaml:"minLength,omitempty"       json:"minLength,omitempty"`
+	Type             string        `yaml:"type,omitempty"             json:"type,omitempty"`
+	Format           string        `yaml:"format,omitempty"           json:"format,omitempty"`
+	Required         bool          `yaml:"required,omitempty"         json:"required,omitempty"` // <<<
+	Description      string        `yaml:"description,omitempty"      json:"description,omitempty"`
+	AllowEmpty       bool          `yaml:"allowEmptyValue,omitempty"  json:"allowEmptyValue,omitempty"` // ?
+	Default          interface{}   `yaml:"default,omitempty"          json:"default,omitempty"`
+	Example          interface{}   `yaml:"example,omitempty"          json:"example,omitempty"`
+	Pattern          string        `yaml:"pattern,omitempty"          json:"pattern,omitempty"`
+	Enum             []interface{} `yaml:"enum,omitempty"             json:"enum,omitempty"`
+	MaxLength        *int          `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
+	MinLength        *int          `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
+	MaxItems         *int          `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
+	MinItems         *int          `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
+	UniqueItems      bool          `yaml:"uniqueItems,omitempty"      json:"uniqueItems,omitempty"`
+	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"` // ?
+	Maximum          *float64      `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
+	Minimum          *float64      `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
+	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
+	XMLRepr          *swagXMLRepr  `yaml:"xml,omitempty"              json:"xml,omitempty"`
 
-	OriginRef string     `yaml:"originRef,omitempty" json:"originRef,omitempty"`
-	Ref       string     `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
-	Items     *swagItems `yaml:"items,omitempty"     json:"items,omitempty"`
+	Items     *swagItems `yaml:"items,omitempty" json:"items,omitempty"`
+	OriginRef string     `yaml:"-"               json:"-"`
+	Ref       string     `yaml:"$ref,omitempty"  json:"$ref,omitempty"`
 }
 
 type swagItems struct {
-	Type    string        `yaml:"type,omitempty"    json:"type,omitempty"`
-	Format  string        `yaml:"format,omitempty"  json:"format,omitempty"`
-	Default interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
-	Enum    []interface{} `yaml:"enum,omitempty"    json:"enum,omitempty"`
+	Type             string        `yaml:"type,omitempty"             json:"type,omitempty"`
+	Format           string        `yaml:"format,omitempty"           json:"format,omitempty"`
+	AllowEmpty       bool          `yaml:"allowEmptyValue,omitempty"  json:"allowEmptyValue,omitempty"` // ?
+	Default          interface{}   `yaml:"default,omitempty"          json:"default,omitempty"`
+	Example          interface{}   `yaml:"example,omitempty"          json:"example,omitempty"` // ?
+	Pattern          string        `yaml:"pattern,omitempty"          json:"pattern,omitempty"`
+	Enum             []interface{} `yaml:"enum,omitempty"             json:"enum,omitempty"`
+	MaxLength        *int          `yaml:"maxLength,omitempty"        json:"maxLength,omitempty"`
+	MinLength        *int          `yaml:"minLength,omitempty"        json:"minLength,omitempty"`
+	MaxItems         *int          `yaml:"maxItems,omitempty"         json:"maxItems,omitempty"`
+	MinItems         *int          `yaml:"minItems,omitempty"         json:"minItems,omitempty"`
+	UniqueItems      bool          `yaml:"uniqueItems,omitempty"      json:"uniqueItems,omitempty"`
+	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty"          json:"maximum,omitempty"`
+	Minimum          *float64      `yaml:"minimum,omitempty"          json:"minimum,omitempty"`
+	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	MultipleOf       float64       `yaml:"multipleOf,omitempty"       json:"multipleOf,omitempty"`
+	XMLRepr          *swagXMLRepr  `yaml:"xml,omitempty"              json:"xml,omitempty"`
 
-	OriginRef string     `yaml:"originRef,omitempty" json:"originRef,omitempty"`
-	Ref       string     `yaml:"$ref,omitempty"      json:"$ref,omitempty"`
-	Items     *swagItems `yaml:"items,omitempty"     json:"items,omitempty"`
+	Items     *swagItems `yaml:"items,omitempty" json:"items,omitempty"`
+	OriginRef string     `yaml:"-"               json:"-"`
+	Ref       string     `yaml:"$ref,omitempty"  json:"$ref,omitempty"`
 }
 
-func buildSwaggerItems(arr *apiArray) *swagItems {
+// ======================================
+// items & schema & externalDoc & xmlRepr
+// ======================================
+
+func buildSwagItems(arr *apiArray, opt *ItemOption) *swagItems {
 	/*
 		"items": {
 		  "type": "integer",
-		  "format": "int64"
+		  "format": "int64",
+		  // ...
 		}
 		"items": {
 		  "type": "array",
-		  "items": {}
+		  "items": {},
+		  // ...
 		}
 		"items": {
-		  "originRef": "User",
 		  "$ref": "#/definitions/User"
 		}
 	*/
-	if arr == nil {
-		return nil
+	var items *swagItems
+	if opt == nil {
+		items = &swagItems{}
+	} else {
+		items = &swagItems{
+			AllowEmpty:       opt.allowEmpty, // ?
+			Default:          opt.defaul,
+			Example:          opt.example, // ?
+			Pattern:          opt.pattern,
+			Enum:             opt.enum,
+			MaxLength:        opt.maxLength,
+			MinLength:        opt.minLength,
+			MaxItems:         opt.maxItems,
+			MinItems:         opt.minItems,
+			UniqueItems:      opt.uniqueItems,
+			CollectionFormat: opt.collectionFormat,
+			Maximum:          opt.maximum,
+			Minimum:          opt.minimum,
+			ExclusiveMin:     opt.exclusiveMin,
+			ExclusiveMax:     opt.exclusiveMax,
+			MultipleOf:       opt.multipleOf,
+			XMLRepr:          buildSwagXMLRepr(opt.xmlRepr),
+		}
 	}
-	if arr.item.kind == apiPrimeKind {
+
+	switch arr.item.kind {
+	case apiPrimeKind:
 		prime := arr.item.prime
-		return &swagItems{Type: prime.typ, Format: prime.format}
-	}
-	if arr.item.kind == apiArrayKind {
-		return &swagItems{Type: ARRAY, Items: buildSwaggerItems(arr.item.array)}
-	}
-	if arr.item.kind == apiObjectKind {
+		if prime.typ == FILE {
+			panic("Invalid file type used in non-request parameter")
+		}
+		items.Type = prime.typ
+		items.Format = prime.format
+		return items
+	case apiArrayKind:
+		items.Type = ARRAY
+		var o *ItemOption
+		if opt != nil {
+			o = opt.itemOption
+		}
+		items.Items = buildSwagItems(arr.item.array, o)
+		return items
+	case apiObjectKind:
 		origin := arr.item.name
 		ref := "#/definitions/" + origin
 		return &swagItems{OriginRef: origin, Ref: ref}
+	default:
+		return nil // unreachable
 	}
-
-	return nil
 }
 
-func buildSwaggerParameterSchema(typ string) (outType string, outFormat string, schema *swagSchema, items *swagItems) {
+func buildSwagSchema(typ string, option *ItemOption, allowFile bool) (outType, outFmt, origin, ref string, items *swagItems) {
 	/*
 		{
-		  "type": "string"
+		  "type": "string",
+		  "format": "password",
+		  // ...
 		}
 		{
 		  "type": "array",
-		  "items": {}
+		  "items": {},
+		  // ...
 		},
 		{
-		  "schema": {
-		    "originRef": "User",
-		    "$ref": "#/definitions/User"
-		  }
+		  "$ref": "#/definitions/User"
 		}
 	*/
 	at := parseApiType(typ)
 
-	if at.kind == apiPrimeKind {
-		outType = at.prime.typ
-		outFormat = at.prime.format
-		return
-	}
-	if at.kind == apiArrayKind {
-		outType = ARRAY
-		items = buildSwaggerItems(at.array)
-		return
-	}
-	if at.kind == apiObjectKind {
-		origin := at.name
-		ref := "#/definitions/" + origin
-		schema = &swagSchema{OriginRef: origin, Ref: ref} // schema
-		return
-	}
-
-	return
-}
-
-func buildSwaggerResponseSchema(typ string) *swagSchema {
-	/*
-		"schema": {
-		  "type": "string"
+	switch at.kind {
+	case apiPrimeKind:
+		if at.prime.typ == FILE && !allowFile {
+			panic("Invalid file type used in non-request parameter")
 		}
-		"schema": {
-		  "type": "array",
-		  "items": {}
-		}
-		"schema": {
-		  "originRef": "Result",
-		  "$ref": "#/definitions/Result"
-		}
-	*/
-	at := parseApiType(typ)
-
-	if at.kind == apiPrimeKind {
-		return &swagSchema{Type: at.prime.typ, Format: at.prime.format}
-	}
-	if at.kind == apiArrayKind {
-		items := buildSwaggerItems(at.array)
-		return &swagSchema{Type: ARRAY, Items: items}
-	}
-	if at.kind == apiObjectKind {
-		origin := at.name
-		ref := "#/definitions/" + origin
-		return &swagSchema{OriginRef: origin, Ref: ref}
-	}
-
-	return nil
-}
-
-func buildSwaggerPropertySchema(typ string) (outType string, outFmt string, origin string, ref string, items *swagItems) {
-	/*
-		{
-		  "type": "integer"
-		}
-		{
-		  "type": "array",
-		  "items": {}
-		}
-		{
-		  "originRef": "Page<User>",
-		  "$ref": "#/definitions/Page<User>"
-		}
-	*/
-	at := parseApiType(typ)
-
-	if at.kind == apiPrimeKind {
 		outType = at.prime.typ
 		outFmt = at.prime.format
 		return
-	}
-	if at.kind == apiArrayKind {
+	case apiArrayKind:
 		outType = ARRAY
-		items = buildSwaggerItems(at.array)
+		items = buildSwagItems(at.array, option)
 		return
-	}
-	if at.kind == apiObjectKind {
+	case apiObjectKind:
 		origin = at.name
 		ref = "#/definitions/" + origin // ref
 		return
+	default:
+		return // unreachable
 	}
-
-	return
 }
 
-func buildSwaggerParameters(params []*Param) []*swagParam {
-	out := make([]*swagParam, len(params))
-	for i, p := range params {
-		typ, format, schema, items := buildSwaggerParameterSchema(p.typ)
-		param := &swagParam{
-			Name:            p.name,
-			In:              p.in,
-			Required:        p.required,
-			Description:     p.desc,
-			Type:            typ,
-			Format:          format,
-			AllowEmptyValue: p.allowEmpty,
-			Default:         p.def,
-			Enum:            p.enum,
-			Example:         p.example,
-			Maximum:         p.maximum,
-			Minimum:         p.minimum,
-			MaxLength:       p.maxLength,
-			MinLength:       p.minLength,
-			Schema:          schema,
-			Items:           items,
+func buildSwagExternalDoc(doc *ExternalDoc) *swagExternalDoc {
+	if doc == nil {
+		return nil
+	}
+	return &swagExternalDoc{Url: doc.url, Description: doc.desc}
+}
+
+func buildSwagXMLRepr(xml *XMLRepr) *swagXMLRepr {
+	if xml == nil {
+		return nil
+	}
+	return &swagXMLRepr{
+		Name:      xml.name,
+		Namespace: xml.namespace,
+		Prefix:    xml.prefix,
+		Attribute: xml.attribute,
+		Wrapped:   xml.wrapped,
+	}
+}
+
+// ===============================
+// params & responses & definition
+// ===============================
+
+func buildSwagParams(params []*Param) []*swagParam {
+	out := make([]*swagParam, 0, len(params))
+	for _, p := range params {
+		var param *swagParam
+		typ, format, origin, ref, items := buildSwagSchema(p.typ, p.itemOption, true)
+		if p.in != BODY {
+			// cannot use schema
+			if ref != "" {
+				panic("Invalid type `" + p.typ + "` used in non-body parameter") // only allowed primitive and array
+			}
+			param = &swagParam{
+				Name:             p.name,
+				In:               p.in,
+				Required:         p.required,
+				Description:      p.desc,
+				Type:             typ,
+				Format:           format,
+				AllowEmpty:       p.allowEmpty,
+				Default:          p.defaul,
+				Example:          p.example, // ?
+				Pattern:          p.pattern,
+				Enum:             p.enum,
+				MaxLength:        p.maxLength,
+				MinLength:        p.minLength,
+				MaxItems:         p.maxItems,
+				MinItems:         p.minItems,
+				UniqueItems:      p.uniqueItems,
+				CollectionFormat: p.collectionFormat,
+				Maximum:          p.maximum,
+				Minimum:          p.minimum,
+				ExclusiveMin:     p.exclusiveMin,
+				ExclusiveMax:     p.exclusiveMax,
+				MultipleOf:       p.multipleOf,
+				XMLRepr:          buildSwagXMLRepr(p.xmlRepr),
+				Items:            items,
+			}
+		} else {
+			// must put in schema
+			param = &swagParam{
+				Name:        p.name,
+				In:          p.in,
+				Required:    p.required,
+				Description: p.desc,
+			}
+			if ref != "" {
+				param.Schema = &swagSchema{OriginRef: origin, Ref: ref}
+			} else {
+				param.Schema = &swagSchema{
+					Type:             typ,
+					Format:           format,
+					AllowEmpty:       p.allowEmpty, // ?
+					Default:          p.defaul,
+					Example:          p.example,
+					Pattern:          p.pattern,
+					Enum:             p.enum,
+					MaxLength:        p.maxLength,
+					MinLength:        p.minLength,
+					MaxItems:         p.maxItems,
+					MinItems:         p.minItems,
+					UniqueItems:      p.uniqueItems,
+					CollectionFormat: p.collectionFormat, // ?
+					Maximum:          p.maximum,
+					Minimum:          p.minimum,
+					ExclusiveMin:     p.exclusiveMin,
+					ExclusiveMax:     p.exclusiveMax,
+					MultipleOf:       p.multipleOf,
+					XMLRepr:          buildSwagXMLRepr(p.xmlRepr),
+					Items:            items,
+				}
+			}
 		}
 
-		if p.in == BODY { // must put in schema
-			origin := ""
-			ref := ""
-			if param.Schema != nil {
-				origin = param.Schema.OriginRef
-				ref = param.Schema.Ref
+		out = append(out, param)
+	}
+	return out
+}
+
+func buildSwagResponses(responses []*Response) map[string]*swagResponse {
+	out := make(map[string]*swagResponse, len(responses))
+	for _, r := range responses {
+		desc := r.desc
+		if desc == "" {
+			desc = strconv.Itoa(r.code) + " " + http.StatusText(r.code)
+		}
+		headers := make(map[string]*swagResponseHeader, len(r.headers))
+		for _, h := range r.headers {
+			typ, format, _, ref, items := buildSwagSchema(h.typ, nil, false)
+			if ref != "" || items != nil {
+				panic("Invalid type `" + h.typ + "` used in response header") // only allow primitive
 			}
-			param.Schema = &swagSchema{
-				Type:      param.Type,
-				Format:    param.Format,
+			headers[h.name] = &swagResponseHeader{
+				Type:        typ,
+				Format:      format,
+				Description: h.desc,
+				Example:     h.example, // ?
+				// ignore other fields, see https://swagger.io/specification/v2/#headerObject
+			}
+		}
+		examples := make(map[string]interface{}, len(r.examples))
+		for _, e := range r.examples {
+			examples[e.mime] = e.example
+		}
+
+		resp := &swagResponse{
+			Description: desc,
+			Headers:     headers,
+			Examples:    examples,
+		}
+		if r.typ != "" {
+			typ, format, origin, ref, items := buildSwagSchema(r.typ, nil, false)
+			resp.Schema = &swagResponseSchema{
+				Type:      typ,
+				Format:    format,
+				Items:     items,
 				OriginRef: origin,
 				Ref:       ref,
-				Items:     param.Items,
+				// ignore other fields, see https://swagger.io/specification/v2/#schemaObject
 			}
-			param.Type = ""
-			param.Format = ""
-			param.Items = nil
 		}
-
-		out[i] = param
+		out[strconv.Itoa(r.code)] = resp
 	}
 	return out
 }
 
-func buildSwaggerResponses(responses []*Response) map[string]*swagResponse {
-	out := make(map[string]*swagResponse)
-	for _, r := range responses {
-		headers := make(map[string]*swagHeader)
-		for _, h := range r.headers {
-			headers[h.name] = &swagHeader{Type: h.typ, Description: h.desc}
-		}
-
-		code := strconv.Itoa(r.code)
-		out[code] = &swagResponse{
-			Description: r.desc,
-			Schema:      buildSwaggerResponseSchema(r.typ),
-			Examples:    r.examples,
-			Headers:     headers,
-		}
-	}
-	return out
-}
-
-func buildSwaggerDefinition(def *Definition) *swagDefinition {
-	required := make([]string, 0)
-	properties := newLinkedHashMap() // make(map[string]*swagSchema)
-	for _, p := range def.properties {
+func buildSwagDefinition(definition *Definition) *swagDefinition {
+	required := make([]string, 0, len(definition.properties)/2)
+	properties := newOrderedMap(len(definition.properties)) // map[string]*swagSchema
+	for _, p := range definition.properties {
 		if p.required {
 			required = append(required, p.name)
 		}
 
-		typ, format, origin, ref, items := buildSwaggerPropertySchema(p.typ)
-		properties.Set(p.name, &swagSchema{
-			Required:        p.required,
-			Description:     p.desc,
-			Type:            typ,
-			Format:          format,
-			AllowEmptyValue: p.allowEmpty,
-			Default:         p.def,
-			Example:         p.example,
-			Enum:            p.enum,
-			Maximum:         p.maximum,
-			Minimum:         p.minimum,
-			MaxLength:       p.maxLength,
-			MinLength:       p.minLength,
-			OriginRef:       origin,
-			Ref:             ref,
-			Items:           items,
-		})
+		var schema *swagSchema
+		typ, format, origin, ref, items := buildSwagSchema(p.typ, p.itemOption, false)
+		if ref != "" {
+			schema = &swagSchema{OriginRef: origin, Ref: ref}
+		} else {
+			schema = &swagSchema{
+				// Required: p.required,
+				Type:             typ,
+				Format:           format,
+				Description:      p.desc,
+				AllowEmpty:       p.allowEmpty, // ?
+				Default:          p.defaul,
+				Example:          p.example,
+				Pattern:          p.pattern,
+				Enum:             p.enum,
+				MaxLength:        p.maxLength,
+				MinLength:        p.minLength,
+				MaxItems:         p.maxItems,
+				MinItems:         p.minItems,
+				UniqueItems:      p.uniqueItems,
+				CollectionFormat: p.collectionFormat, // ?
+				Maximum:          p.maximum,
+				Minimum:          p.minimum,
+				ExclusiveMin:     p.exclusiveMin,
+				ExclusiveMax:     p.exclusiveMax,
+				MultipleOf:       p.multipleOf,
+				XMLRepr:          buildSwagXMLRepr(p.xmlRepr),
+				Items:            items,
+			}
+		}
+		properties.Set(p.name, schema)
 	}
 
 	return &swagDefinition{
-		Type:        "object",
-		Description: def.desc,
+		Type:        OBJECT, // fixed schema type to object
 		Required:    required,
+		Description: definition.desc,
+		XMLRepr:     buildSwagXMLRepr(definition.xmlRepr),
 		Properties:  properties,
 	}
 }
 
-func buildSwaggerPaths(doc *Document) map[string]map[string]*swagPath {
-	out := make(map[string]map[string]*swagPath)
-	for _, p := range doc.paths {
-		_, ok := out[p.route]
-		if !ok {
-			out[p.route] = make(map[string]*swagPath)
+// ========================
+// operations & definitions
+// ========================
+
+func buildSwagOperations(doc *Document) map[string]map[string]*swagOperation {
+	// route - method - operation
+	out := make(map[string]map[string]*swagOperation, 2) // cap defaults to 2
+	for _, op := range doc.operations {
+		method := strings.ToLower(op.method)
+		operationId := op.operationId
+		if operationId == "" {
+			operationId = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
+				op.route, "/", "-"), "{", ":"), "}", "") + "-" + method
 		}
-
-		method := strings.ToLower(p.method)
-		id := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(p.route, "/", "-"), "{", ""), "}", "") + "-" + method
-		securities := make([]map[string][]interface{}, 0)
-		for _, s := range p.securities {
-			securities = append(securities, map[string][]interface{}{s: {}})
-		}
-
-		out[p.route][method] = &swagPath{
-			Summary:     p.summary,
-			Description: p.desc,
-			OperationId: id,
-			Tags:        p.tags,
-			Securities:  securities,
-			Consumes:    p.consumes,
-			Produces:    p.produces,
-			Deprecated:  p.deprecated,
-			Parameters:  buildSwaggerParameters(p.params),
-			Responses:   buildSwaggerResponses(p.responses),
-		}
-	}
-	return out
-}
-
-func buildSwaggerDefinitions(doc *Document) map[string]*swagDefinition {
-	propertyTypes := make([]string, 0)
-	for _, definition := range doc.definitions {
-		prehandleGenericName(definition) // new name
-
-		if len(definition.generics) == 0 && len(definition.properties) > 0 {
-			for _, property := range definition.properties {
-				propertyTypes = append(propertyTypes, property.typ)
+		securities := make([]map[string][]string, 0, len(op.securities))
+		for _, s := range op.securities {
+			secReq := map[string][]string{s: {}}
+			if scopes, ok := op.secsScopes[s]; ok {
+				secReq[s] = scopes
 			}
+			securities = append(securities, secReq)
 		}
-	}
-	for _, path := range doc.paths {
-		for _, param := range path.params {
-			propertyTypes = append(propertyTypes, param.typ)
-		}
-		for _, response := range path.responses {
-			propertyTypes = append(propertyTypes, response.typ)
-		}
-	}
-	definitions := prehandleGenericList(doc.definitions, propertyTypes) // new list
 
-	out := make(map[string]*swagDefinition)
-	for _, def := range definitions {
-		if len(def.generics) == 0 {
-			out[def.name] = buildSwaggerDefinition(def)
+		_, ok := out[op.route]
+		if !ok {
+			out[op.route] = make(map[string]*swagOperation, 4) // cap defaults to 4
+		}
+		out[op.route][method] = &swagOperation{
+			Summary:     op.summary,
+			OperationId: operationId,
+			Description: op.desc,
+			Schemes:     op.schemes,
+			Consumes:    op.consumes,
+			Produces:    op.produces,
+			Tags:        op.tags,
+			Securities:  securities,
+			Deprecated:  op.deprecated,
+			ExternalDoc: buildSwagExternalDoc(op.externalDoc),
+			Parameters:  buildSwagParams(op.params),
+			Responses:   buildSwagResponses(op.responses),
 		}
 	}
 	return out
 }
 
-func buildSwaggerDocument(d *Document) *swagDocument {
+func buildSwagDefinitions(doc *Document) map[string]*swagDefinition {
+	// prehandle definition list
+	allSpecTypes := collectAllSpecTypes(doc)
+	clonedDefinitions := make([]*Definition, 0, len(doc.definitions))
+	for _, definition := range doc.definitions {
+		clonedDefinitions = append(clonedDefinitions, prehandleDefinition(definition)) // with generic name checked
+	}
+	newDefinitionList := prehandleDefinitionList(clonedDefinitions, allSpecTypes)
+
+	// return result map
+	out := make(map[string]*swagDefinition, len(newDefinitionList))
+	for _, definition := range newDefinitionList {
+		out[definition.name] = buildSwagDefinition(definition)
+	}
+	return out
+}
+
+// ========
+// document
+// ========
+
+func buildSwagDocument(doc *Document) *swagDocument {
+	// check
+	checkDocument(doc)
+
+	// info
 	out := &swagDocument{
 		Swagger:  "2.0",
-		Host:     d.host,
-		BasePath: d.basePath,
+		Host:     doc.host,
+		BasePath: doc.basePath,
 		Info: &swagInfo{
-			Title:          d.info.title,
-			Description:    d.info.desc,
-			Version:        d.info.version,
-			TermsOfService: d.info.termsOfService,
+			Title:          doc.info.title,
+			Version:        doc.info.version,
+			Description:    doc.info.desc,
+			TermsOfService: doc.info.termsOfService,
 		},
 	}
-	if d.info.license != nil {
-		out.Info.License = &swagLicense{Name: d.info.license.name, Url: d.info.license.url}
+	if doc.info.license != nil {
+		out.Info.License = &swagLicense{Name: doc.info.license.name, Url: doc.info.license.url}
 	}
-	if d.info.contact != nil {
-		out.Info.Contact = &swagContact{Name: d.info.contact.name, Url: d.info.contact.url, Email: d.info.contact.email}
+	if doc.info.contact != nil {
+		out.Info.Contact = &swagContact{Name: doc.info.contact.name, Url: doc.info.contact.url, Email: doc.info.contact.email}
 	}
-	if len(d.tags) > 0 {
-		tags := make([]*swagTag, 0)
-		for _, t := range d.tags {
-			tags = append(tags, &swagTag{Name: t.name, Description: t.desc})
+
+	// option
+	if opt := doc.option; opt != nil {
+		tags := make([]*swagTag, 0, len(opt.tags))
+		for _, t := range opt.tags {
+			tags = append(tags, &swagTag{Name: t.name, Description: t.desc, ExternalDoc: buildSwagExternalDoc(t.externalDoc)})
 		}
+		securities := make(map[string]*swagSecurity, len(opt.securities))
+		for _, s := range opt.securities {
+			if s.typ == APIKEY {
+				securities[s.title] = &swagSecurity{Type: APIKEY, Description: s.desc, Name: s.name, In: s.in}
+			} else if s.typ == BASIC {
+				securities[s.title] = &swagSecurity{Type: BASIC, Description: s.desc}
+			} else if s.typ == OAUTH2 {
+				scopes := make(map[string]string, len(s.scopes))
+				for _, c := range s.scopes {
+					scopes[c.scope] = c.desc
+				}
+				securities[s.title] = &swagSecurity{Type: OAUTH2, Description: s.desc, Flow: s.flow, AuthorizationUrl: s.authorizationUrl, TokenUrl: s.tokenUrl, Scopes: scopes}
+			}
+		}
+
+		out.Schemes = opt.schemes
+		out.Consumes = opt.consumes
+		out.Produces = opt.produces
 		out.Tags = tags
-	}
-	if len(d.securities) > 0 {
-		securities := make(map[string]*swagSecurity)
-		for _, s := range d.securities {
-			securities[s.title] = &swagSecurity{Type: s.typ, Name: s.name, In: s.in}
-		}
 		out.Securities = securities
+		out.ExternalDoc = buildSwagExternalDoc(opt.externalDoc)
 	}
 
-	// definitions
-	out.Definitions = buildSwaggerDefinitions(d)
-
-	// paths
-	out.Paths = buildSwaggerPaths(d)
+	// definitions & operations
+	out.Definitions = buildSwagDefinitions(doc)
+	out.Operations = buildSwagOperations(doc)
 
 	return out
-}
-
-// GenerateSwaggerYaml generates swagger yaml script and writes into file.
-func (d *Document) GenerateSwaggerYaml(path string) ([]byte, error) {
-	swagDoc := buildSwaggerDocument(d)
-	bs, err := yaml.Marshal(swagDoc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = saveFile(path, bs)
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
-// GenerateSwaggerJson generates swagger json script and writes into file.
-func (d *Document) GenerateSwaggerJson(path string) ([]byte, error) {
-	swagDoc := buildSwaggerDocument(d)
-	bs, err := jsonMarshal(swagDoc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = saveFile(path, bs)
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
-// GenerateSwaggerYaml generates swagger yaml script and writes into file.
-func GenerateSwaggerYaml(path string) ([]byte, error) {
-	return _document.GenerateSwaggerYaml(path)
-}
-
-// GenerateSwaggerJson generates swagger json script and writes into file.
-func GenerateSwaggerJson(path string) ([]byte, error) {
-	return _document.GenerateSwaggerJson(path)
 }

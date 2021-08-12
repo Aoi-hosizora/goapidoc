@@ -5,15 +5,15 @@ import (
 	"strings"
 )
 
-type apiTypeKind int
+type apiTypeKind int8
 
 const (
-	apiPrimeKind apiTypeKind = iota
+	apiPrimeKind apiTypeKind = iota + 1
 	apiObjectKind
 	apiArrayKind
 )
 
-// Obj<integer#int64, string[]>[]
+// Example: Obj<integer#int64, string[]>[]
 type apiType struct {
 	name string
 	kind apiTypeKind
@@ -23,233 +23,339 @@ type apiType struct {
 	array  *apiArray
 }
 
-// integer#int64
+// Example: string or string#date-time
 type apiPrime struct {
 	typ    string
 	format string
 }
 
-// xxx<yyy,...>
+// Example: xxx or xxx<yyy, zzz>
 type apiObject struct {
-	generics []*apiType // yyy,...
-	typ      string     // xxx
+	typ      string
+	generics []*apiType
 }
 
-// xxx[][]
+// Example: xxx[][]
 type apiArray struct {
-	item *apiType // xxx[]
+	item *apiType
 }
 
+var (
+	typeNameRe    = regexp.MustCompile(`^[a-zA-Z0-9_]+(?:(?:<(.+)>)|(?:#[a-zA-Z0-9\-_]*))?(?:\[])*$`) // xxx(?:<(yyy)>|#zzz)?(?:[])*
+	genericNameRe = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+)
+
+// checkTypeName checks given type name from Param, Response and Definition.
+func checkTypeName(typ string) {
+	// re
+	if !typeNameRe.MatchString(typ) {
+		panic("Invalid type `" + typ + "`")
+	}
+	// <(.+)>
+	for _, subTyp := range typeNameRe.FindStringSubmatch(typ)[1:] {
+		genParts := strings.Split(subTyp, ",")
+		genStrings := make([]string, 0, 2) // cap defaults to 2
+		for idx, part := range genParts {
+			if strings.Count(part, "<") == strings.Count(part, ">") {
+				// T1, T2<T3>
+				genStrings = append(genStrings, part)
+			} else {
+				// T1, T2<T3, T4> => T1 | T2<T3 | T4> => T1 | T2<T3,T4>
+				if idx+1 < len(genParts) {
+					genParts[idx+1] = genParts[idx] + "," + genParts[idx+1]
+				} else {
+					panic("Invalid type `" + typ + "`")
+				}
+			}
+		}
+		for _, genTyp := range genStrings {
+			if genTyp = strings.TrimSpace(genTyp); genTyp != "" {
+				checkTypeName(genTyp)
+			}
+		}
+	}
+}
+
+// parseApiType parses type string to three kinds of apiType.
 func parseApiType(typ string) *apiType {
 	typ = strings.TrimSpace(typ)
-	l := len(typ)
 
-	// array: X[][]
-	if l >= 3 && typ[l-2:] == "[]" {
-		item := parseApiType(typ[:l-2]) // X[]
+	// 1. array: X[] | X[][][]
+	if strings.HasSuffix(typ, "[]") {
+		item := parseApiType(typ[:len(typ)-2]) // X | X[][]
 		return &apiType{
-			name: typ,
-			kind: apiArrayKind,
-			array: &apiArray{
-				item: item,
-			},
+			name:  typ,
+			kind:  apiArrayKind,
+			array: &apiArray{item: item},
 		}
 	}
 
-	// base: X#Y
-	for _, prime := range []string{INTEGER, NUMBER, STRING, BOOLEAN, FILE, ARRAY, OBJECT} {
-		primeLen := len(prime)
-		if typ == prime || (l > primeLen+1 && strings.HasPrefix(typ, prime) && typ[primeLen] == '#') {
-			format := defaultFormat(prime)
-			if typ != prime {
-				format = typ[primeLen+1:] // Y
-			}
-			return &apiType{
-				name: typ,
-				kind: apiPrimeKind,
-				prime: &apiPrime{
-					typ:    prime,
-					format: format,
-				},
-			}
-		}
-	}
-
-	// object with generic: X<Y,Z<A,B<C>>>
-	start := strings.Index(typ, "<")
-	if l > 3 && start >= 0 && typ[l-1] == '>' && typ[l-2:l] != "<>" {
-		paramStr := typ[start+1 : l-1]         // Y,Z<A,B<C>>
-		params := strings.Split(paramStr, ",") // Y | Z<A | B<C>>
-		generics := make([]string, 0)
-		for idx, param := range params {
-			if strings.Count(param, "<") != strings.Count(param, ">") { // Z<A
-				if len(params) > idx+1 {
-					params[idx+1] = params[idx] + "," + params[idx+1] // Z<A,B<C>>
-				} else {
-					panic("Failed to parse type of: `" + paramStr + "`")
+	// 2. prime with format: X# | X#Y
+	if strings.Contains(typ, "#") {
+		for _, prime := range []string{INTEGER, NUMBER, STRING, BOOLEAN, FILE, ARRAY, OBJECT} {
+			if strings.HasPrefix(typ, prime) {
+				if prime == ARRAY || prime == OBJECT {
+					panic("Use array or object in type `" + typ + "` invalidly")
 				}
-			} else {
-				generics = append(generics, param)
+				fmtIdx := strings.Index(typ, "#") + 1
+				fmt := ""
+				if fmtIdx < len(typ) {
+					fmt = typ[fmtIdx:]
+				}
+				return &apiType{
+					name:  typ,
+					kind:  apiPrimeKind,
+					prime: &apiPrime{typ: prime, format: fmt},
+				}
 			}
 		}
-		out := &apiObject{
-			typ:      typ[:start],
-			generics: []*apiType{},
+	}
+
+	// 3. object with generic: X<Y<Z>> | X<Y, Z<A, B<C>>>
+	if strings.Contains(typ, "<") {
+		genIdx := strings.Index(typ, "<") + 1
+		genParts := strings.Split(typ[genIdx:len(typ)-1], ",") // Y<Z> || {Y, Z<A, B<C>>}
+		genStrings := make([]string, 0, 2)                     // cap defaults to 2
+		for idx, part := range genParts {
+			part = strings.TrimSpace(part)
+			if strings.Count(part, "<") == strings.Count(part, ">") { // Y<Z>
+				genStrings = append(genStrings, part)
+			} else { // Z<A, B<C>>
+				if idx+1 < len(genParts) {
+					genParts[idx+1] = genParts[idx] + "," + genParts[idx+1] // -> Z<A + , + B<C>>
+				} else {
+					panic("Invalid type `" + typ + "`")
+				}
+			}
 		}
-		for _, generic := range generics {
-			out.generics = append(out.generics, parseApiType(generic))
+		genTypes := make([]*apiType, 0, len(genStrings))
+		for _, gen := range genStrings {
+			genTypes = append(genTypes, parseApiType(gen))
+		}
+		object := typ[:genIdx-1]
+		switch object {
+		case INTEGER, NUMBER, STRING, BOOLEAN, FILE, ARRAY, OBJECT:
+			panic("Invalid type `" + typ + "`")
 		}
 		return &apiType{
 			name:   typ,
 			kind:   apiObjectKind,
-			object: out,
+			object: &apiObject{typ: object, generics: genTypes},
 		}
 	}
 
-	// object without generic: X | X<>
-	object := &apiObject{
-		typ:      typ,
-		generics: []*apiType{},
+	// 4. prime without format: X
+	switch typ {
+	case INTEGER, NUMBER, STRING, BOOLEAN, FILE:
+		return &apiType{
+			name:  typ,
+			kind:  apiPrimeKind,
+			prime: &apiPrime{typ: typ, format: defaultFormat(typ)},
+		}
+	case ARRAY, OBJECT:
+		panic("Use array or object as type invalidly")
 	}
-	if l >= 2 && typ[l-2:l] == "<>" {
-		object.typ = typ[:l-2]
+
+	// 5. object without generic: X
+	if strings.Contains(typ, "#") {
+		panic("Invalid type `" + typ + "`")
 	}
 	return &apiType{
 		name:   typ,
 		kind:   apiObjectKind,
-		object: object,
+		object: &apiObject{typ: typ, generics: []*apiType{}},
 	}
 }
 
-// get default format from type
+// defaultFormat returns the default format for given type.
 func defaultFormat(typ string) string {
 	if typ == INTEGER {
 		return INT32
-	} else if typ == NUMBER {
+	}
+	if typ == NUMBER {
 		return DOUBLE
 	}
 	return ""
 }
 
-// parse generic param
-func prehandleGenericName(def *Definition) {
-	// change generic type in properties
-	for _, prop := range def.properties {
-		for _, gen := range def.generics { // T -> «T»
-			if strings.HasPrefix(gen, "«") && strings.HasSuffix(gen, "»") {
-				continue
+// collectAllSpecTypes checks and collects all specific types.
+func collectAllSpecTypes(doc *Document) []string {
+	// check all type names (param, resp, prop)
+	cnt := 0
+	for _, op := range doc.operations {
+		cnt += len(op.params) + len(op.responses)
+		for _, param := range op.params {
+			checkTypeName(param.typ)
+		}
+		for _, resp := range op.responses {
+			if resp.typ != "" {
+				checkTypeName(resp.typ)
 			}
-
-			newGen := "«" + gen + "»"
-			re, err := regexp.Compile(`(^|[, <])` + gen + `([, <>\[]|$)`) // {, <} {, <>[]}
-			if err != nil {
-				panic("Failed to parse type of: `" + gen + "`")
-			}
-
-			prop.typ = strings.ReplaceAll(prop.typ, " ", "")
-			prop.typ = re.ReplaceAllString(prop.typ, "$1"+newGen+"$2")
-			prop.typ = strings.ReplaceAll(prop.typ, ",", ", ")
+		}
+	}
+	for _, def := range doc.definitions {
+		for _, prop := range def.properties {
+			checkTypeName(prop.typ)
+		}
+		if len(def.generics) == 0 {
+			cnt += len(def.properties)
 		}
 	}
 
-	// change generic type in generic list
-	for idx := range def.generics {
-		gen := def.generics[idx]
-		if !strings.HasPrefix(gen, "«") || !strings.HasSuffix(gen, "»") {
-			def.generics[idx] = "«" + gen + "»"
+	// collect all specific types
+	out := make([]string, 0, cnt)
+	for _, op := range doc.operations {
+		for _, param := range op.params {
+			out = append(out, param.typ)
+		}
+		for _, resp := range op.responses {
+			if resp.typ != "" {
+				out = append(out, resp.typ)
+			}
 		}
 	}
+	for _, def := range doc.definitions {
+		if len(def.generics) == 0 {
+			for _, prop := range def.properties {
+				out = append(out, prop.typ)
+			}
+		}
+	}
+	return out
 }
 
-// generate related generic list
-func prehandleGenericList(definitions []*Definition, allTypes []string) []*Definition {
-	genericDefs := make(map[string]*Definition)
-	normalDefs := newLinkedHashMap() // old definitions
-	for _, def := range definitions {
-		if len(def.generics) == 0 {
-			normalDefs.Set(def.name, def)
-		} else {
-			genericDefs[def.name] = def
+// prehandleDefinition deduplicates, checks and prehandles generic names, and returns a new cloned Definition.
+func prehandleDefinition(definition *Definition) *Definition {
+	// deduplicate and check generic names
+	generics := make([]string, 0, len(definition.generics))
+	for _, gen := range definition.generics {
+		contained := false
+		for _, g := range generics {
+			if g == gen {
+				contained = true
+				break
+			}
+		}
+		if !contained {
+			if !genericNameRe.MatchString(gen) { // a-zA-Z0-9_
+				panic("Invalid generic type `" + gen + "`")
+			}
+			generics = append(generics, gen)
 		}
 	}
 
-	addedDefs := newLinkedHashMap() //  new definitions to add
+	// clone definition
+	out := &Definition{
+		name:       definition.name,
+		desc:       definition.desc,
+		xmlRepr:    definition.xmlRepr,
+		generics:   generics,
+		properties: make([]*Property, 0, len(definition.properties)),
+	}
+	for _, prop := range definition.properties {
+		out.properties = append(out.properties, cloneProperty(prop))
+	}
 
-	// preHandle
-	var preHandle func(string)
-	preHandle = func(typ string) { // string
-		at := parseApiType(typ) // *apiType
+	// update generic type name
+	for idx, gen := range out.generics {
+		newGen := "«" + gen + "»"
+		re := regexp.MustCompile(`(^|[,\s<])` + gen + `([,\s<>\[]|$)`) // {,\s<} xxx {,\s<>[}
+		for _, prop := range out.properties {
+			for { // replace all property type
+				curr := prop.typ
+				prop.typ = strings.ReplaceAll(prop.typ, " ", "")
+				prop.typ = re.ReplaceAllString(prop.typ, "$1"+newGen+"$2") // T -> «T»
+				prop.typ = strings.ReplaceAll(prop.typ, ",", ", ")
+				if prop.typ == curr {
+					break
+				}
+			}
+		}
+		out.generics[idx] = newGen
+	}
+	return out
+}
+
+// prehandleDefinitionList prehandles and returns the final Definition list with given and type list.
+func prehandleDefinitionList(allDefinitions []*Definition, allTypes []string) []*Definition {
+	// extract generic definitions from given definitions
+	allDefMap := make(map[string]*Definition, len(allDefinitions))
+	out := make([]*Definition, 0, len(allDefinitions))    // out definition slice
+	outKeys := make(map[string]bool, len(allDefinitions)) // out definition key map
+	for _, def := range allDefinitions {
+		if _, ok := allDefMap[def.name]; ok {
+			panic("Duplicate definition `" + def.name + "`")
+		}
+		allDefMap[def.name] = def
+		if len(def.generics) == 0 {
+			out = append(out, def) // definition without generic
+			outKeys[def.name] = true
+		}
+	}
+
+	// extract more definitions from given types
+	var extractFn func(typ string)
+	extractFn = func(typ string) {
+		if _, ok := outKeys[typ]; ok {
+			return
+		}
+		at := parseApiType(typ)
 		for at.kind == apiArrayKind {
 			at = at.array.item
 		}
-		if at.kind != apiObjectKind || len(at.object.generics) == 0 {
+		if at.kind != apiObjectKind {
 			return
 		}
+		// `at` belongs to object
+		obj := at.object
 
-		genDef, ok := genericDefs[at.object.typ] // *Definition
+		// check object existence and generic parameter
+		genDef, ok := allDefMap[obj.typ]
 		if !ok {
+			panic("Object type `" + at.name + "` not found")
+		}
+		if len(obj.generics) != len(genDef.generics) {
+			panic("Object type `" + at.name + "`'s generic parameter length is not matched")
+		}
+		if len(obj.generics) == 0 {
 			return
 		}
 
-		// new motoDef
-		properties := make([]*Property, 0)
-		for _, prop := range genDef.properties {
-			properties = append(properties, &Property{
-				name:       prop.name,
-				typ:        prop.typ, // << need parse
-				required:   prop.required,
-				desc:       prop.desc,
-				allowEmpty: prop.allowEmpty,
-				def:        prop.def,
-				example:    prop.example,
-				enum:       prop.enum,
-				minLength:  prop.minLength,
-				maxLength:  prop.maxLength,
-				minimum:    prop.minimum,
-				maximum:    prop.maximum,
-			})
-		}
-		addedDef := &Definition{ // *Definition
-			name:       genDef.name, // << need parse
+		// specific definition need to be added
+		specDef := &Definition{
+			name:       genDef.name, // TypeName<GenericName, ...>
 			desc:       genDef.desc,
-			generics:   []string{},
-			properties: properties,
+			xmlRepr:    genDef.xmlRepr,
+			generics:   nil, // empty
+			properties: make([]*Property, 0, len(genDef.properties)),
 		}
-
-		specNames := make([]string, 0)
+		for _, prop := range genDef.properties {
+			specDef.properties = append(specDef.properties, cloneProperty(prop)) // << need to extract type recurrently
+		}
+		// replace to spec name for new definition
+		specNames := make([]string, 0, len(genDef.generics))
 		for idx, genName := range genDef.generics {
-			if len(at.object.generics) < idx {
-				break
-			}
-			specName := at.object.generics[idx].name
+			specName := obj.generics[idx].name
 			specNames = append(specNames, specName)
-			for _, prop := range addedDef.properties {
-				prop.typ = strings.ReplaceAll(prop.typ, genName, specName)
+			for _, prop := range specDef.properties {
+				prop.typ = strings.ReplaceAll(prop.typ, genName, specName) // «T» -> XXX, replace directly
 			}
 		}
-		addedDef.name += "<" + strings.Join(specNames, ", ") + ">"
-		addedDefs.Set(addedDef.name, addedDef)
+		specDef.name += "<" + strings.Join(specNames, ", ") + ">" // TypeName -> TypeName<GenericName, ...>
 
-		for _, prop := range addedDef.properties {
-			if !addedDefs.Has(prop.typ) {
-				preHandle(prop.typ) // << preHandle properties types
-			}
+		// extract recurrently and append to outMap
+		for _, prop := range specDef.properties {
+			extractFn(prop.typ) // << extract property type recurrently
 		}
+		out = append(out, specDef)
+		outKeys[specDef.name] = true
 	}
 
+	// for all types, extract generic parameters to definition list
 	for _, typ := range allTypes {
-		preHandle(typ)
+		extractFn(typ)
 	}
 
-	out := make([]*Definition, 0)
-	for _, key := range normalDefs.Keys() {
-		val, _ := normalDefs.Get(key)
-		out = append(out, val.(*Definition))
-	}
-	for _, key := range addedDefs.Keys() {
-		val, _ := addedDefs.Get(key)
-		out = append(out, val.(*Definition))
-	}
-
+	// return definition slice
 	return out
 }

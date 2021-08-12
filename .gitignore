@@ -6,7 +6,3 @@
 
 ### Build ###
 build/
-docs/*.*
-!docs/api.apib
-!docs/api.json
-!docs/api.yaml

@@ -4,10 +4,41 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"text/template"
+	"unsafe"
 )
+
+func spaceIndent(indent int, s string) string {
+	spaces := strings.Repeat("    ", indent)
+	return spaces + strings.ReplaceAll(s, "\n", "\n"+spaces)
+}
+
+func fastBtos(bs []byte) string {
+	// unsafe !!!
+	return *(*string)(unsafe.Pointer(&bs))
+}
+
+func renderTemplate(t string, object interface{}) ([]byte, error) {
+	tmpl, err := template.New("template").Parse(t)
+	if err != nil {
+		return nil, err
+	}
+	buf := &bytes.Buffer{}
+	err = tmpl.Execute(buf, object)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func yamlMarshal(t interface{}) ([]byte, error) {
+	return yaml.Marshal(t)
+}
 
 func jsonMarshal(t interface{}) ([]byte, error) {
 	buffer := &bytes.Buffer{}
@@ -20,44 +51,37 @@ func jsonMarshal(t interface{}) ([]byte, error) {
 
 func saveFile(path string, data []byte) error {
 	dir := filepath.Dir(path)
-	_, err := os.Stat(dir)
-	if os.IsNotExist(err) {
-		err := os.MkdirAll(dir, 0644)
-		if err != nil {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err = os.MkdirAll(dir, 0644); err != nil {
 			return err
 		}
 	}
-
-	err = ioutil.WriteFile(path, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+	return ioutil.WriteFile(path, data, 0644)
 }
 
-// linkedHashMap is used to replace map[string]interface{}.
-type linkedHashMap struct {
+// orderedMap represents an ordered hashmap, is used to replace map[K]V.
+type orderedMap struct {
 	m map[string]interface{}
 	i []string
 }
 
-func newLinkedHashMap() *linkedHashMap {
-	return &linkedHashMap{
-		m: make(map[string]interface{}),
-		i: make([]string, 0),
+// newOrderedMap creates an empty orderedMap with cap.
+func newOrderedMap(cap int) *orderedMap {
+	return &orderedMap{
+		m: make(map[string]interface{}, cap),
+		i: make([]string, 0, cap),
 	}
 }
 
-func (l *linkedHashMap) Keys() []string {
+func (l *orderedMap) Length() int {
+	return len(l.i)
+}
+
+func (l *orderedMap) Keys() []string {
 	return l.i
 }
 
-func (l *linkedHashMap) Has(key string) bool {
-	_, exist := l.m[key]
-	return exist
-}
-
-func (l *linkedHashMap) Set(key string, value interface{}) {
+func (l *orderedMap) Set(key string, value interface{}) {
 	_, exist := l.m[key]
 	l.m[key] = value
 	if !exist {
@@ -65,42 +89,38 @@ func (l *linkedHashMap) Set(key string, value interface{}) {
 	}
 }
 
-func (l *linkedHashMap) Get(key string) (interface{}, bool) {
+func (l *orderedMap) Get(key string) (interface{}, bool) {
 	v, ok := l.m[key]
 	return v, ok
 }
 
-func (l *linkedHashMap) MustGet(key string) interface{} {
-	val, ok := l.Get(key)
-	if !ok {
-		panic("key " + key + " is not found.")
-	}
-	return val
+func (l *orderedMap) MustGet(key string) interface{} {
+	val, _ := l.Get(key)
+	return val // return nil if not exists, no panic
 }
 
-func (l *linkedHashMap) MarshalJSON() ([]byte, error) {
-	ov := make([]interface{}, len(l.i))
-	for idx, field := range l.i {
-		ov[idx] = l.m[field]
-	}
-
+func (l *orderedMap) MarshalJSON() ([]byte, error) {
+	length := len(l.i)
 	buf := &bytes.Buffer{}
 	buf.WriteString("{")
-	for idx, field := range l.i {
-		b, err := json.Marshal(ov[idx])
+	for idx, k := range l.i {
+		b, err := jsonMarshal(l.m[k])
 		if err != nil {
-			return []byte{}, err
+			return nil, err
 		}
-		buf.WriteString(fmt.Sprintf("  \"%s\": %s", field, string(b)))
-		if idx < len(l.i)-1 {
+		buf.WriteString(fmt.Sprintf("  \"%s\": %s", k, string(b)))
+		if idx < length-1 {
 			buf.WriteString(",")
 		}
 	}
 	buf.WriteString("}")
-
 	return buf.Bytes(), nil
 }
 
-func (l *linkedHashMap) MarshalYAML() (interface{}, error) {
-	return l.m, nil
+func (l *orderedMap) MarshalYAML() (interface{}, error) {
+	ms := yaml.MapSlice{}
+	for _, k := range l.i {
+		ms = append(ms, yaml.MapItem{Key: k, Value: l.m[k]})
+	}
+	return ms, nil
 }
