@@ -277,7 +277,6 @@ func (r *Response) Desc(desc string) *Response {
 }
 
 // Examples sets the whole response examples in Response.
-// TODO BREAK CHANGES
 func (r *Response) Examples(examples ...*ResponseExample) *Response {
 	r.examples = examples
 	return r
@@ -342,7 +341,6 @@ func (r *ResponseExample) Example(example interface{}) *ResponseExample {
 // ==============
 
 // ResponseHeader represents a response header information of Response.
-// TODO BREAK CHANGES
 type ResponseHeader struct {
 	name    string
 	typ     string // primitive type
@@ -543,7 +541,6 @@ func (p *Param) MaxLength(max int) *Param {
 }
 
 // LengthRange sets the minLength and maxLength in Param.
-// TODO BREAK CHANGES
 func (p *Param) LengthRange(min, max int) *Param {
 	p.minLength = &min
 	p.maxLength = &max
@@ -582,21 +579,18 @@ func (p *Param) CollectionFormat(collectionFormat string) *Param {
 }
 
 // Minimum sets the minimum in Param.
-// TODO BREAK CHANGES
 func (p *Param) Minimum(min float64) *Param {
 	p.minimum = &min
 	return p
 }
 
 // Maximum sets the maximum in Param.
-// TODO BREAK CHANGES
 func (p *Param) Maximum(max float64) *Param {
 	p.maximum = &max
 	return p
 }
 
 // ValueRange sets the minimum and maximum in Param.
-// TODO BREAK CHANGES
 func (p *Param) ValueRange(min, max float64) *Param {
 	p.minimum = &min
 	p.maximum = &max

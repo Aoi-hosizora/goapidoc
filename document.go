@@ -91,7 +91,6 @@ func (d *Document) AddDefinitions(definitions ...*Definition) *Document {
 // ====
 
 // Info represents a basic information of Document.
-// TODO BREAK CHANGES
 type Info struct {
 	title   string
 	desc    string
@@ -398,7 +397,6 @@ type Security struct {
 }
 
 // NewSecurity creates a default Security with given arguments.
-// TODO BREAK CHANGES
 func NewSecurity(title string, typ string) *Security {
 	return &Security{title: title, typ: typ}
 }

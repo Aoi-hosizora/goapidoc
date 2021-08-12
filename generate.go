@@ -153,21 +153,18 @@ func checkDocument(doc *Document) {
 }
 
 // GenerateSwaggerYaml generates swagger yaml script and returns byte array.
-// TODO BREAK CHANGES
 func (d *Document) GenerateSwaggerYaml() ([]byte, error) {
 	doc := buildSwagDocument(d)
 	return yamlMarshal(doc)
 }
 
 // GenerateSwaggerJson generates swagger json script and returns byte array.
-// TODO BREAK CHANGES
 func (d *Document) GenerateSwaggerJson() ([]byte, error) {
 	doc := buildSwagDocument(d)
 	return jsonMarshal(doc)
 }
 
 // GenerateApib generates apib script and returns byte array.
-// TODO BREAK CHANGES
 func (d *Document) GenerateApib() ([]byte, error) {
 	return buildApibDocument(d)
 }

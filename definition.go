@@ -241,7 +241,6 @@ func (p *Property) MaxLength(max int) *Property {
 }
 
 // LengthRange sets the minLength and maxLength in Property.
-// TODO BREAK CHANGES
 func (p *Property) LengthRange(min, max int) *Property {
 	p.minLength = &min
 	p.maxLength = &max
@@ -280,21 +279,18 @@ func (p *Property) CollectionFormat(collectionFormat string) *Property {
 }
 
 // Minimum sets the minimum in Property.
-// TODO BREAK CHANGES
 func (p *Property) Minimum(min float64) *Property {
 	p.minimum = &min
 	return p
 }
 
 // Maximum sets the maximum in Property.
-// TODO BREAK CHANGES
 func (p *Property) Maximum(max float64) *Property {
 	p.maximum = &max
 	return p
 }
 
 // ValueRange sets the minimum and maximum in Property.
-// TODO BREAK CHANGES
 func (p *Property) ValueRange(min, max float64) *Property {
 	p.minimum = &min
 	p.maximum = &max
