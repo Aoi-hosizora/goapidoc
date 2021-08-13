@@ -73,6 +73,7 @@ const (
 	GIF   = "image/gif"                         // GIF mime data: image/gif
 )
 
+// collection format
 const (
 	CSV   = "csv"   // CSV collection format: foo,bar
 	SSV   = "ssv"   // SSV collection format: foo bar

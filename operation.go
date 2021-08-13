@@ -66,23 +66,56 @@ func NewPatchOperation(route, summary string) *Operation {
 	return NewOperation(PATCH, route, summary)
 }
 
-func (o *Operation) GetMethod() string                        { return o.method }
-func (o *Operation) GetRoute() string                         { return o.route }
-func (o *Operation) GetSummary() string                       { return o.summary }
-func (o *Operation) GetDesc() string                          { return o.desc }
-func (o *Operation) GetOperationId() string                   { return o.operationId }
-func (o *Operation) GetSchemes() []string                     { return o.schemes }
-func (o *Operation) GetConsumes() []string                    { return o.consumes }
-func (o *Operation) GetProduces() []string                    { return o.produces }
-func (o *Operation) GetTags() []string                        { return o.tags }
-func (o *Operation) GetSecurities() []string                  { return o.securities }
+// GetMethod returns the method from Operation.
+func (o *Operation) GetMethod() string { return o.method }
+
+// GetRoute returns the route from Operation.
+func (o *Operation) GetRoute() string { return o.route }
+
+// GetSummary returns the summary from Operation.
+func (o *Operation) GetSummary() string { return o.summary }
+
+// GetDesc returns the desc from Operation.
+func (o *Operation) GetDesc() string { return o.desc }
+
+// GetOperationId returns the operationId from Operation.
+func (o *Operation) GetOperationId() string { return o.operationId }
+
+// GetSchemes returns the whole schemes from Operation.
+func (o *Operation) GetSchemes() []string { return o.schemes }
+
+// GetConsumes returns the whole consumes from Operation.
+func (o *Operation) GetConsumes() []string { return o.consumes }
+
+// GetProduces returns the whole produces from Operation.
+func (o *Operation) GetProduces() []string { return o.produces }
+
+// GetTags returns the whole tags from Operation.
+func (o *Operation) GetTags() []string { return o.tags }
+
+// GetSecurities returns the whole securities requirements from Operation.
+func (o *Operation) GetSecurities() []string { return o.securities }
+
+// GetSecuritiesScopes returns the whole securities scopes from Operation.
 func (o *Operation) GetSecuritiesScopes() map[string][]string { return o.secsScopes }
-func (o *Operation) GetDeprecated() bool                      { return o.deprecated }
-func (o *Operation) GetRequestExample() interface{}           { return o.reqExample }
-func (o *Operation) GetExternalDoc() *ExternalDoc             { return o.externalDoc }
-func (o *Operation) GetAdditionalDoc() string                 { return o.additionalDoc }
-func (o *Operation) GetParams() []*Param                      { return o.params }
-func (o *Operation) GetResponses() []*Response                { return o.responses }
+
+// GetDeprecated returns the deprecated from Operation.
+func (o *Operation) GetDeprecated() bool { return o.deprecated }
+
+// GetRequestExample returns the request example from Operation.
+func (o *Operation) GetRequestExample() interface{} { return o.reqExample }
+
+// GetExternalDoc returns the external documentation from Operation.
+func (o *Operation) GetExternalDoc() *ExternalDoc { return o.externalDoc }
+
+// GetAdditionalDoc returns the additional document from Operation.
+func (o *Operation) GetAdditionalDoc() string { return o.additionalDoc }
+
+// GetParams returns the whole params from Operation.
+func (o *Operation) GetParams() []*Param { return o.params }
+
+// GetResponses returns the whole responses from Operation.
+func (o *Operation) GetResponses() []*Response { return o.responses }
 
 // Method sets the method in Operation.
 func (o *Operation) Method(method string) *Operation {
@@ -251,12 +284,23 @@ func NewResponse(code int, typ string) *Response {
 	return &Response{code: code, typ: typ}
 }
 
-func (r *Response) GetCode() int                    { return r.code }
-func (r *Response) GetType() string                 { return r.typ }
-func (r *Response) GetDesc() string                 { return r.desc }
+// GetCode returns the code from Response
+func (r *Response) GetCode() int { return r.code }
+
+// GetType returns the type from Response
+func (r *Response) GetType() string { return r.typ }
+
+// GetDesc returns the desc from Response
+func (r *Response) GetDesc() string { return r.desc }
+
+// GetExamples returns the whole response examples from Response
 func (r *Response) GetExamples() []*ResponseExample { return r.examples }
-func (r *Response) GetHeaders() []*ResponseHeader   { return r.headers }
-func (r *Response) GetAdditionalDoc() string        { return r.additionalDoc }
+
+// GetHeaders returns the whole response headers from Response
+func (r *Response) GetHeaders() []*ResponseHeader { return r.headers }
+
+// GetAdditionalDoc returns the additional document from Response
+func (r *Response) GetAdditionalDoc() string { return r.additionalDoc }
 
 // Code sets the code in Response.
 func (r *Response) Code(code int) *Response {
@@ -321,7 +365,10 @@ func NewResponseExample(mime string, example interface{}) *ResponseExample {
 	return &ResponseExample{mime: mime, example: example}
 }
 
-func (r *ResponseExample) GetMime() string         { return r.mime }
+// GetMime returns the mime from ResponseExample.
+func (r *ResponseExample) GetMime() string { return r.mime }
+
+// GetExample returns the example from ResponseExample.
 func (r *ResponseExample) GetExample() interface{} { return r.example }
 
 // Mime sets the mime in ResponseExample.
@@ -348,14 +395,21 @@ type ResponseHeader struct {
 	example interface{}
 }
 
-// NewHeader creates a default Header with given arguments.
+// NewResponseHeader creates a default Header with given arguments.
 func NewResponseHeader(name, typ, desc string) *ResponseHeader {
 	return &ResponseHeader{name: name, typ: typ, desc: desc}
 }
 
-func (h *ResponseHeader) GetName() string         { return h.name }
-func (h *ResponseHeader) GetType() string         { return h.typ }
-func (h *ResponseHeader) GetDesc() string         { return h.desc }
+// GetName returns the name from ResponseHeader.
+func (h *ResponseHeader) GetName() string { return h.name }
+
+// GetType returns the type from ResponseHeader.
+func (h *ResponseHeader) GetType() string { return h.typ }
+
+// GetDesc returns the desc from ResponseHeader.
+func (h *ResponseHeader) GetDesc() string { return h.desc }
+
+// GetExample returns the example from ResponseHeader.
 func (h *ResponseHeader) GetExample() interface{} { return h.example }
 
 // Name sets the name in ResponseHeader.
@@ -444,29 +498,74 @@ func NewHeaderParam(name, typ string, required bool, desc string) *Param {
 	return NewParam(name, HEADER, typ, required, desc)
 }
 
-func (p *Param) GetName() string             { return p.name }
-func (p *Param) GetInLoc() string            { return p.in }
-func (p *Param) GetType() string             { return p.typ }
-func (p *Param) GetRequired() bool           { return p.required }
-func (p *Param) GetDesc() string             { return p.desc }
-func (p *Param) GetAllowEmpty() bool         { return p.allowEmpty }
-func (p *Param) GetDefault() interface{}     { return p.defaul }
-func (p *Param) GetExample() interface{}     { return p.example }
-func (p *Param) GetPattern() string          { return p.pattern }
-func (p *Param) GetEnum() []interface{}      { return p.enum }
-func (p *Param) GetMinLength() *int          { return p.minLength }
-func (p *Param) GetMaxLength() *int          { return p.maxLength }
-func (p *Param) GetMinItems() *int           { return p.minItems }
-func (p *Param) GetMaxItems() *int           { return p.maxItems }
-func (p *Param) GetUniqueItems() bool        { return p.uniqueItems }
+// GetName returns the name from Param.
+func (p *Param) GetName() string { return p.name }
+
+// GetInLoc returns the in-location from Param.
+func (p *Param) GetInLoc() string { return p.in }
+
+// GetType returns the type from Param.
+func (p *Param) GetType() string { return p.typ }
+
+// GetRequired returns the required from Param.
+func (p *Param) GetRequired() bool { return p.required }
+
+// GetDesc returns the desc from Param.
+func (p *Param) GetDesc() string { return p.desc }
+
+// GetAllowEmpty returns the allowEmpty from Param.
+func (p *Param) GetAllowEmpty() bool { return p.allowEmpty }
+
+// GetDefault returns the default from Param.
+func (p *Param) GetDefault() interface{} { return p.defaul }
+
+// GetExample returns the example from Param.
+func (p *Param) GetExample() interface{} { return p.example }
+
+// GetPattern returns the pattern from Param.
+func (p *Param) GetPattern() string { return p.pattern }
+
+// GetEnum returns the whole enum from Param.
+func (p *Param) GetEnum() []interface{} { return p.enum }
+
+// GetMinLength returns the minLength from Param.
+func (p *Param) GetMinLength() *int { return p.minLength }
+
+// GetMaxLength returns the maxLength from Param.
+func (p *Param) GetMaxLength() *int { return p.maxLength }
+
+// GetMinItems returns the minItems from Param.
+func (p *Param) GetMinItems() *int { return p.minItems }
+
+// GetMaxItems returns the maxItems from Param.
+func (p *Param) GetMaxItems() *int { return p.maxItems }
+
+// GetUniqueItems returns the uniqueItems from Param.
+func (p *Param) GetUniqueItems() bool { return p.uniqueItems }
+
+// GetCollectionFormat returns the collectionFormat from Param.
 func (p *Param) GetCollectionFormat() string { return p.collectionFormat }
-func (p *Param) GetMinimum() *float64        { return p.minimum }
-func (p *Param) GetMaximum() *float64        { return p.maximum }
-func (p *Param) GetExclusiveMin() bool       { return p.exclusiveMin }
-func (p *Param) GetExclusiveMax() bool       { return p.exclusiveMax }
-func (p *Param) GetMultipleOf() float64      { return p.multipleOf }
-func (p *Param) GetItemOption() *ItemOption  { return p.itemOption }
-func (p *Param) GetXMLRepr() *XMLRepr        { return p.xmlRepr }
+
+// GetMinimum returns the minimum from Param.
+func (p *Param) GetMinimum() *float64 { return p.minimum }
+
+// GetMaximum returns the maximum from Param.
+func (p *Param) GetMaximum() *float64 { return p.maximum }
+
+// GetExclusiveMin returns the exclusiveMin from Param.
+func (p *Param) GetExclusiveMin() bool { return p.exclusiveMin }
+
+// GetExclusiveMax returns the exclusiveMax from Param.
+func (p *Param) GetExclusiveMax() bool { return p.exclusiveMax }
+
+// GetMultipleOf returns the multipleOf from Param.
+func (p *Param) GetMultipleOf() float64 { return p.multipleOf }
+
+// GetItemOption returns the item option from Param.
+func (p *Param) GetItemOption() *ItemOption { return p.itemOption }
+
+// GetXMLRepr returns the xml repr from Param.
+func (p *Param) GetXMLRepr() *XMLRepr { return p.xmlRepr }
 
 // Name sets the name in Param.
 func (p *Param) Name(name string) *Param {

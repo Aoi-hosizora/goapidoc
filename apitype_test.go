@@ -267,13 +267,13 @@ func TestPrehandleDefinitionList(t *testing.T) {
 			[][]string{{"uid", "name"}, {"type", "detail"}, {"code", "data"}, {"code", "data", "error"}, {"code", "data"}, {"code", "data"}, {"code", "data"}, {"total", "data"}},
 			[][]string{{"integer", "string"}, {"string", "string"}, {"integer", "UserDto"}, {"integer", "Result<UserDto>", "ErrorDto"}, {"integer", "UserDto[]"}, {"integer", "Result<UserDto[]>"}, {"integer", "Result<UserDto>"}, {"integer", "Result<Result<UserDto>>[]"}}},
 
-		{"blank type", []string{""}, true, nil,nil,nil},
-		{"not found", []string{"xxx"}, true, nil,nil,nil},
-		{"not found sub type", []string{"Result<xxx>"}, true, nil,nil,nil},
-		{"integer<integer>", []string{"integer<integer>"}, true, nil,nil,nil},
-		{"UserDto<integer>", []string{"UserDto<integer>"}, true, nil,nil,nil},
-		{"Result<UserDto, ErrorDto>", []string{"Result<UserDto, ErrorDto>"}, true, nil,nil,nil},
-		{"Result2<UserDto>", []string{"Result2<UserDto>"}, true, nil,nil,nil},
+		{"blank type", []string{""}, true, nil, nil, nil},
+		{"not found", []string{"xxx"}, true, nil, nil, nil},
+		{"not found sub type", []string{"Result<xxx>"}, true, nil, nil, nil},
+		{"integer<integer>", []string{"integer<integer>"}, true, nil, nil, nil},
+		{"UserDto<integer>", []string{"UserDto<integer>"}, true, nil, nil, nil},
+		{"Result<UserDto, ErrorDto>", []string{"Result<UserDto, ErrorDto>"}, true, nil, nil, nil},
+		{"Result2<UserDto>", []string{"Result2<UserDto>"}, true, nil, nil, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			testPanic(t, tc.wantPanic, func() {

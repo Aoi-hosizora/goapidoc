@@ -20,11 +20,22 @@ func NewDocument(host, basePath string, info *Info) *Document {
 	return &Document{host: host, basePath: basePath, info: info}
 }
 
-func (d *Document) GetHost() string               { return d.host }
-func (d *Document) GetBasePath() string           { return d.basePath }
-func (d *Document) GetInfo() *Info                { return d.info }
-func (d *Document) GetOption() *Option            { return d.option }
-func (d *Document) GetOperations() []*Operation   { return d.operations }
+// GetHost returns the host from Document.
+func (d *Document) GetHost() string { return d.host }
+
+// GetBasePath returns the basePath from Document.
+func (d *Document) GetBasePath() string { return d.basePath }
+
+// GetInfo returns the info from Document.
+func (d *Document) GetInfo() *Info { return d.info }
+
+// GetOption returns the option from Document.
+func (d *Document) GetOption() *Option { return d.option }
+
+// GetOperations returns the whole operations from Document.
+func (d *Document) GetOperations() []*Operation { return d.operations }
+
+// GetDefinitions returns the whole definitions from Document.
 func (d *Document) GetDefinitions() []*Definition { return d.definitions }
 
 // Cleanup cleans up the Document.
@@ -106,12 +117,23 @@ func NewInfo(title, desc, version string) *Info {
 	return &Info{title: title, desc: desc, version: version}
 }
 
-func (i *Info) GetTitle() string          { return i.title }
-func (i *Info) GetDesc() string           { return i.desc }
-func (i *Info) GetVersion() string        { return i.version }
+// GetTitle returns the title from Info.
+func (i *Info) GetTitle() string { return i.title }
+
+// GetDesc returns the desc from Info.
+func (i *Info) GetDesc() string { return i.desc }
+
+// GetVersion returns the version from Info.
+func (i *Info) GetVersion() string { return i.version }
+
+// GetTermsOfService returns the terms of service from Info.
 func (i *Info) GetTermsOfService() string { return i.termsOfService }
-func (i *Info) GetLicense() *License      { return i.license }
-func (i *Info) GetContact() *Contact      { return i.contact }
+
+// GetLicense returns the license from Info.
+func (i *Info) GetLicense() *License { return i.license }
+
+// GetContact returns the contact from Info.
+func (i *Info) GetContact() *Contact { return i.contact }
 
 // Title sets the title in Info.
 func (i *Info) Title(title string) *Info {
@@ -164,8 +186,11 @@ func NewLicense(name, url string) *License {
 	return &License{name: name, url: url}
 }
 
+// GetName returns the name from License.
 func (l *License) GetName() string { return l.name }
-func (l *License) GetUrl() string  { return l.url }
+
+// GetUrl returns the url from License.
+func (l *License) GetUrl() string { return l.url }
 
 // Name sets the name in License.
 func (l *License) Name(name string) *License {
@@ -195,8 +220,13 @@ func NewContact(name, url, email string) *Contact {
 	return &Contact{name: name, url: url, email: email}
 }
 
-func (c *Contact) GetName() string  { return c.name }
-func (c *Contact) GetUrl() string   { return c.url }
+// GetName returns the name from Contact.
+func (c *Contact) GetName() string { return c.name }
+
+// GetUrl returns the url from Contact.
+func (c *Contact) GetUrl() string { return c.url }
+
+// GetEmail returns the email from Contact.
 func (c *Contact) GetEmail() string { return c.email }
 
 // Name sets the name in Contact.
@@ -238,13 +268,28 @@ func NewOption() *Option {
 	return &Option{}
 }
 
-func (o *Option) GetSchemes() []string              { return o.schemes }
-func (o *Option) GetConsumes() []string             { return o.consumes }
-func (o *Option) GetProduces() []string             { return o.produces }
-func (o *Option) GetTags() []*Tag                   { return o.tags }
-func (o *Option) GetSecurities() []*Security        { return o.securities }
-func (o *Option) GetExternalDoc() *ExternalDoc      { return o.externalDoc }
-func (o *Option) GetAdditionalDoc() string          { return o.additionalDoc }
+// GetSchemes returns the whole schemes from Option.
+func (o *Option) GetSchemes() []string { return o.schemes }
+
+// GetConsumes returns the whole consumes from Option.
+func (o *Option) GetConsumes() []string { return o.consumes }
+
+// GetProduces returns the whole produces from Option.
+func (o *Option) GetProduces() []string { return o.produces }
+
+// GetTags returns the whole tags from Option.
+func (o *Option) GetTags() []*Tag { return o.tags }
+
+// GetSecurities returns the whole securities from Option.
+func (o *Option) GetSecurities() []*Security { return o.securities }
+
+// GetExternalDoc returns the external documentation from Option.
+func (o *Option) GetExternalDoc() *ExternalDoc { return o.externalDoc }
+
+// GetAdditionalDoc returns the additional document from Option.
+func (o *Option) GetAdditionalDoc() string { return o.additionalDoc }
+
+// GetRoutesOptions returns the whole routes options from Option.
 func (o *Option) GetRoutesOptions() []*RoutesOption { return o.routesOptions }
 
 // Schemes sets the whole schemes in Option.
@@ -348,10 +393,17 @@ func NewTag(name, desc string) *Tag {
 	return &Tag{name: name, desc: desc}
 }
 
-func (t *Tag) GetName() string              { return t.name }
-func (t *Tag) GetDesc() string              { return t.desc }
+// GetName returns the name from Tag.
+func (t *Tag) GetName() string { return t.name }
+
+// GetDesc returns the desc from Tag.
+func (t *Tag) GetDesc() string { return t.desc }
+
+// GetExternalDoc returns the external documentation from Tag.
 func (t *Tag) GetExternalDoc() *ExternalDoc { return t.externalDoc }
-func (t *Tag) GetAdditionalDoc() string     { return t.additionalDoc }
+
+// GetAdditionalDoc returns the additional document from Tag.
+func (t *Tag) GetAdditionalDoc() string { return t.additionalDoc }
 
 // Name sets the name in Tag.
 func (t *Tag) Name(name string) *Tag {
@@ -416,14 +468,31 @@ func NewOAuth2Security(title string, flow string) *Security {
 	return &Security{title: title, typ: OAUTH2, flow: flow}
 }
 
-func (s *Security) GetTitle() string            { return s.title }
-func (s *Security) GetType() string             { return s.typ }
-func (s *Security) GetDesc() string             { return s.desc }
-func (s *Security) GetInLoc() string            { return s.in }
-func (s *Security) GetName() string             { return s.name }
-func (s *Security) GetFlow() string             { return s.flow }
+// GetTitle returns the title from Security.
+func (s *Security) GetTitle() string { return s.title }
+
+// GetType returns the authentication type from Security.
+func (s *Security) GetType() string { return s.typ }
+
+// GetDesc returns the desc from Security.
+func (s *Security) GetDesc() string { return s.desc }
+
+// GetInLoc returns the in-location from Security.
+func (s *Security) GetInLoc() string { return s.in }
+
+// GetName returns the name from Security.
+func (s *Security) GetName() string { return s.name }
+
+// GetFlow returns the flow from Security.
+func (s *Security) GetFlow() string { return s.flow }
+
+// GetAuthorizationUrl returns the authorization url from Security.
 func (s *Security) GetAuthorizationUrl() string { return s.authorizationUrl }
-func (s *Security) GetTokenUrl() string         { return s.tokenUrl }
+
+// GetTokenUrl returns the token url from Security.
+func (s *Security) GetTokenUrl() string { return s.tokenUrl }
+
+// GetScopes returns the whole security scopes from Security.
 func (s *Security) GetScopes() []*SecurityScope { return s.scopes }
 
 // Title sets the title in Security.
@@ -501,8 +570,11 @@ func NewSecurityScope(scope, desc string) *SecurityScope {
 	return &SecurityScope{scope: scope, desc: desc}
 }
 
+// GetScope returns the scope from SecurityScope.
 func (s *SecurityScope) GetScope() string { return s.scope }
-func (s *SecurityScope) GetDesc() string  { return s.desc }
+
+// GetDesc returns the desc from SecurityScope.
+func (s *SecurityScope) GetDesc() string { return s.desc }
 
 // Scope sets the scope in Security.
 func (s *SecurityScope) Scope(scope string) *SecurityScope {
@@ -531,8 +603,11 @@ func NewExternalDoc(desc, url string) *ExternalDoc {
 	return &ExternalDoc{desc: desc, url: url}
 }
 
+// GetDesc returns the desc from ExternalDoc.
 func (e *ExternalDoc) GetDesc() string { return e.desc }
-func (e *ExternalDoc) GetUrl() string  { return e.url }
+
+// GetUrl returns the url from ExternalDoc.
+func (e *ExternalDoc) GetUrl() string { return e.url }
 
 // Desc sets the desc in ExternalDoc.
 func (e *ExternalDoc) Desc(desc string) *ExternalDoc {
@@ -562,8 +637,13 @@ func NewRoutesOption(route string) *RoutesOption {
 	return &RoutesOption{route: route}
 }
 
-func (r *RoutesOption) GetRoute() string         { return r.route }
-func (r *RoutesOption) GetSummary() string       { return r.summary }
+// GetRoute returns the route from RoutesOption.
+func (r *RoutesOption) GetRoute() string { return r.route }
+
+// GetSummary returns the summary from RoutesOption.
+func (r *RoutesOption) GetSummary() string { return r.summary }
+
+// GetAdditionalDoc returns the additional document from RoutesOption.
 func (r *RoutesOption) GetAdditionalDoc() string { return r.additionalDoc }
 
 // Route sets the route in RoutesOption.
@@ -599,11 +679,22 @@ func SetDocument(host, basePath string, info *Info) *Document {
 	return _document
 }
 
-func GetHost() string               { return _document.GetHost() }
-func GetBasePath() string           { return _document.GetBasePath() }
-func GetInfo() *Info                { return _document.GetInfo() }
-func GetOption() *Option            { return _document.GetOption() }
-func GetOperations() []*Operation   { return _document.GetOperations() }
+// GetHost returns the host from global Document.
+func GetHost() string { return _document.GetHost() }
+
+// GetBasePath returns the basePath from global Document.
+func GetBasePath() string { return _document.GetBasePath() }
+
+// GetInfo returns the info from global Document.
+func GetInfo() *Info { return _document.GetInfo() }
+
+// GetOption returns the option from global Document.
+func GetOption() *Option { return _document.GetOption() }
+
+// GetOperations returns the whole operations from global Document.
+func GetOperations() []*Operation { return _document.GetOperations() }
+
+// GetDefinitions returns the whole definitions from global Document.
 func GetDefinitions() []*Definition { return _document.GetDefinitions() }
 
 // CleanupDocument cleans up the global Document.

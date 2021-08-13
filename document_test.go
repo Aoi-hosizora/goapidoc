@@ -250,9 +250,9 @@ func TestSetGet(t *testing.T) {
 					Example(60))).
 			Params(NewPathParam("id", "integer#int64", true, "user id"),
 				NewQueryParam("need_details", "boolean", false, "is need details")).
-			AddParams(NewFormParam("key", "string", false, "fake form key"), // only for test
-				NewBodyParam("param", "Fake", false, "fake body").XMLRepr(NewXMLRepr("Fake")), // only for test
-				NewHeaderParam("X-NEED-DETAILS", "boolean", false, "a duplicate parameter of need_details query")).
+			AddParams(NewFormParam("key", "string", false, "fake form key"),
+				NewBodyParam("param", "Fake", false, "fake body").XMLRepr(NewXMLRepr("Fake")),
+				NewHeaderParam("X-NEED-DETAILS", "boolean", false, "a duplicate parameter of need_details query")). // only for test
 			AddParams(NewParam("", "", "", false, "").
 				Name("X-TEST").
 				InLoc(HEADER).
@@ -487,7 +487,8 @@ func TestSetGet(t *testing.T) {
 					AllowEmpty(true).
 					Default([]string{}).
 					Example([]string{"hello", "world"}).
-					Pattern("^.+$"). // followings are only for test
+					Pattern("^.+$").
+					// the followings are only for test
 					Enum("hello", "world", "").
 					MinLength(0).
 					MaxLength(0).
@@ -503,7 +504,7 @@ func TestSetGet(t *testing.T) {
 					ExclusiveMin(true).
 					MultipleOf(1.1).
 					XMLRepr(NewXMLRepr("Data")).
-					ItemOption(NewItemOption(). // only for test
+					ItemOption(NewItemOption().
 						AllowEmpty(true).
 						Default([]string{}).
 						Example([]string{"hello", "world"}).
@@ -524,7 +525,7 @@ func TestSetGet(t *testing.T) {
 						ExclusiveMin(true).
 						MultipleOf(1.1).
 						XMLRepr(NewXMLRepr("Object")).
-						ItemOption(NewItemOption()))))
+						ItemOption(NewItemOption())))) // only for test
 		if len(GetDefinitions()) != 3 {
 			failNow(t, "AddDefinitions or SetDefinitions has a wrong behavior")
 		}

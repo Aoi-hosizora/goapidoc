@@ -19,10 +19,19 @@ func NewDefinition(name, desc string) *Definition {
 	return &Definition{name: name, desc: desc}
 }
 
-func (d *Definition) GetName() string            { return d.name }
-func (d *Definition) GetDesc() string            { return d.desc }
-func (d *Definition) GetXMLRepr() *XMLRepr       { return d.xmlRepr }
-func (d *Definition) GetGenerics() []string      { return d.generics }
+// GetName returns the name from Definition.
+func (d *Definition) GetName() string { return d.name }
+
+// GetDesc returns the desc from Definition.
+func (d *Definition) GetDesc() string { return d.desc }
+
+// GetXMLRepr returns the xml repr from Definition.
+func (d *Definition) GetXMLRepr() *XMLRepr { return d.xmlRepr }
+
+// GetGenerics returns the whole generics from Definition.
+func (d *Definition) GetGenerics() []string { return d.generics }
+
+// GetProperties returns the whole properties from Definition.
 func (d *Definition) GetProperties() []*Property { return d.properties }
 
 // Name sets the name in Definition.
@@ -79,11 +88,20 @@ func NewXMLRepr(name string) *XMLRepr {
 	return &XMLRepr{name: name}
 }
 
-func (x *XMLRepr) GetName() string      { return x.name }
+// GetName returns the name from XMLRepr.
+func (x *XMLRepr) GetName() string { return x.name }
+
+// GetNamespace returns the namespace from XMLRepr.
 func (x *XMLRepr) GetNamespace() string { return x.namespace }
-func (x *XMLRepr) GetPrefix() string    { return x.prefix }
-func (x *XMLRepr) GetAttribute() bool   { return x.attribute }
-func (x *XMLRepr) GetWrapped() bool     { return x.wrapped }
+
+// GetPrefix returns the prefix from XMLRepr.
+func (x *XMLRepr) GetPrefix() string { return x.prefix }
+
+// GetAttribute returns the attribute from XMLRepr.
+func (x *XMLRepr) GetAttribute() bool { return x.attribute }
+
+// GetWrapped returns the wrapped from XMLRepr.
+func (x *XMLRepr) GetWrapped() bool { return x.wrapped }
 
 // Name sets the name in XMLRepr.
 func (x *XMLRepr) Name(name string) *XMLRepr {
@@ -151,28 +169,71 @@ func NewProperty(name, typ string, required bool, desc string) *Property {
 	return &Property{name: name, typ: typ, required: required, desc: desc}
 }
 
-func (p *Property) GetName() string             { return p.name }
-func (p *Property) GetType() string             { return p.typ }
-func (p *Property) GetRequired() bool           { return p.required }
-func (p *Property) GetDesc() string             { return p.desc }
-func (p *Property) GetAllowEmpty() bool         { return p.allowEmpty }
-func (p *Property) GetDefault() interface{}     { return p.defaul }
-func (p *Property) GetExample() interface{}     { return p.example }
-func (p *Property) GetPattern() string          { return p.pattern }
-func (p *Property) GetEnum() []interface{}      { return p.enum }
-func (p *Property) GetMinLength() *int          { return p.minLength }
-func (p *Property) GetMaxLength() *int          { return p.maxLength }
-func (p *Property) GetMinItems() *int           { return p.minItems }
-func (p *Property) GetMaxItems() *int           { return p.maxItems }
-func (p *Property) GetUniqueItems() bool        { return p.uniqueItems }
+// GetName returns the name from Property.
+func (p *Property) GetName() string { return p.name }
+
+// GetType returns the type from Property.
+func (p *Property) GetType() string { return p.typ }
+
+// GetRequired returns the required from Property.
+func (p *Property) GetRequired() bool { return p.required }
+
+// GetDesc returns the desc from Property.
+func (p *Property) GetDesc() string { return p.desc }
+
+// GetAllowEmpty returns the allowEmpty from Property.
+func (p *Property) GetAllowEmpty() bool { return p.allowEmpty }
+
+// GetDefault returns the default from Property.
+func (p *Property) GetDefault() interface{} { return p.defaul }
+
+// GetExample returns the example from Property.
+func (p *Property) GetExample() interface{} { return p.example }
+
+// GetPattern returns the pattern from Property.
+func (p *Property) GetPattern() string { return p.pattern }
+
+// GetEnum returns the enum from Property.
+func (p *Property) GetEnum() []interface{} { return p.enum }
+
+// GetMinLength returns the minLength from Property.
+func (p *Property) GetMinLength() *int { return p.minLength }
+
+// GetMaxLength returns the maxLength from Property.
+func (p *Property) GetMaxLength() *int { return p.maxLength }
+
+// GetMinItems returns the minItems from Property.
+func (p *Property) GetMinItems() *int { return p.minItems }
+
+// GetMaxItems returns the maxItems from Property.
+func (p *Property) GetMaxItems() *int { return p.maxItems }
+
+// GetUniqueItems returns the uniqueItems from Property.
+func (p *Property) GetUniqueItems() bool { return p.uniqueItems }
+
+// GetCollectionFormat returns the collectionFormat from Property.
 func (p *Property) GetCollectionFormat() string { return p.collectionFormat }
-func (p *Property) GetMinimum() *float64        { return p.minimum }
-func (p *Property) GetMaximum() *float64        { return p.maximum }
-func (p *Property) GetExclusiveMin() bool       { return p.exclusiveMin }
-func (p *Property) GetExclusiveMax() bool       { return p.exclusiveMax }
-func (p *Property) GetMultipleOf() float64      { return p.multipleOf }
-func (p *Property) GetItemOption() *ItemOption  { return p.itemOption }
-func (p *Property) GetXMLRepr() *XMLRepr        { return p.xmlRepr }
+
+// GetMinimum returns the minimum from Property.
+func (p *Property) GetMinimum() *float64 { return p.minimum }
+
+// GetMaximum returns the maximum from Property.
+func (p *Property) GetMaximum() *float64 { return p.maximum }
+
+// GetExclusiveMin returns the exclusiveMin from Property.
+func (p *Property) GetExclusiveMin() bool { return p.exclusiveMin }
+
+// GetExclusiveMax returns the exclusiveMax from Property.
+func (p *Property) GetExclusiveMax() bool { return p.exclusiveMax }
+
+// GetMultipleOf returns the multipleOf from Property.
+func (p *Property) GetMultipleOf() float64 { return p.multipleOf }
+
+// GetItemOption returns the item option from Property.
+func (p *Property) GetItemOption() *ItemOption { return p.itemOption }
+
+// GetXMLRepr returns the xml repr from Property.
+func (p *Property) GetXMLRepr() *XMLRepr { return p.xmlRepr }
 
 // Name sets the name in Property.
 func (p *Property) Name(name string) *Property {
@@ -358,24 +419,59 @@ func NewItemOption() *ItemOption {
 	return &ItemOption{}
 }
 
-func (o *ItemOption) GetAllowEmpty() bool         { return o.allowEmpty }
-func (o *ItemOption) GetDefault() interface{}     { return o.defaul }
-func (o *ItemOption) GetExample() interface{}     { return o.example }
-func (o *ItemOption) GetPattern() string          { return o.pattern }
-func (o *ItemOption) GetEnum() []interface{}      { return o.enum }
-func (o *ItemOption) GetMinLength() *int          { return o.minLength }
-func (o *ItemOption) GetMaxLength() *int          { return o.maxLength }
-func (o *ItemOption) GetMinItems() *int           { return o.minItems }
-func (o *ItemOption) GetMaxItems() *int           { return o.maxItems }
-func (o *ItemOption) GetUniqueItems() bool        { return o.uniqueItems }
+// GetAllowEmpty returns the allowEmpty from ItemOption.
+func (o *ItemOption) GetAllowEmpty() bool { return o.allowEmpty }
+
+// GetDefault returns the default from ItemOption.
+func (o *ItemOption) GetDefault() interface{} { return o.defaul }
+
+// GetExample returns the example from ItemOption.
+func (o *ItemOption) GetExample() interface{} { return o.example }
+
+// GetPattern returns the pattern from ItemOption.
+func (o *ItemOption) GetPattern() string { return o.pattern }
+
+// GetEnum returns the enum from ItemOption.
+func (o *ItemOption) GetEnum() []interface{} { return o.enum }
+
+// GetMinLength returns the minLength from ItemOption.
+func (o *ItemOption) GetMinLength() *int { return o.minLength }
+
+// GetMaxLength returns the maxLength from ItemOption.
+func (o *ItemOption) GetMaxLength() *int { return o.maxLength }
+
+// GetMinItems returns the minItems from ItemOption.
+func (o *ItemOption) GetMinItems() *int { return o.minItems }
+
+// GetMaxItems returns the maxItems from ItemOption.
+func (o *ItemOption) GetMaxItems() *int { return o.maxItems }
+
+// GetUniqueItems returns the uniqueItems from ItemOption.
+func (o *ItemOption) GetUniqueItems() bool { return o.uniqueItems }
+
+// GetCollectionFormat returns the collectionFormat from ItemOption.
 func (o *ItemOption) GetCollectionFormat() string { return o.collectionFormat }
-func (o *ItemOption) GetMinimum() *float64        { return o.minimum }
-func (o *ItemOption) GetMaximum() *float64        { return o.maximum }
-func (o *ItemOption) GetExclusiveMin() bool       { return o.exclusiveMin }
-func (o *ItemOption) GetExclusiveMax() bool       { return o.exclusiveMax }
-func (o *ItemOption) GetMultipleOf() float64      { return o.multipleOf }
-func (o *ItemOption) GetItemOption() *ItemOption  { return o.itemOption }
-func (o *ItemOption) GetXMLRepr() *XMLRepr        { return o.xmlRepr }
+
+// GetMinimum returns the minimum from ItemOption.
+func (o *ItemOption) GetMinimum() *float64 { return o.minimum }
+
+// GetMaximum returns the maximum from ItemOption.
+func (o *ItemOption) GetMaximum() *float64 { return o.maximum }
+
+// GetExclusiveMin returns the exclusiveMin from ItemOption.
+func (o *ItemOption) GetExclusiveMin() bool { return o.exclusiveMin }
+
+// GetExclusiveMax returns the exclusiveMax from ItemOption.
+func (o *ItemOption) GetExclusiveMax() bool { return o.exclusiveMax }
+
+// GetMultipleOf returns the multipleOf from ItemOption.
+func (o *ItemOption) GetMultipleOf() float64 { return o.multipleOf }
+
+// GetItemOption returns the itemOption from ItemOption.
+func (o *ItemOption) GetItemOption() *ItemOption { return o.itemOption }
+
+// GetXMLRepr returns the xmlRepr from ItemOption.
+func (o *ItemOption) GetXMLRepr() *XMLRepr { return o.xmlRepr }
 
 // AllowEmpty sets the allowEmpty in ItemOption.
 func (o *ItemOption) AllowEmpty(allow bool) *ItemOption {

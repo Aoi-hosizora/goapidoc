@@ -120,7 +120,7 @@ func parseApiType(typ string) *apiType {
 			part = strings.TrimSpace(part)
 			if strings.Count(part, "<") == strings.Count(part, ">") { // Y<Z>
 				genStrings = append(genStrings, part)
-			} else { // Z<A, B<C>>
+			} else {
 				if idx+1 < len(genParts) {
 					genParts[idx+1] = genParts[idx] + "," + genParts[idx+1] // -> Z<A + , + B<C>>
 				} else {

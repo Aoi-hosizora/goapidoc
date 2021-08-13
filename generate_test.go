@@ -613,8 +613,8 @@ func TestGenerate3(t *testing.T) {
 	CleanupDocument()
 	SetDocument("localhost:60001", "/",
 		NewInfo("Demo api", "This is a demo api only for testing goapidoc.", "1.0.0").
-		License(NewLicense("MIT", "")).
-		Contact(NewContact("", "https://github.com/Aoi-hosizora", "")),
+			License(NewLicense("MIT", "")).
+			Contact(NewContact("", "https://github.com/Aoi-hosizora", "")),
 	)
 
 	SetOption(NewOption().
@@ -906,10 +906,10 @@ func TestRenderAndSaveError(t *testing.T) {
 	d1 := NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
 		Operations(NewOperation("get", "/", "summary").
 			Responses(NewResponse(200, ""))).Definitions(NewDefinition("name", "").
-		Properties(NewProperty("name", "integer", true, "").Example(func() {}))) // <<<
+		Properties(NewProperty("name", "integer", true, "").Example(func() {})))
 	d2 := NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
 		Operations(NewOperation("get", "/", "summary").
-			Responses(NewResponse(200, "").Examples(NewResponseExample("mime", customType{})))) // <<<
+			Responses(NewResponse(200, "").Examples(NewResponseExample("mime", customType{}))))
 	d3 := NewDocument("host", "/", NewInfo("title", "", "1.0.0")).
 		Operations(NewOperation("get", "/", "summary").Responses(NewResponse(200, "")))
 
