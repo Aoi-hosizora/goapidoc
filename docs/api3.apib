@@ -153,7 +153,7 @@ Security requirement: jwt
 
 user-controller
 
-## Query all users [/user{?force_refresh,page,limit}]
+## Query all users [/user{?page,limit,force_refresh}]
 
 > `/user`
 
@@ -165,14 +165,14 @@ Security requirement: jwt
 
 + Parameters
 
-    + force_refresh (boolean, optional) - force refresh flag for querying users
-        + Default: `false`
     + page (number, optional) - query page
         (format: int32)
         + Default: `1`
     + limit (number, optional) - page size
         (format: int32)
         + Default: `20`
+    + force_refresh (boolean, optional) - force refresh flag for querying users
+        + Default: `false`
 
 + Request (application/json)
 

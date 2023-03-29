@@ -249,21 +249,6 @@
         ],
         "parameters": [
           {
-            "name": "force_refresh",
-            "in": "query",
-            "required": false,
-            "description": "force refresh flag for querying users",
-            "type": "boolean",
-            "default": false
-          },
-          {
-            "name": "X-Special-Flag",
-            "in": "header",
-            "required": true,
-            "description": "a special flag in header, which must be set for querying users",
-            "type": "string"
-          },
-          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -280,6 +265,21 @@
             "type": "integer",
             "format": "int32",
             "default": 20
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag for querying users",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": true,
+            "description": "a special flag in header, which must be set for querying users",
+            "type": "string"
           }
         ],
         "responses": {

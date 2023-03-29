@@ -531,26 +531,6 @@ func buildSwagOperations(doc *Document) map[string]map[string]*swagOperation {
 		}
 		params := op.params
 		if opt := doc.option; opt != nil {
-			paramTemplates := make(map[string]*ParamTemplate, len(opt.paramTemplates))
-			for _, template := range opt.paramTemplates {
-				paramTemplates[template.name] = template
-			}
-			for _, templateName := range op.paramTmpls {
-				if template, ok := paramTemplates[templateName]; ok {
-					for _, templateParam := range template.params {
-						existed := false
-						for _, existedParam := range params {
-							if existedParam.name == templateParam.name {
-								existed = true
-								break
-							}
-						}
-						if !existed {
-							params = append(params, templateParam)
-						}
-					}
-				}
-			}
 			for _, globalParam := range opt.globalParams {
 				existed := false
 				for _, existedParam := range params {

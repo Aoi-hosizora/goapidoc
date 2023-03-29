@@ -486,7 +486,6 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 	var securities map[string]*Security
 	var routesOptions map[string]*RoutesOption
 	var globalParams []*Param
-	var paramTemplates map[string]*ParamTemplate
 	if opt := doc.option; opt != nil {
 		allTags = opt.tags
 		securities = make(map[string]*Security, len(opt.securities))
@@ -498,32 +497,12 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 			routesOptions[ro.route] = ro
 		}
 		globalParams = opt.globalParams
-		paramTemplates = make(map[string]*ParamTemplate, len(opt.paramTemplates))
-		for _, template := range opt.paramTemplates {
-			paramTemplates[template.name] = template
-		}
 	}
 
 	// extract and process params from all operations
 	operationParas := make(map[*Operation][]*Param)
 	for _, op := range doc.operations {
 		params := op.params
-		for _, templateName := range op.paramTmpls {
-			if template, ok := paramTemplates[templateName]; ok {
-				for _, templateParam := range template.params {
-					existed := false
-					for _, existedParam := range params {
-						if existedParam.name == templateParam.name {
-							existed = true
-							break
-						}
-					}
-					if !existed {
-						params = append(params, templateParam)
-					}
-				}
-			}
-		}
 		for _, globalParam := range globalParams {
 			existed := false
 			for _, existedParam := range params {
