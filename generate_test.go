@@ -628,7 +628,14 @@ func TestGenerate3(t *testing.T) {
 		).
 		GlobalParams(
 			NewQueryParam("force_refresh", "boolean", false, "force refresh flag").Default(false),
-			NewHeaderParam("X-Special-Flag", "string", false, "a special flag in header").Example("token-xxx"),
+			NewHeaderParam("X-Special-Flag", "string", false, "a special flag in header"),
+		).
+		ParamTemplates(
+			NewParamTemplate("page_limit_query").
+				Params(
+					NewQueryParam("page", "integer#int32", false, "query page").Default(1),
+					NewQueryParam("limit", "integer#int32", false, "page size").Default(20),
+				),
 		),
 	)
 
@@ -671,11 +678,10 @@ func TestGenerate3(t *testing.T) {
 			Tags("User").
 			Securities("jwt").
 			Params(
-				NewQueryParam("page", "integer#int32", false, "query page").Default(1),
-				NewQueryParam("limit", "integer#int32", false, "page size").Default(20),
 				NewQueryParam("force_refresh", "boolean", false, "force refresh flag for querying users").Default(false),
 				NewHeaderParam("X-Special-Flag", "string", true, "a special flag in header, which must be set for querying users"),
 			).
+			ParamTemplateNames("page_limit_query").
 			Responses(
 				NewResponse(200, "_Result<_Page<UserDto>>"),
 			),

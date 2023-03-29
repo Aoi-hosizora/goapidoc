@@ -343,7 +343,7 @@ var apibOperationTemplate = `
 {{ end }}
 `
 
-func buildApibOperation(op *Operation, securities map[string]*Security, globalParams map[string]*Param) ([]byte, error) {
+func buildApibOperation(op *Operation, params []*Param, securities map[string]*Security) ([]byte, error) {
 	// prehandle operation fields
 	consume := JSON
 	if len(op.consumes) >= 1 {
@@ -353,7 +353,6 @@ func buildApibOperation(op *Operation, securities map[string]*Security, globalPa
 	if len(op.produces) >= 1 {
 		produce = op.produces[0]
 	}
-	params := op.params
 	secReqName := ""
 	if len(op.securities) > 0 {
 		secReqName = op.securities[0] // only support single security
@@ -369,18 +368,6 @@ func buildApibOperation(op *Operation, securities map[string]*Security, globalPa
 			} else if s.typ == OAUTH2 {
 				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc}) // <<<
 			}
-		}
-	}
-	for _, globalParam := range globalParams {
-		existed := false
-		for _, existedParam := range params {
-			if existedParam.name == globalParam.name {
-				existed = true
-				break
-			}
-		}
-		if !existed {
-			params = append(params, globalParam)
 		}
 	}
 
@@ -498,7 +485,8 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 	var allTags []*Tag
 	var securities map[string]*Security
 	var routesOptions map[string]*RoutesOption
-	var globalParams map[string]*Param
+	var globalParams []*Param
+	var paramTemplates map[string]*ParamTemplate
 	if opt := doc.option; opt != nil {
 		allTags = opt.tags
 		securities = make(map[string]*Security, len(opt.securities))
@@ -509,13 +497,49 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 		for _, ro := range opt.routesOptions {
 			routesOptions[ro.route] = ro
 		}
-		globalParams = make(map[string]*Param, len(opt.globalParams))
-		for _, gp := range opt.globalParams {
-			globalParams[gp.name] = gp
+		globalParams = opt.globalParams
+		paramTemplates = make(map[string]*ParamTemplate, len(opt.paramTemplates))
+		for _, template := range opt.paramTemplates {
+			paramTemplates[template.name] = template
 		}
 	}
 
-	// put all operations to trmoMap splitting by tag, route and method
+	// extract and process params from all operations
+	operationParas := make(map[*Operation][]*Param)
+	for _, op := range doc.operations {
+		params := op.params
+		for _, templateName := range op.paramTmpls {
+			if template, ok := paramTemplates[templateName]; ok {
+				for _, templateParam := range template.params {
+					existed := false
+					for _, existedParam := range params {
+						if existedParam.name == templateParam.name {
+							existed = true
+							break
+						}
+					}
+					if !existed {
+						params = append(params, templateParam)
+					}
+				}
+			}
+		}
+		for _, globalParam := range globalParams {
+			existed := false
+			for _, existedParam := range params {
+				if existedParam.name == globalParam.name {
+					existed = true
+					break
+				}
+			}
+			if !existed {
+				params = append(params, globalParam)
+			}
+		}
+		operationParas[op] = params
+	}
+
+	// put all operationParas to trmoMap splitting by tag, route and method
 	// trmo: tag - route - method - Operation
 	trmoMap := newOrderedMap(len(allTags)) // map[string]map[string]map[string]*Operation
 	for _, tag := range allTags {
@@ -528,23 +552,9 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 			tag = op.tags[0]
 		}
 		queries := make([]string, 0, 3) // cap defaults to 3
-		for _, param := range op.params {
+		for _, param := range operationParas[op] {
 			if param.in == "query" {
 				queries = append(queries, param.name)
-			}
-		}
-		for _, globalParam := range globalParams {
-			if globalParam.in == "query" {
-				existed := false
-				for _, existedName := range queries {
-					if existedName == globalParam.name {
-						existed = true
-						break
-					}
-				}
-				if !existed {
-					queries = append(queries, globalParam.name)
-				}
 			}
 		}
 		route := op.route
@@ -570,7 +580,7 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 		trmoMap.Set(tag, rmoMap)
 	}
 
-	// render operations from trmoMap to apibGroup slice
+	// render operationParas from trmoMap to apibGroup slice
 	out := make([]*apibGroup, 0, trmoMap.Length())
 	for _, tag := range allTags {
 		rmoMap := trmoMap.MustGet(tag.name).(*orderedMap)
@@ -584,7 +594,7 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 				op := moMap.MustGet(method).(*Operation)
 				rawRoute = op.route
 				summaries = append(summaries, op.summary)
-				bs, err := buildApibOperation(op, securities, globalParams)
+				bs, err := buildApibOperation(op, operationParas[op], securities)
 				if err != nil {
 					return nil, err
 				}

@@ -22,6 +22,7 @@ type Operation struct {
 	reqExample    interface{}
 	externalDoc   *ExternalDoc
 	additionalDoc string
+	paramTmpls    []string
 	params        []*Param
 	responses     []*Response
 }
@@ -237,6 +238,18 @@ func (o *Operation) ExternalDoc(doc *ExternalDoc) *Operation {
 // AdditionalDoc sets the additional document in Operation, this is only supported in API Blueprint.
 func (o *Operation) AdditionalDoc(doc string) *Operation {
 	o.additionalDoc = doc
+	return o
+}
+
+// ParamTemplateNames sets the whole param template names in Operation.
+func (o *Operation) ParamTemplateNames(names ...string) *Operation {
+	o.paramTmpls = names
+	return o
+}
+
+// AddParamTemplateNames adds some param template names into Operation.
+func (o *Operation) AddParamTemplateNames(names ...string) *Operation {
+	o.paramTmpls = append(o.paramTmpls, names...)
 	return o
 }
 

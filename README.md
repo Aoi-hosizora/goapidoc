@@ -41,6 +41,10 @@ func main() {
 		).
 		Securities(
 			NewApiKeySecurity("jwt", HEADER, "Authorization"),
+		).
+		GlobalParams(
+			NewQueryParam("force_refresh", "boolean", false, "force refresh flag").Default(false),
+			NewHeaderParam("X-Special-Flag", "string", false, "a special flag in header").Example("token-xxx"),
 		),
 	)
 
@@ -85,6 +89,8 @@ func main() {
 			Params(
 				NewQueryParam("page", "integer#int32", false, "query page").Default(1),
 				NewQueryParam("limit", "integer#int32", false, "page size").Default(20),
+				NewQueryParam("force_refresh", "boolean", false, "force refresh flag for querying users").Default(false),
+				NewHeaderParam("X-Special-Flag", "string", true, "a special flag in header, which must be set for querying users"),
 			).
 			Responses(
 				NewResponse(200, "_Result<_Page<UserDto>>"),

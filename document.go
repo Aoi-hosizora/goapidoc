@@ -253,15 +253,16 @@ func (c *Contact) Email(email string) *Contact {
 
 // Option represents an api extra option of Document.
 type Option struct {
-	schemes       []string
-	consumes      []string
-	produces      []string
-	tags          []*Tag
-	securities    []*Security
-	globalParams  []*Param
-	externalDoc   *ExternalDoc
-	additionalDoc string
-	routesOptions []*RoutesOption
+	schemes        []string
+	consumes       []string
+	produces       []string
+	tags           []*Tag
+	securities     []*Security
+	globalParams   []*Param
+	paramTemplates []*ParamTemplate
+	externalDoc    *ExternalDoc
+	additionalDoc  string
+	routesOptions  []*RoutesOption
 }
 
 // NewOption creates a default Option.
@@ -286,6 +287,9 @@ func (o *Option) GetSecurities() []*Security { return o.securities }
 
 // GetGlobalParams returns the whole global params from Option.
 func (o *Option) GetGlobalParams() []*Param { return o.globalParams }
+
+// GetParamTemplates returns the whole param templates from Option.
+func (o *Option) GetParamTemplates() []*ParamTemplate { return o.paramTemplates }
 
 // GetExternalDoc returns the external documentation from Option.
 func (o *Option) GetExternalDoc() *ExternalDoc { return o.externalDoc }
@@ -365,6 +369,18 @@ func (o *Option) GlobalParams(globalParams ...*Param) *Option {
 // AddGlobalParams adds some global params into Option.
 func (o *Option) AddGlobalParams(globalParams ...*Param) *Option {
 	o.globalParams = append(o.globalParams, globalParams...)
+	return o
+}
+
+// ParamTemplates sets the whole param templates in Option.
+func (o *Option) ParamTemplates(templates ...*ParamTemplate) *Option {
+	o.paramTemplates = templates
+	return o
+}
+
+// AddParamTemplates adds some param templates into Option.
+func (o *Option) AddParamTemplates(templates ...*ParamTemplate) *Option {
+	o.paramTemplates = append(o.paramTemplates, templates...)
 	return o
 }
 
@@ -602,6 +618,45 @@ func (s *SecurityScope) Scope(scope string) *SecurityScope {
 func (s *SecurityScope) Desc(desc string) *SecurityScope {
 	s.desc = desc
 	return s
+}
+
+// =========
+// ParamTemplate
+// =========
+
+// ParamTemplate represents a param template of Document.
+type ParamTemplate struct {
+	name   string
+	params []*Param
+}
+
+// NewParamTemplate creates a default ParamTemplate with given arguments.
+func NewParamTemplate(name string) *ParamTemplate {
+	return &ParamTemplate{name: name}
+}
+
+// GetName returns the name from ParamTemplate.
+func (p *ParamTemplate) GetName() string { return p.name }
+
+// GetParams returns the params from ParamTemplate.
+func (p *ParamTemplate) GetParams() []*Param { return p.params }
+
+// Name sets the name in ParamTemplate.
+func (p *ParamTemplate) Name(name string) *ParamTemplate {
+	p.name = name
+	return p
+}
+
+// Params sets the whole params in ParamTemplate.
+func (p *ParamTemplate) Params(params ...*Param) *ParamTemplate {
+	p.params = params
+	return p
+}
+
+// AddParams add some params into ParamTemplate.
+func (p *ParamTemplate) AddParams(params ...*Param) *ParamTemplate {
+	p.params = append(p.params, params...)
+	return p
 }
 
 // ===========
