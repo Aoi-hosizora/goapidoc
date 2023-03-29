@@ -97,6 +97,9 @@ func TestSetGet(t *testing.T) {
 						NewSecurityScope("", "").
 							Scope("rw").
 							Desc("for reading and writing"))).
+			GlobalParams(NewQueryParam("force_refresh", "boolean", false, "force refresh flag").
+				Default(false)).
+			AddGlobalParams(NewHeaderParam("X-XXX", "string", false, "test global header")).
 			ExternalDoc(NewExternalDoc("", "").
 				Desc("Find out more about this api").
 				Url("https://github.com/Aoi-hosizora")).
@@ -167,6 +170,10 @@ func TestSetGet(t *testing.T) {
 			s[3].GetTitle() != "oauth2" || s[3].GetType() != "oauth2" || s[3].GetFlow() != "accessCode" || s[3].GetTokenUrl() != "xxx/oauth2/token" || s[3].GetAuthorizationUrl() != "xxx/oauth2/authorization" ||
 			s[3].GetScopes()[0].GetScope() != "read" || s[3].GetScopes()[0].GetDesc() != "only for reading" || s[3].GetScopes()[1].GetScope() != "write" || s[3].GetScopes()[1].GetDesc() != "only for writing" || s[3].GetScopes()[2].GetScope() != "rw" || s[3].GetScopes()[2].GetDesc() != "for reading and writing" {
 			failNow(t, "Option.Securities or Option.AddSecurities or Security.XXX has a wrong behavior")
+		}
+		if p := GetOption().GetGlobalParams(); p[0].GetName() != "force_refresh" || p[0].GetInLoc() != "query" || p[0].GetType() != "boolean" || p[0].GetRequired() == true || p[0].GetDesc() != "force refresh flag" || p[0].GetDefault() != false ||
+			p[1].GetName() != "X-XXX" || p[1].GetInLoc() != "header" || p[1].GetType() != "string" || p[1].GetRequired() == true || p[1].GetDesc() != "test global header" {
+			failNow(t, "Option.GlobalParams or Option.AddGlobalParams or Param.XXX has a wrong behavior")
 		}
 		if e := GetOption().GetExternalDoc(); e.GetDesc() != "Find out more about this api" || e.GetUrl() != "https://github.com/Aoi-hosizora" {
 			failNow(t, "Option.ExternalDoc or ExternalDoc.XXX has a wrong behavior")

@@ -23,7 +23,7 @@ License: MIT
 
 auth-controller
 
-## Sign up [/auth/register]
+## Sign up [/auth/register{?force_refresh}]
 
 > `/auth/register`
 
@@ -31,9 +31,18 @@ auth-controller
 
 > `POST /auth/register`
 
++ Parameters
+
+    + force_refresh (boolean, optional) - force refresh flag
+        + Default: `false`
+
 + Request (application/json)
 
     + Attributes (RegisterParam)
+
+    + Headers
+
+            X-Special-Flag: (string, optional) - a special flag in header
 
     + Body
 
@@ -45,7 +54,7 @@ auth-controller
 
     + Body
 
-## Sign in [/auth/login]
+## Sign in [/auth/login{?force_refresh}]
 
 > `/auth/login`
 
@@ -53,9 +62,18 @@ auth-controller
 
 > `POST /auth/login`
 
++ Parameters
+
+    + force_refresh (boolean, optional) - force refresh flag
+        + Default: `false`
+
 + Request (application/json)
 
     + Attributes (LoginParam)
+
+    + Headers
+
+            X-Special-Flag: (string, optional) - a special flag in header
 
     + Body
 
@@ -67,7 +85,7 @@ auth-controller
 
     + Body
 
-## Get the authorized user [/auth/me]
+## Get the authorized user [/auth/me{?force_refresh}]
 
 > `/auth/me`
 
@@ -77,11 +95,17 @@ auth-controller
 
 Security requirement: jwt
 
++ Parameters
+
+    + force_refresh (boolean, optional) - force refresh flag
+        + Default: `false`
+
 + Request (application/json)
 
     + Headers
 
             Authorization: (string, optional) - jwt, apiKey
+            X-Special-Flag: (string, optional) - a special flag in header
 
     + Body
 
@@ -93,7 +117,7 @@ Security requirement: jwt
 
     + Body
 
-## Sign out [/auth/logout]
+## Sign out [/auth/logout{?force_refresh}]
 
 > `/auth/logout`
 
@@ -103,11 +127,17 @@ Security requirement: jwt
 
 Security requirement: jwt
 
++ Parameters
+
+    + force_refresh (boolean, optional) - force refresh flag
+        + Default: `false`
+
 + Request (application/json)
 
     + Headers
 
             Authorization: (string, optional) - jwt, apiKey
+            X-Special-Flag: (string, optional) - a special flag in header
 
     + Body
 
@@ -123,7 +153,7 @@ Security requirement: jwt
 
 user-controller
 
-## Query all users [/user{?page,limit}]
+## Query all users [/user{?page,limit,force_refresh}]
 
 > `/user`
 
@@ -141,11 +171,14 @@ Security requirement: jwt
     + limit (number, optional) - page size
         (format: int32)
         + Default: `20`
+    + force_refresh (boolean, optional) - force refresh flag for querying users
+        + Default: `false`
 
 + Request (application/json)
 
     + Headers
 
+            X-Special-Flag: (string, required) - a special flag in header, which must be set for querying users
             Authorization: (string, optional) - jwt, apiKey
 
     + Body
@@ -158,7 +191,7 @@ Security requirement: jwt
 
     + Body
 
-## Query the specific user [/user/{id}]
+## Query the specific user [/user/{id}{?force_refresh}]
 
 > `/user/{id}`
 
@@ -172,12 +205,15 @@ Security requirement: jwt
 
     + id (number, required) - user id
         (format: int64)
+    + force_refresh (boolean, optional) - force refresh flag
+        + Default: `false`
 
 + Request (application/json)
 
     + Headers
 
             Authorization: (string, optional) - jwt, apiKey
+            X-Special-Flag: (string, optional) - a special flag in header
 
     + Body
 
@@ -189,7 +225,7 @@ Security requirement: jwt
 
     + Body
 
-## Update the authorized user | Delete the authorized user [/user]
+## Update the authorized user | Delete the authorized user [/user{?force_refresh}]
 
 > `/user`
 
@@ -199,6 +235,11 @@ Security requirement: jwt
 
 Security requirement: jwt
 
++ Parameters
+
+    + force_refresh (boolean, optional) - force refresh flag
+        + Default: `false`
+
 + Request (application/json)
 
     + Attributes (UpdateUserParam)
@@ -206,6 +247,7 @@ Security requirement: jwt
     + Headers
 
             Authorization: (string, optional) - jwt, apiKey
+            X-Special-Flag: (string, optional) - a special flag in header
 
     + Body
 
@@ -223,11 +265,17 @@ Security requirement: jwt
 
 Security requirement: jwt
 
++ Parameters
+
+    + force_refresh (boolean, optional) - force refresh flag
+        + Default: `false`
+
 + Request (application/json)
 
     + Headers
 
             Authorization: (string, optional) - jwt, apiKey
+            X-Special-Flag: (string, optional) - a special flag in header
 
     + Body
 

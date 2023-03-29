@@ -258,6 +258,7 @@ type Option struct {
 	produces      []string
 	tags          []*Tag
 	securities    []*Security
+	globalParams  []*Param
 	externalDoc   *ExternalDoc
 	additionalDoc string
 	routesOptions []*RoutesOption
@@ -282,6 +283,9 @@ func (o *Option) GetTags() []*Tag { return o.tags }
 
 // GetSecurities returns the whole securities from Option.
 func (o *Option) GetSecurities() []*Security { return o.securities }
+
+// GetGlobalParams returns the whole global params from Option.
+func (o *Option) GetGlobalParams() []*Param { return o.globalParams }
 
 // GetExternalDoc returns the external documentation from Option.
 func (o *Option) GetExternalDoc() *ExternalDoc { return o.externalDoc }
@@ -349,6 +353,18 @@ func (o *Option) Securities(securities ...*Security) *Option {
 // AddSecurities adds some securities into Option.
 func (o *Option) AddSecurities(securities ...*Security) *Option {
 	o.securities = append(o.securities, securities...)
+	return o
+}
+
+// GlobalParams sets the whole global params in Option.
+func (o *Option) GlobalParams(globalParams ...*Param) *Option {
+	o.globalParams = globalParams
+	return o
+}
+
+// AddGlobalParams adds some global params into Option.
+func (o *Option) AddGlobalParams(globalParams ...*Param) *Option {
+	o.globalParams = append(o.globalParams, globalParams...)
 	return o
 }
 

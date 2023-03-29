@@ -529,6 +529,22 @@ func buildSwagOperations(doc *Document) map[string]map[string]*swagOperation {
 			}
 			securities = append(securities, secReq)
 		}
+		params := op.params
+		if doc.option != nil {
+			for _, globalParam := range doc.option.globalParams {
+				existed := false
+				for _, existedParam := range params {
+					if existedParam.name == globalParam.name {
+						existed = true
+						break
+					}
+				}
+				if existed {
+					continue
+				}
+				params = append(params, globalParam)
+			}
+		}
 
 		_, ok := out[op.route]
 		if !ok {
@@ -545,7 +561,7 @@ func buildSwagOperations(doc *Document) map[string]map[string]*swagOperation {
 			Securities:  securities,
 			Deprecated:  op.deprecated,
 			ExternalDoc: buildSwagExternalDoc(op.externalDoc),
-			Parameters:  buildSwagParams(op.params),
+			Parameters:  buildSwagParams(params),
 			Responses:   buildSwagResponses(op.responses),
 		}
 	}

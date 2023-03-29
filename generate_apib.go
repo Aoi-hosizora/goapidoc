@@ -343,7 +343,7 @@ var apibOperationTemplate = `
 {{ end }}
 `
 
-func buildApibOperation(op *Operation, securities map[string]*Security) ([]byte, error) {
+func buildApibOperation(op *Operation, securities map[string]*Security, globalParams map[string]*Param) ([]byte, error) {
 	// prehandle operation fields
 	consume := JSON
 	if len(op.consumes) >= 1 {
@@ -369,6 +369,18 @@ func buildApibOperation(op *Operation, securities map[string]*Security) ([]byte,
 			} else if s.typ == OAUTH2 {
 				params = append(params, &Param{name: "Authorization", in: "header", typ: "string", desc: desc}) // <<<
 			}
+		}
+	}
+	for _, globalParam := range globalParams {
+		existed := false
+		for _, existedParam := range params {
+			if existedParam.name == globalParam.name {
+				existed = true
+				break
+			}
+		}
+		if !existed {
+			params = append(params, globalParam)
 		}
 	}
 
@@ -486,6 +498,7 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 	var allTags []*Tag
 	var securities map[string]*Security
 	var routesOptions map[string]*RoutesOption
+	var globalParams map[string]*Param
 	if opt := doc.option; opt != nil {
 		allTags = opt.tags
 		securities = make(map[string]*Security, len(opt.securities))
@@ -495,6 +508,10 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 		routesOptions = make(map[string]*RoutesOption, len(opt.routesOptions))
 		for _, ro := range opt.routesOptions {
 			routesOptions[ro.route] = ro
+		}
+		globalParams = make(map[string]*Param, len(opt.globalParams))
+		for _, gp := range opt.globalParams {
+			globalParams[gp.name] = gp
 		}
 	}
 
@@ -514,6 +531,20 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 		for _, param := range op.params {
 			if param.in == "query" {
 				queries = append(queries, param.name)
+			}
+		}
+		for _, globalParam := range globalParams {
+			if globalParam.in == "query" {
+				existed := false
+				for _, existedName := range queries {
+					if existedName == globalParam.name {
+						existed = true
+						break
+					}
+				}
+				if !existed {
+					queries = append(queries, globalParam.name)
+				}
 			}
 		}
 		route := op.route
@@ -553,7 +584,7 @@ func buildApibGroups(doc *Document) ([]byte, error) {
 				op := moMap.MustGet(method).(*Operation)
 				rawRoute = op.route
 				summaries = append(summaries, op.summary)
-				bs, err := buildApibOperation(op, securities)
+				bs, err := buildApibOperation(op, securities, globalParams)
 				if err != nil {
 					return nil, err
 				}

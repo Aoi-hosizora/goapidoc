@@ -35,6 +35,17 @@ paths:
         description: login param
         schema:
           $ref: '#/definitions/LoginParam'
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: false
+        description: a special flag in header
+        type: string
       responses:
         "200":
           description: 200 OK
@@ -48,6 +59,18 @@ paths:
       - Authorization
       security:
       - jwt: []
+      parameters:
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: false
+        description: a special flag in header
+        type: string
       responses:
         "200":
           description: 200 OK
@@ -61,6 +84,18 @@ paths:
       - Authorization
       security:
       - jwt: []
+      parameters:
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: false
+        description: a special flag in header
+        type: string
       responses:
         "200":
           description: 200 OK
@@ -79,6 +114,17 @@ paths:
         description: register param
         schema:
           $ref: '#/definitions/RegisterParam'
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: false
+        description: a special flag in header
+        type: string
       responses:
         "200":
           description: 200 OK
@@ -92,6 +138,18 @@ paths:
       - User
       security:
       - jwt: []
+      parameters:
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: false
+        description: a special flag in header
+        type: string
       responses:
         "200":
           description: 200 OK
@@ -119,6 +177,17 @@ paths:
         type: integer
         format: int32
         default: 20
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag for querying users
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: true
+        description: a special flag in header, which must be set for querying users
+        type: string
       responses:
         "200":
           description: 200 OK
@@ -138,6 +207,17 @@ paths:
         description: update user param
         schema:
           $ref: '#/definitions/UpdateUserParam'
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: false
+        description: a special flag in header
+        type: string
       responses:
         "200":
           description: 200 OK
@@ -158,6 +238,17 @@ paths:
         description: user id
         type: integer
         format: int64
+      - name: force_refresh
+        in: query
+        required: false
+        description: force refresh flag
+        type: boolean
+        default: false
+      - name: X-Special-Flag
+        in: header
+        required: false
+        description: a special flag in header
+        type: string
       responses:
         "200":
           description: 200 OK

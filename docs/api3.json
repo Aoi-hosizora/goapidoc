@@ -50,6 +50,21 @@
             "schema": {
               "$ref": "#/definitions/LoginParam"
             }
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": false,
+            "description": "a special flag in header",
+            "type": "string"
           }
         ],
         "responses": {
@@ -74,6 +89,23 @@
             "jwt": []
           }
         ],
+        "parameters": [
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": false,
+            "description": "a special flag in header",
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "200 OK",
@@ -94,6 +126,23 @@
         "security": [
           {
             "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": false,
+            "description": "a special flag in header",
+            "type": "string"
           }
         ],
         "responses": {
@@ -122,6 +171,21 @@
             "schema": {
               "$ref": "#/definitions/RegisterParam"
             }
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": false,
+            "description": "a special flag in header",
+            "type": "string"
           }
         ],
         "responses": {
@@ -144,6 +208,23 @@
         "security": [
           {
             "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": false,
+            "description": "a special flag in header",
+            "type": "string"
           }
         ],
         "responses": {
@@ -184,6 +265,21 @@
             "type": "integer",
             "format": "int32",
             "default": 20
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag for querying users",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": true,
+            "description": "a special flag in header, which must be set for querying users",
+            "type": "string"
           }
         ],
         "responses": {
@@ -215,6 +311,21 @@
             "schema": {
               "$ref": "#/definitions/UpdateUserParam"
             }
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": false,
+            "description": "a special flag in header",
+            "type": "string"
           }
         ],
         "responses": {
@@ -247,6 +358,21 @@
             "description": "user id",
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force refresh flag",
+            "type": "boolean",
+            "default": false
+          },
+          {
+            "name": "X-Special-Flag",
+            "in": "header",
+            "required": false,
+            "description": "a special flag in header",
+            "type": "string"
           }
         ],
         "responses": {
